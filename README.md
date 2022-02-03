@@ -1,32 +1,42 @@
-# File System Access API
-View proposals in the [EXPLAINER](EXPLAINER.md) and the [spec](https://wicg.github.io/file-system-access/).
+# File System Standard
 
-See [changes.md](changes.md) for a list of changes that were made to the API surface between what was available as an Origin Trial in Chrome 83 through Chrome 85, and what will be shipped in Chrome 86.
+This repository hosts the
+[File System Standard](https://fs.spec.whatwg.org/).
 
-## Problem
-Today, if a web site wants to create experiences involving local files (document editor, image compressor, etc.) they are at a disadvantage to native apps. A web site must ask the user to reopen a file every time they want to edit it. After opening, the site can only save changes by re downloading the file to the Downloads folder. A native app, by comparison, can maintain a most recently used list, auto save, and save files anywhere the user wants.
+## Code of conduct
 
-## Use cases
-- Open local file to read
-- Open local file to edit and then save
-- Open local file to edit with auto save
-- Create and save a new file
-- Delete an existing file
-- Read meta data about files
+We are committed to providing a friendly, safe, and welcoming environment for all. Please read and
+respect the [WHATWG Code of Conduct](https://whatwg.org/code-of-conduct).
 
-## Workarounds
-- [FileSaver.js](https://github.com/eligrey/FileSaver.js/) polyfills `saveAs()` from the [W3C File API](https://www.w3.org/TR/FileAPI/), but files open in a new window instead of downloading on Safari 6.1+ and iOS.
-- In Edge, Firefox, and Chrome developers can:
-	- Create a fake anchor element (`var a = document.createElement('a')`)
-	- Set `download` to the desired filename (`a.download = 'file.txt'`)
-	- Set `href` to a data URI or Blob URL (`a.href = URL.createObjectURL(blob)`)
-	- Fake a click on the anchor element (`a.click()`)
-	- Clean up if necessary (`URL.revokeObjectURL(a.href)`)
+## Contribution opportunities
 
-  This is also the approach taken in the
-  [browser-nativefs](https://github.com/GoogleChromeLabs/browser-nativefs)
-  support library.
-- Setting `window.location` to `'data:application/octet-stream' + data_stream`.
-- Hidden Flash controls to display a “save as” dialog.
+Folks notice minor and larger issues with the File System Standard all the time and we'd love your
+help fixing those. Pull requests for typographical and grammar errors are also most welcome.
 
-These methods are clunky and only support “save as” (and depending on the UA may automatically appear in Downloads without prompting the user for location). They do not support most recently used lists, auto save, save, or deleting a file.
+We'd be happy to mentor you through this process. If you're interested and need help getting
+started, leave a comment on the issue or ask around [on chat](https://whatwg.org/chat).
+
+## Pull requests
+
+In short, change `index.bs` and submit your patch, with a
+[good commit message](https://github.com/whatwg/meta/blob/main/COMMITTING.md). Consider
+reading through the [WHATWG FAQ](https://whatwg.org/faq) if you are new here.
+
+Please add your name to the Acknowledgments section in your first pull request, even for trivial
+fixes. The names are sorted lexicographically.
+
+## Building "locally"
+
+For quick local iteration, run `make`. To verify your changes locally, run `make deploy`. See more
+in the
+[WHATWG Contributor Guidelines](https://github.com/whatwg/meta/blob/main/CONTRIBUTING.md#building).
+
+## Merge policy
+
+If you can commit to this repository, see the
+[WHATWG Maintainer Guidelines](https://github.com/whatwg/meta/blob/main/MAINTAINERS.md).
+
+## Tests
+
+Tests can be found in the `fs/` directory of
+[web-platform-tests/wpt](https://github.com/web-platform-tests/wpt).
