@@ -58,18 +58,18 @@ different storage mechanism with a different API for such files. The entry point
 
 A <dfn export id="entry">file system entry</dfn> is either a [=file entry=] or a [=directory entry=].
 
-Each [=/file system entry=] has an associated <dfn for=fsentry>query access</dfn> algorithm, which takes "`read`"
+Each [=/file system entry=] has an associated <dfn for="file system entry" id=entry-query-access>query access</dfn> algorithm, which takes "`read`"
 or "`readwrite`" <var ignore>mode</var> and returns a {{PermissionState}}. Unless specified
 otherwise it returns "{{PermissionState/denied}}". The algorithm is allowed to throw.
 
-Each [=/file system entry=] has an associated <dfn for=fsentry>request access</dfn> algorithm, which takes
+Each [=/file system entry=] has an associated <dfn for="file system entry" id=entry-request-access>request access</dfn> algorithm, which takes
 "`read`" or "`readwrite`" <var ignore>mode</var> and returns a {{PermissionState}}. Unless specified
 otherwise it returns "{{PermissionState/denied}}". The algorithm is allowed to throw.
 
 Note: Implementations that only implement this specification and not dependent specifications do not
-need to bother implementing [=/file system entry=]'s [=fsentry/query access=] and [=fsentry/request access=].
+need to bother implementing [=/file system entry=]'s [=file system entry/query access=] and [=file system entry/request access=].
 
-Each [=/file system entry=] has an associated <dfn for=fsentry>name</dfn> (a [=string=]).
+Each [=/file system entry=] has an associated <dfn for="file system entry" id=entry-name>name</dfn> (a [=string=]).
 
 A <dfn>valid file name</dfn> is a [=string=] that is not an empty string, is not equal to "." or "..",
 and does not contain '/' or any other character used as path separator on the underlying platform.
@@ -83,17 +83,17 @@ Issue: We should consider having further normative restrictions on file names th
 never be allowed using this API, rather than leaving it entirely up to underlying file
 systems.
 
-A <dfn export>file entry</dfn> additionally consists of
+A <dfn export id=file>file entry</dfn> additionally consists of
 <dfn for="file entry" export>binary data</dfn> (a [=byte sequence=]) and a
 <dfn for="file entry">modification timestamp</dfn> (a number representing the number of milliseconds since the <a spec=FileAPI>Unix Epoch</a>).
 
-A <dfn export>directory entry</dfn> additionally consists of a [=/set=] of
+A <dfn export id=directory>directory entry</dfn> additionally consists of a [=/set=] of
 <dfn for="directory entry">children</dfn>, which are themselves [=/file system entries=].
 Each member is either a [=/file entry=] or a [=/directory entry=].
 
 A [=/file system entry=] |entry| should be [=list/contained=] in the [=children=] of at most one
-[=directory entry=], and that directory entry is also known as |entry|'s <dfn for=fsentry>parent</dfn>.
-A [=/file system entry=]'s [=fsentry/parent=] is null if no such directory entry exists.
+[=directory entry=], and that directory entry is also known as |entry|'s <dfn for="file system entry" id=entry-parent>parent</dfn>.
+A [=/file system entry=]'s [=file system entry/parent=] is null if no such directory entry exists.
 
 Note: Two different [=/file system entries=] can represent the same file or directory on disk, in which
 case it is possible for both entries to have a different parent, or for one entry to have a
@@ -113,7 +113,7 @@ Issue: TODO: Explain better how entries map to files on disk (multiple entries c
 directory on disk but an entry doesn't have to map to any file on disk).
 
 <div algorithm>
-To <dfn for=fsentry>resolve</dfn> an [=/file system entry=] |child| relative to a [=directory entry=] |root|,
+To <dfn for="file system entry" id=entry-resolve>resolve</dfn> an [=/file system entry=] |child| relative to a [=directory entry=] |root|,
 run the following steps:
 
 1. Let |result| be [=a new promise=].
@@ -122,11 +122,11 @@ run the following steps:
      [=/resolve=] |result| with an empty list, and abort.
   1. Let |childPromises| be « ».
   1. [=set/For each=] |entry| of |root|'s [=FileSystemHandle/entry=]'s [=children=]:
-    1. Let |p| be the result of [=fsentry/resolving=] |child| relative to |entry|.
+    1. Let |p| be the result of [=file system entry/resolving=] |child| relative to |entry|.
     1. [=list/Append=] |p| to |childPromises|.
     1. [=Upon fulfillment=] of |p| with value |path|:
       1. If |path| is not null:
-        1. [=list/Prepend=] |entry|'s [=fsentry/name=] to |path|.
+        1. [=list/Prepend=] |entry|'s [=file system entry/name=] to |path|.
         1. [=/Resolve=] |result| with |path|.
   1. [=Wait for all=] |childPromises|, with the following success steps:
     1. If |result| hasn't been resolved yet, [=/resolve=] |result| with `null`.
@@ -184,14 +184,14 @@ Their [=deserialization steps=], given |serialized| and |value| are:
      of a directory.
 
   : |handle| . {{FileSystemHandle/name}}
-  :: Returns the [=fsentry/name=] of the entry represented by |handle|.
+  :: Returns the [=file system entry/name=] of the entry represented by |handle|.
 </div>
 
 The <dfn attribute for=FileSystemHandle>kind</dfn> attribute must
 return {{FileSystemHandleKind/"file"}} if the associated [=FileSystemHandle/entry=] is a [=file entry=],
 and return {{FileSystemHandleKind/"directory"}} otherwise.
 
-The <dfn attribute for=FileSystemHandle>name</dfn> attribute must return the [=fsentry/name=] of the
+The <dfn attribute for=FileSystemHandle>name</dfn> attribute must return the [=file system entry/name=] of the
 associated [=FileSystemHandle/entry=].
 
 ### The {{FileSystemHandle/isSameEntry()}} method ### {#api-filesystemhandle-issameentry}
@@ -248,16 +248,16 @@ The <dfn method for=FileSystemFileHandle>getFile()</dfn> method, when invoked, m
 1. Let |result| be [=a new promise=].
 1. Run the following steps [=in parallel=]:
   1. Let |access| be the result of running [=this=]'s [=FileSystemHandle/entry=]'s
-     [=fsentry/query access=] given "`read`".
+     [=file system entry/query access=] given "`read`".
   1. If |access| is not "{{PermissionState/granted}}",
      reject |result| with a {{NotAllowedError}} and abort.
   1. Let |entry| be [=this=]'s [=FileSystemHandle/entry=].
   1. Let |f| be a new {{File}}.
   1. Set |f|'s <a spec=FileAPI>snapshot state</a> to the current state of |entry|.
   1. Set |f|'s underlying byte sequence to a copy of |entry|'s [=binary data=].
-  1. Initialize the value of |f|'s {{File/name}} attribute to |entry|'s [=fsentry/name=].
+  1. Initialize the value of |f|'s {{File/name}} attribute to |entry|'s [=file system entry/name=].
   1. Initialize the value of |f|'s {{File/lastModified}} attribute to |entry|'s [=file entry/modification timestamp=].
-  1. Initialize the value of |f|'s {{Blob/type}} attribute to an [=implementation-defined=] value, based on for example |entry|'s [=fsentry/name=] or its file extension.
+  1. Initialize the value of |f|'s {{Blob/type}} attribute to an [=implementation-defined=] value, based on for example |entry|'s [=file system entry/name=] or its file extension.
 
      Issue: The reading and snapshotting behavior needs to be better specified in the [[FILE-API]] spec,
      for now this is kind of hand-wavy.
@@ -298,7 +298,7 @@ The <dfn method for=FileSystemFileHandle>createWritable(|options|)</dfn> method,
 1. Let |result| be [=a new promise=].
 1. Run the following steps [=in parallel=]:
   1. Let |access| be the result of running [=this=]'s [=FileSystemHandle/entry=]'s
-     [=fsentry/request access=] given "`readwrite`".
+     [=file system entry/request access=] given "`readwrite`".
      If that throws an exception, [=reject=] |result| with that exception and abort.
   1. If |access| is not "{{PermissionState/granted}}",
      reject |result| with a {{NotAllowedError}} and abort.
@@ -365,7 +365,7 @@ The [=asynchronous iterator initialization steps=] for a {{FileSystemDirectoryHa
 ant its async iterator |iterator| are:
 
 1. Let |access| be the result of running |handle|'s [=FileSystemHandle/entry=]'s
-   [=fsentry/query access=] given "`read`".
+   [=file system entry/query access=] given "`read`".
 
 1. If |access| is not "{{PermissionState/granted}}",
    throw a {{NotAllowedError}}.
@@ -383,13 +383,13 @@ and its async iterator |iterator|:
 1. Let |directory| be |handle|'s [=FileSystemHandle/entry=].
 
 1. Let |access| be the result of running |handle|'s [=FileSystemHandle/entry=]'s
-   [=fsentry/query access=] given "`read`".
+   [=file system entry/query access=] given "`read`".
 
 1. If |access| is not "{{PermissionState/granted}}",
    reject |promise| with a {{NotAllowedError}} and return |promise|.
 
 1. Let |child| be a [=/file system entry=] in |directory|'s [=directory entry/children=],
-   such that |child|'s [=fsentry/name=] is not contained in |iterator|'s [=past results=],
+   such that |child|'s [=file system entry/name=] is not contained in |iterator|'s [=past results=],
    or `null` if no such entry exists.
 
    Note: This is intentionally very vague about the iteration order. Different platforms
@@ -401,12 +401,12 @@ and its async iterator |iterator|:
   1. [=/Resolve=] |promise| with `undefined`.
 
 1. Otherwise:
-  1. [=set/Append=] |child|'s [=fsentry/name=] to |iterator|'s [=past results=].
+  1. [=set/Append=] |child|'s [=file system entry/name=] to |iterator|'s [=past results=].
   1. If |child| is a [=file entry=]:
     1. Let |result| be a new {{FileSystemFileHandle}} associated with |child|.
   1. Otherwise:
     1. Let |result| be a new {{FileSystemDirectoryHandle}} associated with |child|.
-  1. [=/Resolve=] |promise| with (|child|'s [=fsentry/name=], |result|).
+  1. [=/Resolve=] |promise| with (|child|'s [=file system entry/name=], |result|).
 
 1. Return |promise|.
 
@@ -444,16 +444,16 @@ must run these steps:
   1. Let |entry| be [=this=]'s [=FileSystemHandle/entry=].
   1. If |options|.{{FileSystemGetFileOptions/create}} is `true`:
     1. Let |access| be the result of running [=this=]'s [=FileSystemHandle/entry=]'s
-       [=fsentry/request access=] given "`readwrite`".
+       [=file system entry/request access=] given "`readwrite`".
        If that throws an exception, [=reject=] |result| with that exception and abort.
   1. Otherwise:
     1. Let |access| be the result of running [=this=]'s [=FileSystemHandle/entry=]'s
-       [=fsentry/query access=] given "`read`".
+       [=file system entry/query access=] given "`read`".
   1. If |access| is not "{{PermissionState/granted}}",
      reject |result| with a {{NotAllowedError}} and abort.
 
   1. [=set/For each=] |child| of |entry|'s [=directory entry/children=]:
-    1. If |child|'s [=fsentry/name=] equals |name|:
+    1. If |child|'s [=file system entry/name=] equals |name|:
       1. If |child| is a [=directory entry=]:
         1. [=/Reject=] |result| with a {{TypeMismatchError}} and abort.
       1. [=/Resolve=] |result| with a new {{FileSystemFileHandle}} whose [=FileSystemHandle/entry=] is |child| and abort.
@@ -461,7 +461,7 @@ must run these steps:
     1. [=/Reject=] |result| with a {{NotFoundError}} and abort.
   1. Let |child| be a new [=file entry=] whose [=query access=] and [=request access=] algorithms
      are those of |entry|.
-  1. Set |child|'s [=fsentry/name=] to |name|.
+  1. Set |child|'s [=file system entry/name=] to |name|.
   1. Set |child|'s [=binary data=] to an empty [=byte sequence=].
   1. Set |child|'s [=modification timestamp=] to the current time.
   1. [=set/Append=] |child| to |entry|'s [=directory entry/children=].
@@ -506,16 +506,16 @@ invoked, must run these steps:
   1. Let |entry| be [=this=]'s [=FileSystemHandle/entry=].
   1. If |options|.{{FileSystemGetDirectoryOptions/create}} is `true`:
     1. Let |access| be the result of running [=this=]'s [=FileSystemHandle/entry=]'s
-       [=fsentry/request access=] given "`readwrite`".
+       [=file system entry/request access=] given "`readwrite`".
        If that throws an exception, [=reject=] |result| with that exception and abort.
   1. Otherwise:
     1. Let |access| be the result of running [=this=]'s [=FileSystemHandle/entry=]'s
-       [=fsentry/query access=] given "`read`".
+       [=file system entry/query access=] given "`read`".
   1. If |access| is not "{{PermissionState/granted}}",
      reject |result| with a {{NotAllowedError}} and abort.
 
   1. [=set/For each=] |child| of |entry|'s [=directory entry/children=]:
-    1. If |child|'s [=fsentry/name=] equals |name|:
+    1. If |child|'s [=file system entry/name=] equals |name|:
       1. If |child| is a [=file entry=]:
         1. [=/Reject=] |result| with a {{TypeMismatchError}} and abort.
       1. [=/Resolve=] |result| with a new {{FileSystemDirectoryHandle}} whose [=FileSystemHandle/entry=] is |child| and abort.
@@ -523,7 +523,7 @@ invoked, must run these steps:
     1. [=/Reject=] |result| with a {{NotFoundError}} and abort.
   1. Let |child| be a new [=directory entry=] whose [=query access=] and [=request access=]
      algorithms are those of |entry|.
-  1. Set |child|'s [=fsentry/name=] to |name|.
+  1. Set |child|'s [=file system entry/name=] to |name|.
   1. Set |child|'s [=directory entry/children=] to an empty [=/set=].
   1. [=set/Append=] |child| to |entry|'s [=directory entry/children=].
   1. If creating |child| in the underlying file system throws an exception,
@@ -564,13 +564,13 @@ these steps:
 
   1. Let |entry| be [=this=]'s [=FileSystemHandle/entry=].
   1. Let |access| be the result of running [=this=]'s [=FileSystemHandle/entry=]'s
-     [=fsentry/request access=] given "`readwrite`".
+     [=file system entry/request access=] given "`readwrite`".
      If that throws an exception, [=reject=] |result| with that exception and abort.
   1. If |access| is not "{{PermissionState/granted}}",
      reject |result| with a {{NotAllowedError}} and abort.
 
   1. [=set/For each=] |child| of |entry|'s [=directory entry/children=]:
-    1. If |child|'s [=fsentry/name=] equals |name|:
+    1. If |child|'s [=file system entry/name=] equals |name|:
       1. If |child| is a [=directory entry=]:
         1. If |child|'s [=directory entry/children=] is not [=set/is empty|empty=] and |options|.{{FileSystemRemoveOptions/recursive}} is `false`:
           1. [=/Reject=] |result| with an {{InvalidModificationError}} and abort.
@@ -643,7 +643,7 @@ if (relative_path === null) {
 
 <div algorithm>
 The <dfn method for=FileSystemDirectoryHandle>resolve(|possibleDescendant|)</dfn> method,
-when invoked, must return the result of [=fsentry/resolving=]
+when invoked, must return the result of [=file system entry/resolving=]
 |possibleDescendant|'s [=FileSystemHandle/entry=] relative to [=this=]'s [=FileSystemHandle/entry=].
 
 </div>
@@ -717,7 +717,7 @@ in a [=/Realm=] |realm|, perform the following steps:
 1. Let |closeAlgorithm| be the following steps:
    1. Let |closeResult| be [=a new promise=].
    1. Run the following steps [=in parallel=]:
-      1. Let |access| be the result of running |file|'s [=fsentry/query access=] given "`readwrite`".
+      1. Let |access| be the result of running |file|'s [=file system entry/query access=] given "`readwrite`".
       1. If |access| is not "{{PermissionState/granted}}",
          reject |closeResult| with a {{NotAllowedError}} and abort.
       1. Perform [=implementation-defined=] malware scans and safe browsing checks.
@@ -750,7 +750,7 @@ runs these steps:
 1. Let |p| be [=a new promise=].
 1. Run the following steps [=in parallel=]:
    1. Let |access| be the result of running |stream|'s [=FileSystemWritableFileStream/[[file]]=]'s
-      [=fsentry/query access=] given "`readwrite`".
+      [=file system entry/query access=] given "`readwrite`".
    1. If |access| is not "{{PermissionState/granted}}",
       reject |p| with a {{NotAllowedError}} and abort.
    1. Let |command| be |input|.{{WriteParams/type}} if |input| is a {{WriteParams}},
@@ -970,7 +970,7 @@ invoked, must run these steps:
 1. If |map|["root"] does not [=map/exist=]:
   1. Let |dir| be a new [=directory entry=] whose [=query access=] and [=request access=] algorithms
      always return "{{PermissionState/granted}}".
-  1. Set |dir|'s [=fsentry/name=] to the empty string.
+  1. Set |dir|'s [=file system entry/name=] to the empty string.
   1. Set |dir|'s [=directory entry/children=] to an empty [=/set=].
   1. Set |map|["root"] to |dir|.
 
