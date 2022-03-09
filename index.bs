@@ -148,7 +148,7 @@ interface FileSystemHandle {
   readonly attribute FileSystemHandleKind kind;
   readonly attribute USVString name;
 
-  Promise<void> remove(optional FileSystemRemoveOptions options = {});
+  Promise<undefined> remove(optional FileSystemRemoveOptions options = {});
 
   Promise<boolean> isSameEntry(FileSystemHandle other);
 };
