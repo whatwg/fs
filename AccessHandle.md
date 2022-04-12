@@ -82,7 +82,7 @@ A few examples of what could be done with *AccessHandles*:
     relying on the new surface's performance and direct buffered access to
     offload sound segments to disk instead of holding them in memory.
 *   Provide a fast and persistent [Emscripten](https://emscripten.org/)
-    filesystem to act as generic and easily accessible storage for Wasm.
+    file system to act as generic and easily accessible storage for Wasm.
 
 ## Non-goals
 
@@ -242,9 +242,9 @@ interface FileSystemAccessHandle {
 [Exposed=DedicatedWorker]
 interface FileSystemSyncAccessHandle {
   unsigned long long read([AllowShared] BufferSource buffer,
-                             FilesystemReadWriteOptions options);
+                             FileSystemReadWriteOptions options);
   unsigned long long write([AllowShared] BufferSource buffer,
-                              FilesystemReadWriteOptions options);
+                              FileSystemReadWriteOptions options);
 
   Promise<undefined> truncate([EnforceRange] unsigned long long size);
   Promise<unsigned long long> getSize();
@@ -252,7 +252,7 @@ interface FileSystemSyncAccessHandle {
   Promise<undefined> close();
 };
 
-dictionary FilesystemReadWriteOptions {
+dictionary FileSystemReadWriteOptions {
   [EnforceRange] unsigned long long at;
 };
 ```
