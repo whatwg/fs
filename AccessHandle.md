@@ -242,9 +242,9 @@ interface FileSystemAccessHandle {
 [Exposed=DedicatedWorker]
 interface FileSystemSyncAccessHandle {
   unsigned long long read([AllowShared] BufferSource buffer,
-                             FileSystemReadWriteOptions options);
+                             optional FileSystemReadWriteOptions options);
   unsigned long long write([AllowShared] BufferSource buffer,
-                              FileSystemReadWriteOptions options);
+                              optional FileSystemReadWriteOptions options);
 
   Promise<undefined> truncate([EnforceRange] unsigned long long size);
   Promise<unsigned long long> getSize();
@@ -253,7 +253,7 @@ interface FileSystemSyncAccessHandle {
 };
 
 dictionary FileSystemReadWriteOptions {
-  [EnforceRange] unsigned long long at;
+  [EnforceRange] unsigned long long at = 0;
 };
 ```
 
