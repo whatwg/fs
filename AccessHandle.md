@@ -122,18 +122,16 @@ API](https://docs.google.com/document/d/1cOdnvuNIWWyJHz1uu8K_9DEgntMtedxfCzShI7d
 
 ```javascript
 // In all contexts
-// For details on the `mode` parameter see "Exposing AccessHandles on all
-// filesystems" below
-const handle = await file.createAccessHandle();
-await handle.writable.getWriter().write(buffer);
-const reader = handle.readable.getReader({ mode: "byob" });
+const accessHandle = await fileHandle.createAccessHandle();
+await accessHandle.writable.getWriter().write(buffer);
+const reader = accessHandle.readable.getReader({ mode: "byob" });
 // Assumes seekable streams, and SharedArrayBuffer support are available
 await reader.read(buffer, { at: 1 });
 
 // Only in a worker context
-const handle = await file.createSyncAccessHandle();
-const writtenBytes = handle.write(buffer);
-const readBytes = handle.read(buffer, { at: 1 });
+const accessHandle = await fileHandle.createSyncAccessHandle();
+const writtenBytes = accessHandle.write(buffer);
+const readBytes = accessHandle.read(buffer, { at: 1 });
 ```
 
 As mentioned above, a new *createAccessHandle()* method would be added to
@@ -158,13 +156,13 @@ default reader and writer with a *seek()* method.
 ### Locking semantics
 
 ```javascript
-const handle1 = await file.createAccessHandle();
+const accessHandle1 = await fileHandle.createAccessHandle();
 try {
-  const handle2 = await file.createAccessHandle();
+  const accessHandle2 = await fileHandle.createAccessHandle();
 } catch (e) {
   // This catch will always be executed, since there is an open access handle
 }
-await handle1.close();
+await accessHandle1.close();
 // Now a new access handle may be created
 ```
 
