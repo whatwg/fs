@@ -604,9 +604,6 @@ these steps:
      and |child| represents `/home/user/project/foo/bar`, this will return
      `['foo', 'bar']`.
   :: Otherwise (|directory| and |child| are not related), |path| will be null.
-
-     This functionality can be useful if a web application shows a directory
-     listing to highlight a file opened through a file picker in that directory listing.
 </div>
 
 <div class=example id=filesystemdirectoryhandle-resolve-example>
@@ -615,17 +612,13 @@ these steps:
 const dir_ref = current_project_dir;
 if (!dir_ref) return;
 
-// Now get a file reference by showing a file picker:
-const file_ref = await self.showOpenFilePicker();
-if (!file_ref) {
-    // User cancelled, or otherwise failed to open a file.
-    return;
-}
+// Now get a file reference:
+const file_ref = await dir_ref.getFileHandle(filename, { create: true });
 
 // Check if file_ref exists inside dir_ref:
 const relative_path = await dir_ref.resolve(file_ref);
 if (relative_path === null) {
-    // Not inside dir_ref
+    // Not inside dir_ref.
 } else {
     // relative_path is an array of names, giving the relative path
     // from dir_ref to the file that is represented by file_ref:
