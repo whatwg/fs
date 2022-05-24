@@ -111,8 +111,9 @@ is left up to individual user-agent implementations.
 An [=/entry=] |a| is <dfn for="entry">the same as</dfn> an [=/entry=] |b| if |a| is equal to |b|, or
 if |a| and |b| are backed by the same file or directory on the local file system.
 
-Issue: TODO: Explain better how entries map to files on disk (multiple entries can map to the same file or
-directory on disk but an entry doesn't have to map to any file on disk).
+An [=/entry=] maps roughly to a path, but there is no guarantee this path exists on disk.
+For example, an [=/entry=] mapping to a path in the [=origin private file system=] will map to a path which
+no longer exists if site data is cleared.
 
 <div algorithm>
 To <dfn for="entry">resolve</dfn> an [=/entry=] |child| relative to a [=directory entry=] |root|,
