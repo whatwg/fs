@@ -239,6 +239,8 @@ when invoked, must run these steps:
       1. [=/Reject=] |result| with a {{TypeMismatchError}} and abort.
     1. If |entry| is not an empty directory and |options|.{{FileSystemRemoveOptions/recursive}} is `false`:
       1. [=/Reject=] |result| with an {{InvalidModificationError}} and abort.
+   1. If |entry| is the root of a sandboxed file system:
+      1. [=/Reject=] |result| with a {{NoModificationAllowedError}} and abort.
   1. If |entry| is a [=file entry=]:
     1. If |entry|'s path does not exist:
       1. [=/Reject=] |result| with a {{NotFoundError}} and abort.
