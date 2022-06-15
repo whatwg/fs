@@ -104,7 +104,7 @@ run the following steps:
    1. If |lock| is "`open`":
      1. Set lock to "`taken-shared`".
      1. Return `true`.
-   1. Else if |lock| is "`taken-shared`":
+   1. Otherwise, if |lock| is "`taken-shared`":
      1. Return `true`.
 1. Return `false`.
 
@@ -243,7 +243,7 @@ The <dfn method for=FileSystemHandle>isSameEntry(|other|)</dfn> method, when inv
 1. Run the following steps [=in parallel=]:
   1. If [=this=]'s [=FileSystemHandle/entry=] is [=the same as=] |other|'s [=FileSystemHandle/entry=],
      [=/resolve=] |p| with `true`.
-  1. Else [=/resolve=] |p| with `false`.
+  1. Otherwise [=/resolve=] |p| with `false`.
 1. Return |p|.
 
 </div>
@@ -856,11 +856,11 @@ runs these steps:
       1. Let |oldSize| be |stream|.[=[[buffer]]=]'s [=byte sequence/length=].
       1. If |data| is a {{BufferSource}},
          let |dataBytes| be [=get a copy of the buffer source|a copy of=] |data|.
-      1. Else if |data| is a {{Blob}}:
+      1. Otherwise, if |data| is a {{Blob}}:
          1. Let |dataBytes| be the result of performing the
             <a spec=FileAPI>read operation</a> on |data|.
             If this throws an exception, [=/reject=] |p| with that exception and abort.
-      1. Else:
+      1. Otherwise:
          1. [=Assert=]: |data| is a {{USVString}}.
          1. Let |dataBytes| be the result of [=UTF-8 encoding=] |data|.
       1. If |writePosition| is larger than |oldSize|,
@@ -886,12 +886,12 @@ runs these steps:
          to runs out of disk space.
       1. Set |stream|.[=[[seekOffset]]=] to |writePosition| + |data|.[=byte sequence/length=].
       1. [=/Resolve=] |p|.
-   1. Else if |command| is {{WriteCommandType/"seek"}}:
+   1. Otherwise, if |command| is {{WriteCommandType/"seek"}}:
       1. If |chunk|.{{WriteParams/position}} is `undefined`,
          [=/reject=] |p| with a {{TypeError}} and abort.
       1. Set |stream|.[=[[seekOffset]]=] to |chunk|.{{WriteParams/position}}.
       1. [=/Resolve=] |p|.
-   1. Else if |command| is {{WriteCommandType/"truncate"}}:
+   1. Otherwise, if |command| is {{WriteCommandType/"truncate"}}:
       1. If |chunk|.{{WriteParams/size}} is `undefined`,
          [=/reject=] |p| with a {{TypeError}} and abort.
       1. Let |newSize| be |chunk|.{{WriteParams/size}}.
@@ -906,7 +906,7 @@ runs these steps:
             Note: [=Storage quota=] only applies to files stored in the [=origin private file system=].
             However this operation could still fail for other files, for example if the disk being written
             to runs out of disk space.
-      1. Else if |newSize| is smaller than |oldSize|:
+      1. Otherwise, if |newSize| is smaller than |oldSize|:
          1. Set |stream|.[=[[buffer]]=] to a [=byte sequence=] containing the first |newSize| bytes
             in |stream|.[=[[buffer]]=].
       1. If |stream|.[=[[seekOffset]]=] is bigger than |newSize|,
@@ -1095,7 +1095,7 @@ these steps:
 1. If the operations reading from |fileContents| in the previous steps failed:
     1. If there were partial reads  and the number of modified bytes in |bytes|  is known,
        set |result| to the number of modified bytes.
-    1. Else set |result| to 0.
+    1. Otherwise set |result| to 0.
 1. Let |arrayBuffer| be |buffer|'s [=underlying buffer=].
 1. [=write|Write=] |bytes| into |arrayBuffer|.
 1. Return |result|.
@@ -1148,7 +1148,7 @@ these steps:
    failed:
     1. If there were partial writes and the number of bytes that were written from |data| is known,
        return the number of bytes that were written from |data|.
-    1. Else return 0.
+    1. Otherwise return 0.
 1. Return |data|'s [=byte sequence/length=].
 
 </div>
@@ -1177,7 +1177,7 @@ these steps:
         containing |newSize| &minus; |oldSize| `0x00` bytes.
      1. If the operations modifying the [=this=].[=[[file]]=]'s [=file entry/binary data=] in the previous steps
         failed, [=/reject=] |p| with a {{InvalidStateError}} and abort.
-  1. Else if |newSize| is smaller than |oldSize|:
+  1. Otherwise, if |newSize| is smaller than |oldSize|:
      1. Set [=this=].[=[[file]]=]'s to a [=byte sequence=] containing the first |newSize| bytes
         in |fileContents|.
      1. If the operations modifying the [=this=].[=[[file]]=]'s [=file entry/binary data=] in the previous steps
