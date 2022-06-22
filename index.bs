@@ -88,25 +88,29 @@ systems.
 
 A <dfn lt="file|file entry">file entry</dfn> additionally consists of
 <dfn for="file entry">binary data</dfn> (a [=byte sequence=]), a
-<dfn for="file entry">modification timestamp</dfn> (a number representing the number of milliseconds since the <a spec=FileAPI>Unix Epoch</a>)
-and a <dfn for="file entry">lock</dfn>. A lock is a string that may exclusively be "`open`", "`taken-exclusive`", and "`taken-shared`".
+<dfn for="file entry">modification timestamp</dfn> (a number representing the number of milliseconds since the <a spec=FileAPI>Unix Epoch</a>),
+a <dfn for="file entry">lock</dfn> (a string that may exclusively be "`open`", "`taken-exclusive`" or "`taken-shared`")
+and a <dfn for="file entry">shared lock count</dfn> (a number representing the number shared locks that are taken at a given point in time).
 
 <div algorithm>
 To <dfn for="file entry/lock">take</dfn> a [=file entry/lock=] with a |value| of "`exclusive`" or "`shared`" on a given [=file entry=] |file|,
 run the following steps:
 
 1. Let |lock| be the |file|'s [=file entry/lock=].
+1. Let |count| be the |file|'s [=file entry/shared lock count=].
 1. If |value| is "`exclusive`":
    1. If |lock| is "`open`":
      1. Set lock to "`taken-exclusive`".
-     1. Return `true`.
+     1. Return true.
 1. If |value| is "`shared`":
    1. If |lock| is "`open`":
-     1. Set lock to "`taken-shared`".
-     1. Return `true`.
+     1. Set |lock| to "`taken-shared`".
+     1. Set |count| to 1.
+     1. Return true.
    1. Otherwise, if |lock| is "`taken-shared`":
-     1. Return `true`.
-1. Return `false`.
+     1. Increase |count| by one.
+     1. Return true.
+1. Return false.
 
 </div>
 
@@ -115,7 +119,11 @@ To <dfn for="file entry/lock">release</dfn> a [=file entry/lock=] on a given [=f
 run the following steps:
 
 1. Let |lock| be the |file|'s associated [=file entry/lock=].
-1. Set |lock| to "`open`".
+1. Let |count| be the |file|'s [=file entry/shared lock count=].
+1. If |lock| is "`taken-shared`":
+  1. Decrease |count| by one.
+  1. If |count| is 0, set |lock| to "`open`".
+1. Otherwise, set |lock| to "`open`".
 
 </div>
 
@@ -242,8 +250,8 @@ The <dfn method for=FileSystemHandle>isSameEntry(|other|)</dfn> method, when inv
 1. Let |p| be [=a new promise=] in |realm|.
 1. Run the following steps [=in parallel=]:
   1. If [=this=]'s [=FileSystemHandle/entry=] is [=the same as=] |other|'s [=FileSystemHandle/entry=],
-     [=/resolve=] |p| with `true`.
-  1. Otherwise [=/resolve=] |p| with `false`.
+     [=/resolve=] |p| with true.
+  1. Otherwise [=/resolve=] |p| with false.
 1. Return |p|.
 
 </div>
@@ -316,7 +324,7 @@ The <dfn method for=FileSystemFileHandle>getFile()</dfn> method, when invoked, m
      This is typically implemented by writing data to a temporary file, and only replacing the file
      represented by |fileHandle| with the temporary file when the writable filestream is closed.
 
-     If {{FileSystemCreateWritableOptions/keepExistingData}} is `false` or not specified,
+     If {{FileSystemCreateWritableOptions/keepExistingData}} is false or not specified,
      the temporary file starts out empty,
      otherwise the existing file is first copied to this temporary file.
 
@@ -344,10 +352,10 @@ The <dfn method for=FileSystemFileHandle>createWritable(|options|)</dfn> method,
      reject |result| with a {{NotAllowedError}} and abort.
   1. Let |entry| be [=this=]'s [=FileSystemHandle/entry=].
   1. Let |lockResult| be the result of [=file entry/lock/take|taking a lock=] with "`shared`" on |entry|.
-  1. If |lockResult| is `false`, [=reject=] |result| with a {{NoModificationAllowedError}} and abort.
+  1. If |lockResult| is false, [=reject=] |result| with a {{NoModificationAllowedError}} and abort.
   1. Let |stream| be the result of [=create a new FileSystemWritableFileStream|creating a new FileSystemWritableFileStream=]
      for |entry| in [=this=]'s [=relevant realm=].
-  1. If |options|.{{FileSystemCreateWritableOptions/keepExistingData}} is `true`:
+  1. If |options|.{{FileSystemCreateWritableOptions/keepExistingData}} is true:
     1. Set |stream|.[=[[buffer]]=] to a copy of |entry|'s [=file entry/binary data=].
   1. [=/Resolve=] |result| with |stream|.
 1. Return |result|.
@@ -358,9 +366,9 @@ The <dfn method for=FileSystemFileHandle>createWritable(|options|)</dfn> method,
 
 <div class="note domintro">
   : |handle| = await |fileHandle| . {{FileSystemFileHandle/createSyncAccessHandle()|createSyncAccessHandle}}()
-  :: Returns a {{FileSystemSyncAccessHandle}} that can be used to read/write from/to the file.
+  :: Returns a {{FileSystemSyncAccessHandle}} that can be used to read from/write to the file.
      Changes made through |handle| might be immediately reflected in the file represented by |fileHandle|.
-     To ensure the changes are reflected in this file, the handle must be flushed or closed.
+     To ensure the changes are reflected in this file, the handle can be flushed or closed.
 
      Creating a {{FileSystemSyncAccessHandle}} [=file entry/lock/take|takes an exclusive lock=] on the
      [=FileSystemHandle/entry=] associated with |fileHandle|. This prevents the creation of
@@ -388,8 +396,8 @@ The <dfn method for=FileSystemFileHandle>createSyncAccessHandle()</dfn> method, 
   1. Let |entry| be [=this=]'s [=FileSystemHandle/entry=].
   1. If |entry| does not represent an [=/entry=] in an [=origin private file system=],
      reject |result| with an {{NotAllowedError}} and abort.
-  1. Let |lockResult| be the result of [=file entry/lock/take|taking a lock=] with  "`exclusive`" on |entry|.
-  1. If |lockResult| is `false`, [=reject=] |result| with a {{NoModificationAllowedError}} and abort.
+  1. Let |lockResult| be the result of [=file entry/lock/take|taking a lock=] with "`exclusive`" on |entry|.
+  1. If |lockResult| is false, [=reject=] |result| with a {{NoModificationAllowedError}} and abort.
   1. Let |handle| be the result of [=create a new FileSystemSyncAccessHandle|creating a new FileSystemSyncAccessHandle=]
      for |entry| in [=this=]'s [=relevant realm=].
   1. [=/Resolve=] |result| with |handle|.
@@ -527,7 +535,7 @@ must run these steps:
   1. If |name| is not a [=valid file name=], [=/reject=] |result| with a {{TypeError}} and abort.
 
   1. Let |entry| be [=this=]'s [=FileSystemHandle/entry=].
-  1. If |options|.{{FileSystemGetFileOptions/create}} is `true`:
+  1. If |options|.{{FileSystemGetFileOptions/create}} is true:
     1. Let |access| be the result of running [=this=]'s [=FileSystemHandle/entry=]'s
        [=entry/request access=] given "`readwrite`".
        If that throws an exception, [=reject=] |result| with that exception and abort.
@@ -542,7 +550,7 @@ must run these steps:
       1. If |child| is a [=directory entry=]:
         1. [=/Reject=] |result| with a {{TypeMismatchError}} and abort.
       1. [=/Resolve=] |result| with a new {{FileSystemFileHandle}} whose [=FileSystemHandle/entry=] is |child| and abort.
-  1. If |options|.{{FileSystemGetFileOptions/create}} is `false`:
+  1. If |options|.{{FileSystemGetFileOptions/create}} is false:
     1. [=/Reject=] |result| with a {{NotFoundError}} and abort.
   1. Let |child| be a new [=file entry=] whose [=query access=] and [=request access=] algorithms
      are those of |entry|.
@@ -589,7 +597,7 @@ invoked, must run these steps:
   1. If |name| is not a [=valid file name=], [=/reject=] |result| with a {{TypeError}} and abort.
 
   1. Let |entry| be [=this=]'s [=FileSystemHandle/entry=].
-  1. If |options|.{{FileSystemGetDirectoryOptions/create}} is `true`:
+  1. If |options|.{{FileSystemGetDirectoryOptions/create}} is true:
     1. Let |access| be the result of running [=this=]'s [=FileSystemHandle/entry=]'s
        [=entry/request access=] given "`readwrite`".
        If that throws an exception, [=reject=] |result| with that exception and abort.
@@ -604,7 +612,7 @@ invoked, must run these steps:
       1. If |child| is a [=file entry=]:
         1. [=/Reject=] |result| with a {{TypeMismatchError}} and abort.
       1. [=/Resolve=] |result| with a new {{FileSystemDirectoryHandle}} whose [=FileSystemHandle/entry=] is |child| and abort.
-  1. If |options|.{{FileSystemGetFileOptions/create}} is `false`:
+  1. If |options|.{{FileSystemGetFileOptions/create}} is false:
     1. [=/Reject=] |result| with a {{NotFoundError}} and abort.
   1. Let |child| be a new [=directory entry=] whose [=query access=] and [=request access=]
      algorithms are those of |entry|.
@@ -657,13 +665,13 @@ these steps:
   1. [=set/For each=] |child| of |entry|'s [=directory entry/children=]:
     1. If |child|'s [=entry/name=] equals |name|:
       1. If |child| is a [=directory entry=]:
-        1. If |child|'s [=directory entry/children=] is not [=set/is empty|empty=] and |options|.{{FileSystemRemoveOptions/recursive}} is `false`:
+        1. If |child|'s [=directory entry/children=] is not [=set/is empty|empty=] and |options|.{{FileSystemRemoveOptions/recursive}} is false:
           1. [=/Reject=] |result| with an {{InvalidModificationError}} and abort.
       1. [=set/Remove=] |child| from |entry|'s [=directory entry/children=].
       1. If removing |child| in the underlying file system throws an exception,
          [=/reject=] |result| with that exception and abort.
 
-         Note: If {{FileSystemRemoveOptions/recursive}} is `true`, the removal can fail
+         Note: If {{FileSystemRemoveOptions/recursive}} is true, the removal can fail
          non-atomically. Some files or directories might have been removed while other files
          or directories still exist.
 
@@ -864,7 +872,7 @@ runs these steps:
          1. [=Assert=]: |data| is a {{USVString}}.
          1. Let |dataBytes| be the result of [=UTF-8 encoding=] |data|.
       1. If |writePosition| is larger than |oldSize|,
-         append |writePosition| - |oldSize| `0x00` (NUL) bytes to the end of |stream|.[=[[buffer]]=].
+         append |writePosition| - |oldSize| 0x00 (NUL) bytes to the end of |stream|.[=[[buffer]]=].
 
          Note: Implementations are expected to behave as if the skipped over file contents
          are indeed filled with NUL bytes. That doesn't mean these bytes have to actually be
@@ -1048,16 +1056,12 @@ A {{FileSystemSyncAccessHandle}} has an associated <dfn for=FileSystemSyncAccess
 A {{FileSystemSyncAccessHandle}} has an associated <dfn for=FileSystemSyncAccessHandle>\[[state]]</dfn>,
 a string that may exclusively be "`open`" or "`closed`".
 
-<div class="note domintro">
-
-A {{FileSystemSyncAccessHandle}} is an object that is capable of reading/writing from/to,
+A {{FileSystemSyncAccessHandle}} is an object that is capable of reading from/writing to,
 as well as obtaining and changing the size of, a single file.
 
 The {{FileSystemSyncAccessHandle/read()}} and {{FileSystemSyncAccessHandle/write()}} methods are synchronous.
 This allows for higher performance for critical methods on contexts where asynchronous
 operations come with high overhead, e.g., WebAssembly.
-
-</div>
 
 <div algorithm>
 To <dfn>create a new FileSystemSyncAccessHandle</dfn> given a [=file entry=] |file|
@@ -1093,8 +1097,8 @@ these steps:
 1. Let |result| be |bufferSize|.
 1. Let |bytes| be a [=byte sequence=] containing the bytes from |readStart| to |readEnd| of |fileContents|.
 1. If the operations reading from |fileContents| in the previous steps failed:
-    1. If there were partial reads  and the number of modified bytes in |bytes|  is known,
-       set |result| to the number of modified bytes.
+    1. If there were partial reads and the number of bytes that were read into |bytes| is known,
+       set |result| to the number of read bytes.
     1. Otherwise set |result| to 0.
 1. Let |arrayBuffer| be |buffer|'s [=underlying buffer=].
 1. [=write|Write=] |bytes| into |arrayBuffer|.
@@ -1129,7 +1133,7 @@ these steps:
    different mechanism.
 
 1. If |writePosition| is larger than |oldSize|,
-   append |writePosition| &minus; |oldSize| `0x00` (NUL) bytes to the end of |fileContents|.
+   append |writePosition| &minus; |oldSize| 0x00 (NUL) bytes to the end of |fileContents|.
 
    Note: Implementations are expected to behave as if the skipped over file contents
    are indeed filled with NUL bytes. That doesn't mean these bytes have to actually be
@@ -1174,7 +1178,7 @@ these steps:
         with a {{QuotaExceededError}} and abort.
      1. Set [=this=].[=[[file]]=]'s to a [=byte sequence=] formed by concatenating
         |fileContents| with a [=byte sequence=]
-        containing |newSize| &minus; |oldSize| `0x00` bytes.
+        containing |newSize| &minus; |oldSize| 0x00 bytes.
      1. If the operations modifying the [=this=].[=[[file]]=]'s [=file entry/binary data=] in the previous steps
         failed, [=/reject=] |p| with a {{InvalidStateError}} and abort.
   1. Otherwise, if |newSize| is smaller than |oldSize|:
