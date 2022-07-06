@@ -1094,8 +1094,8 @@ these steps:
 1. If |readStart| is larger than |fileSize|, return 0.
 1. Let |readEnd| be |readStart| + (|bufferSize| &minus; 1).
 1. If |readEnd| is larger than |fileSize|, set |readEnd| to |fileSize|.
-1. Let |result| be |bufferSize|.
 1. Let |bytes| be a [=byte sequence=] containing the bytes from |readStart| to |readEnd| of |fileContents|.
+1. Let |result| be |bytes|'s [=byte sequence/length=].
 1. If the operations reading from |fileContents| in the previous steps failed:
     1. If there were partial reads and the number of bytes that were read into |bytes| is known,
        set |result| to the number of read bytes.
