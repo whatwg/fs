@@ -1082,6 +1082,7 @@ in a [=/Realm=] |realm|, perform the following steps:
   :: Reads the contents of the file associated with |handle| into |buffer|, optionally at a given offset.
 </div>
 
+// TODO(fivedots): Specify how Access Handles should react when reading from a file that has been modified externally.
 <div algorithm>
 The <dfn method for=FileSystemSyncAccessHandle>read(|buffer|, {{FileSystemReadWriteOptions}}: |options|)</dfn> method, when invoked, must run
 these steps:
@@ -1115,7 +1116,6 @@ these steps:
 </div>
 
 // TODO(fivedots): Figure out how to properly check the available storage quota (in this method and others) by passing the right storage shelf.
-// TODO(fivedots): Figure out mechanism to prevent concurrent IO operations e.g. doing write() while a truncate() is executing in parallel.
 <div algorithm>
 The <dfn method for=FileSystemSyncAccessHandle>write(|buffer|, {{FileSystemReadWriteOptions}}: |options|)</dfn> method, when invoked, must run
 these steps:
