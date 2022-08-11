@@ -58,7 +58,7 @@ index on) handles.
 * No information should be gleaned from the ID. It is completely opaque to the
   site
 * Avoid surprises by having the same semantics as `isSameEntry()`, namely:
-  `await a.isSameEntry(b) === (await a.getUniqueID() === await b.getUniqueID())`
+  `await a.isSameEntry(b) === (await a.getUniqueId() === await b.getUniqueId())`
 
 ## Non-goals
 
@@ -82,7 +82,7 @@ Before:
 ```javascript
 // IndexedDB structure
 // { "handles": [handle1, handle2, … ] }
-const key = await handle.getUniqueID();
+const key = await handle.getUniqueId();
 var handles = await get("handles");
 handles.push(handle);
 await set("handles", handles);
@@ -97,7 +97,7 @@ After:
 //   "def456": handle2,
 //    …
 // }
-const key = await handle.getUniqueID();
+const key = await handle.getUniqueId();
 await set(key, handle);
 ```
 
@@ -120,7 +120,7 @@ parameter as a key, which can be used to lock a file handle at the application
 level. 
 
 ```javascript
-const key = await handle.getUniqueID();
+const key = await handle.getUniqueId();
 await navigator.locks.request(key, async lock => {
   const writable = await handle.createWritable();
   // Write without fear of conflicts.
