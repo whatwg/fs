@@ -1146,7 +1146,7 @@ these steps:
   Note: The mechanism used to access buffer's contents is left purposely vague.
   It is likely that implementations will choose to focus on performance by issuing
   direct write calls to the host operating system (instead of creating a copy of buffer),
-  which makes specifying the write order and the results of partial writes prohibitevely difficult.
+  which prevents a detailed specification of the write order and the results of partial writes.
 
 1. If the operations modifying the [=this=].[=[[file]]=]'s [=file entry/binary data=] in the previous steps
    failed:
