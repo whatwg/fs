@@ -82,7 +82,6 @@ Before:
 ```javascript
 // IndexedDB structure
 // { "handles": [handle1, handle2, … ] }
-const key = await handle.getUniqueId();
 var handles = await get("handles");
 handles.push(handle);
 await set("handles", handles);
