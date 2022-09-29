@@ -815,7 +815,7 @@ in a [=/Realm=] |realm|, perform the following steps:
          reject |closeResult| with a {{NotAllowedError}} and abort.
       1. Perform [=implementation-defined=] malware scans and safe browsing checks.
          If these checks fail, [=/reject=] |closeResult| with an {{AbortError}} and abort.
-      1. Set |stream|.[=[[file]]=]'s [=file entry/binary data=] to |stream|.[=[[buffer]]=].
+      1. Set |stream|.[=FileSystemWritableFileStream/[[file]]=]'s [=file entry/binary data=] to |stream|.[=[[buffer]]=].
          If that throws an exception, [=/reject=] |closeResult| with that exception and abort.
 
          Note: It is expected that this atomically updates the contents of the file on disk
@@ -1089,7 +1089,7 @@ these steps:
 
 1. If [=this=].[=[[state]]=] is "`closed`", throw an {{InvalidStateError}}.
 1. Let |bufferSize| be |buffer|'s [=byte length=].
-1. Let |fileContents| be [=this=].[=[[file]]=]'s [=file entry/binary data=].
+1. Let |fileContents| be [=this=].[=FileSystemSyncAccessHandle/[[file]]=]'s [=file entry/binary data=].
 1. Let |fileSize| be |fileContents|'s [=byte sequence/length=].
 1. Let |readStart| be |options|.{{FileSystemReadWriteOptions/at}}.
 1. If |readStart| is larger than |fileSize|, return 0.
@@ -1102,7 +1102,7 @@ these steps:
        set |result| to the number of read bytes.
     1. Otherwise set |result| to 0.
 1. Let |arrayBuffer| be |buffer|'s [=underlying buffer=].
-1. [=write|Write=] |bytes| into |arrayBuffer|.
+1. [=ArrayBuffer/write|Write=] |bytes| into |arrayBuffer|.
 1. Return |result|.
 
 </div>
@@ -1123,7 +1123,7 @@ these steps:
 
 1. If [=this=].[=[[state]]=] is "`closed`", throw a {{InvalidStateError}}.
 1. Let |writePosition| be |options|.{{FileSystemReadWriteOptions/at}}.
-1. Let |fileContents| be a copy of [=this=].[=[[file]]=]'s [=file entry/binary data=].
+1. Let |fileContents| be a copy of [=this=].[=FileSystemSyncAccessHandle/[[file]]=]'s [=file entry/binary data=].
 1. Let |oldSize| be |fileContents|'s [=byte sequence/length=].
 1. Let |bufferSize| be |buffer|'s [=byte length=].
 1. If |writePosition| is larger than |oldSize|,
@@ -1141,14 +1141,14 @@ these steps:
       |oldSize| &minus; (|writePosition| + |bufferSize|) bytes of |fileContents|.
 1. Let |newSize| be |head|'s [=byte sequence/length=] + |bufferSize| + |tail|'s [=byte sequence/length=].
 1. If |newSize| &minus; |oldSize| exceeds the available [=storage quota=], throw a {{QuotaExceededError}}.
-1. Set [=this=].[=[[file]]=]'s [=file entry/binary data=] to the concatenation of |head|, the contents of |buffer| and |tail|.
+1. Set [=this=].[=FileSystemSyncAccessHandle/[[file]]=]'s [=file entry/binary data=] to the concatenation of |head|, the contents of |buffer| and |tail|.
 
   Note: The mechanism used to access buffer's contents is left purposely vague.
   It is likely that implementations will choose to focus on performance by issuing
   direct write calls to the host operating system (instead of creating a copy of buffer),
   which prevents a detailed specification of the write order and the results of partial writes.
 
-1. If the operations modifying the [=this=].[=[[file]]=]'s [=file entry/binary data=] in the previous steps
+1. If the operations modifying the [=this=].[=FileSystemSyncAccessHandle/[[file]]=]'s [=file entry/binary data=] in the previous steps
    failed:
     1. If there were partial writes and the number of bytes that were written from |buffer| is known,
        return the number of bytes that were written from |buffer|.
@@ -1169,22 +1169,22 @@ The <dfn method for=FileSystemSyncAccessHandle>truncate(|newSize|)</dfn> method,
 these steps:
 
 1. If [=this=].[=[[state]]=] is "`closed`", return [=a promise rejected with=] an {{InvalidStateError}}.
-1. Let |fileContents| be a copy of [=this=].[=[[file]]=]'s [=file entry/binary data=].
+1. Let |fileContents| be a copy of [=this=].[=FileSystemSyncAccessHandle/[[file]]=]'s [=file entry/binary data=].
 1. Let |p| be [=a new promise=] created in the [=relevant Realm=] of [=this=].
 1. Run the following steps [=in parallel=]:
-  1. Let |oldSize| be the [=byte sequence/length=] of [=this=].[=[[file]]=]'s [=file entry/binary data=].
+  1. Let |oldSize| be the [=byte sequence/length=] of [=this=].[=FileSystemSyncAccessHandle/[[file]]=]'s [=file entry/binary data=].
   1. If |newSize| is larger than |oldSize|:
      1. If |newSize| &minus; |oldSize| exceeds the available [=storage quota=], [=/reject=] |p|
         with a {{QuotaExceededError}} and abort.
-     1. Set [=this=].[=[[file]]=]'s to a [=byte sequence=] formed by concatenating
+     1. Set [=this=].[=FileSystemSyncAccessHandle/[[file]]=]'s to a [=byte sequence=] formed by concatenating
         |fileContents| with a [=byte sequence=]
         containing |newSize| &minus; |oldSize| 0x00 bytes.
-     1. If the operations modifying the [=this=].[=[[file]]=]'s [=file entry/binary data=] in the previous steps
+     1. If the operations modifying the [=this=].[=FileSystemSyncAccessHandle/[[file]]=]'s [=file entry/binary data=] in the previous steps
         failed, [=/reject=] |p| with a {{InvalidStateError}} and abort.
   1. Otherwise, if |newSize| is smaller than |oldSize|:
-     1. Set [=this=].[=[[file]]=]'s to a [=byte sequence=] containing the first |newSize| bytes
+     1. Set [=this=].[=FileSystemSyncAccessHandle/[[file]]=]'s to a [=byte sequence=] containing the first |newSize| bytes
         in |fileContents|.
-     1. If the operations modifying the [=this=].[=[[file]]=]'s [=file entry/binary data=] in the previous steps
+     1. If the operations modifying the [=this=].[=FileSystemSyncAccessHandle/[[file]]=]'s [=file entry/binary data=] in the previous steps
         failed, [=/reject=] |p| with a {{InvalidStateError}} and abort.
   1. [=/Resolve=] |p|.
 1. Return |p|.
@@ -1205,7 +1205,7 @@ these steps:
 1. If [=this=].[=[[state]]=] is "`closed`", return [=a promise rejected with=] an {{InvalidStateError}}.
 1. Let |p| be [=a new promise=] created in the [=relevant Realm=] of [=this=].
 1. Run the following steps [=in parallel=]:
-  1. Let |size| be the [=byte sequence/length=] of [=this=].[=[[file]]=]'s [=file entry/binary data=].
+  1. Let |size| be the [=byte sequence/length=] of [=this=].[=FileSystemSyncAccessHandle/[[file]]=]'s [=file entry/binary data=].
   1. [=/Resolve=] |p| with |size|.
 1. Return |p|.
 
