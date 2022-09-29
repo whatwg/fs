@@ -1034,10 +1034,10 @@ interface FileSystemSyncAccessHandle {
   unsigned long long write([AllowShared] BufferSource buffer,
                            optional FileSystemReadWriteOptions options = {});
 
-  void truncate([EnforceRange] unsigned long long newSize);
+  undefined truncate([EnforceRange] unsigned long long newSize);
   unsigned long long getSize();
-  void flush();
-  void close();
+  undefined flush();
+  undefined close();
 };
 
 </xmp>
