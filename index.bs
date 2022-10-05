@@ -836,7 +836,7 @@ The <dfn>write a chunk</dfn> algorithm,
 given a {{FileSystemWritableFileStream}} |stream| and |chunk|,
 runs these steps:
 
-1. Let |input| be the result of [=converting=] |chunk| to a {{FileSystemWriteChunkType}}.
+1. Let |input| be the result of [=converted to an IDL value|converting=] |chunk| to a {{FileSystemWriteChunkType}}.
    If this throws an exception, then return [=a promise rejected with=] that exception.
 1. Let |p| be [=a new promise=].
 1. Run the following steps [=in parallel=]:
