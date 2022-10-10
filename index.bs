@@ -1025,7 +1025,7 @@ steps:
 <xmp class=idl>
 
 dictionary FileSystemReadWriteOptions {
-  [EnforceRange] required unsigned long long at = 0;
+  [EnforceRange] unsigned long long at = 0;
 };
 
 [Exposed=DedicatedWorker, SecureContext]
