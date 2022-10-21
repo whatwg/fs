@@ -1154,7 +1154,7 @@ these steps:
 
 <div class="note domintro">
   : |handle| . {{FileSystemSyncAccessHandle/truncate()|truncate}}(|newSize|)
-  :: Resizes the file associated with stream to be |newSize| bytes long. If size is larger than the current file size this pads the file with null bytes; otherwise it truncates the file.
+  :: Resizes the file associated with |handle| to be |newSize| bytes long. If |newSize| is larger than the current file size this pads the file with null bytes; otherwise it truncates the file.
 </div>
 
 <div algorithm>
