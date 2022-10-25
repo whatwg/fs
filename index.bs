@@ -1161,18 +1161,18 @@ these steps:
 
 1. If [=this=].[=[[state]]=] is "`closed`", throw an {{InvalidStateError}}.
 1. Let |fileContents| be a copy of [=this=].[=FileSystemSyncAccessHandle/[[file]]=]'s [=file entry/binary data=].
-1. 1. Let |oldSize| be the [=byte sequence/length=] of [=this=].[=[[file]]=]'s [=file entry/binary data=].
+1. 1. Let |oldSize| be the [=byte sequence/length=] of [=this=].[=FileSystemSyncAccessHandle/[[file]]=]'s [=file entry/binary data=].
 1. If |newSize| is larger than |oldSize|:
    1. If |newSize| &minus; |oldSize| exceeds the available [=storage quota=], throw a {{QuotaExceededError}}.
-   1. Set [=this=].[=[[file]]=]'s to a [=byte sequence=] formed by concatenating
+   1. Set [=this=].[=FileSystemSyncAccessHandle/[[file]]=]'s to a [=byte sequence=] formed by concatenating
       |fileContents| with a [=byte sequence=]
       containing |newSize| &minus; |oldSize| 0x00 bytes.
-   1. If the operations modifying the [=this=].[=[[file]]=]'s [=file entry/binary data=] in the previous steps
+   1. If the operations modifying the [=this=].[=FileSystemSyncAccessHandle/[[file]]=]'s [=file entry/binary data=] in the previous steps
       failed, throw an {{InvalidStateError}}.
 1. Otherwise, if |newSize| is smaller than |oldSize|:
-   1. Set [=this=].[=[[file]]=]'s to a [=byte sequence=] containing the first |newSize| bytes
+   1. Set [=this=].[=FileSystemSyncAccessHandle/[[file]]=]'s to a [=byte sequence=] containing the first |newSize| bytes
       in |fileContents|.
-   1. If the operations modifying the [=this=].[=[[file]]=]'s [=file entry/binary data=] in the previous steps
+   1. If the operations modifying the [=this=].[=FileSystemSyncAccessHandle/[[file]]=]'s [=file entry/binary data=] in the previous steps
       failed, throw an {{InvalidStateError}}.
 
 </div>
@@ -1189,7 +1189,7 @@ The <dfn method for=FileSystemSyncAccessHandle>getSize()</dfn> method, when invo
 these steps:
 
 1. If [=this=].[=[[state]]=] is "`closed`", throw an {{InvalidStateError}}.
-1. Let |size| be the [=byte sequence/length=] of [=this=].[=[[file]]=]'s [=file entry/binary data=].
+1. Let |size| be the [=byte sequence/length=] of [=this=].[=FileSystemSyncAccessHandle/[[file]]=]'s [=file entry/binary data=].
 1. Return |size|.
 
 
