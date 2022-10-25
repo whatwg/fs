@@ -835,7 +835,7 @@ The <dfn>write a chunk</dfn> algorithm,
 given a {{FileSystemWritableFileStream}} |stream| and |chunk|,
 runs these steps:
 
-1. Let |input| be the result of [=converting=] |chunk| to a {{FileSystemWriteChunkType}}.
+1. Let |input| be the result of [=converted to an IDL value|converting=] |chunk| to a {{FileSystemWriteChunkType}}.
    If this throws an exception, then return [=a promise rejected with=] that exception.
 1. Let |p| be [=a new promise=].
 1. Run the following steps [=in parallel=]:
@@ -1024,7 +1024,7 @@ steps:
 <xmp class=idl>
 
 dictionary FileSystemReadWriteOptions {
-  [EnforceRange] required unsigned long long at = 0;
+  [EnforceRange] unsigned long long at = 0;
 };
 
 [Exposed=DedicatedWorker, SecureContext]
@@ -1152,7 +1152,7 @@ these steps:
 
 <div class="note domintro">
   : |handle| . {{FileSystemSyncAccessHandle/truncate()|truncate}}(|newSize|)
-  :: Resizes the file associated with stream to be |newSize| bytes long. If size is larger than the current file size this pads the file with null bytes; otherwise it truncates the file.
+  :: Resizes the file associated with |handle| to be |newSize| bytes long. If |newSize| is larger than the current file size this pads the file with null bytes; otherwise it truncates the file.
 </div>
 
 <div algorithm>
