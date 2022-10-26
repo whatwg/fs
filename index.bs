@@ -375,9 +375,8 @@ The <dfn method for=FileSystemFileHandle>createWritable(|options|)</dfn> method,
      further {{FileSystemSyncAccessHandle}}s or {{FileSystemWritableFileStream}}s
      for the entry, until the access handle is closed.
 
-     The returned {{FileSystemSyncAccessHandle}} offers synchronous {{FileSystemSyncAccessHandle/read()}} and
-     {{FileSystemSyncAccessHandle/write()}} methods. This allows for higher performance for critical methods on
-     contexts where asynchronous operations come with high overhead, e.g., WebAssembly.
+     The returned {{FileSystemSyncAccessHandle}} offers synchronous methods. This allows for higher performance
+     on contexts where asynchronous operations come with high overhead, e.g., WebAssembly.
 
      For the time being, this method will only succeed when the |fileHandle| belongs to the
      [=origin private file system=].
@@ -1035,10 +1034,10 @@ interface FileSystemSyncAccessHandle {
   unsigned long long write([AllowShared] BufferSource buffer,
                            optional FileSystemReadWriteOptions options = {});
 
-  Promise<undefined> truncate([EnforceRange] unsigned long long newSize);
-  Promise<unsigned long long> getSize();
-  Promise<undefined> flush();
-  Promise<undefined> close();
+  undefined truncate([EnforceRange] unsigned long long newSize);
+  unsigned long long getSize();
+  undefined flush();
+  undefined close();
 };
 
 </xmp>
@@ -1052,9 +1051,8 @@ a string that may exclusively be "`open`" or "`closed`".
 A {{FileSystemSyncAccessHandle}} is an object that is capable of reading from/writing to,
 as well as obtaining and changing the size of, a single file.
 
-The {{FileSystemSyncAccessHandle/read()}} and {{FileSystemSyncAccessHandle/write()}} methods are synchronous.
-This allows for higher performance for critical methods on contexts where asynchronous
-operations come with high overhead, e.g., WebAssembly.
+A {{FileSystemSyncAccessHandle}} offers synchronous methods. This allows for higher performance on
+contexts where asynchronous operations come with high overhead, e.g., WebAssembly.
 
 <div algorithm>
 To <dfn>create a new FileSystemSyncAccessHandle</dfn> given a [=file entry=] |file|
@@ -1114,7 +1112,7 @@ these steps:
 The <dfn method for=FileSystemSyncAccessHandle>write(|buffer|, {{FileSystemReadWriteOptions}}: |options|)</dfn> method, when invoked, must run
 these steps:
 
-1. If [=this=].[=[[state]]=] is "`closed`", throw a {{InvalidStateError}}.
+1. If [=this=].[=[[state]]=] is "`closed`", throw an {{InvalidStateError}}.
 1. Let |writePosition| be |options|.{{FileSystemReadWriteOptions/at}}.
 1. Let |fileContents| be a copy of [=this=].[=FileSystemSyncAccessHandle/[[file]]=]'s [=file entry/binary data=].
 1. Let |oldSize| be |fileContents|'s [=byte sequence/length=].
@@ -1161,26 +1159,21 @@ these steps:
 The <dfn method for=FileSystemSyncAccessHandle>truncate(|newSize|)</dfn> method, when invoked, must run
 these steps:
 
-1. If [=this=].[=[[state]]=] is "`closed`", return [=a promise rejected with=] an {{InvalidStateError}}.
+1. If [=this=].[=[[state]]=] is "`closed`", throw an {{InvalidStateError}}.
 1. Let |fileContents| be a copy of [=this=].[=FileSystemSyncAccessHandle/[[file]]=]'s [=file entry/binary data=].
-1. Let |p| be [=a new promise=] created in the [=relevant Realm=] of [=this=].
-1. Run the following steps [=in parallel=]:
-  1. Let |oldSize| be the [=byte sequence/length=] of [=this=].[=FileSystemSyncAccessHandle/[[file]]=]'s [=file entry/binary data=].
-  1. If |newSize| is larger than |oldSize|:
-     1. If |newSize| &minus; |oldSize| exceeds the available [=storage quota=], [=/reject=] |p|
-        with a {{QuotaExceededError}} and abort.
-     1. Set [=this=].[=FileSystemSyncAccessHandle/[[file]]=]'s to a [=byte sequence=] formed by concatenating
-        |fileContents| with a [=byte sequence=]
-        containing |newSize| &minus; |oldSize| 0x00 bytes.
-     1. If the operations modifying the [=this=].[=FileSystemSyncAccessHandle/[[file]]=]'s [=file entry/binary data=] in the previous steps
-        failed, [=/reject=] |p| with a {{InvalidStateError}} and abort.
-  1. Otherwise, if |newSize| is smaller than |oldSize|:
-     1. Set [=this=].[=FileSystemSyncAccessHandle/[[file]]=]'s to a [=byte sequence=] containing the first |newSize| bytes
-        in |fileContents|.
-     1. If the operations modifying the [=this=].[=FileSystemSyncAccessHandle/[[file]]=]'s [=file entry/binary data=] in the previous steps
-        failed, [=/reject=] |p| with a {{InvalidStateError}} and abort.
-  1. [=/Resolve=] |p|.
-1. Return |p|.
+1. 1. Let |oldSize| be the [=byte sequence/length=] of [=this=].[=FileSystemSyncAccessHandle/[[file]]=]'s [=file entry/binary data=].
+1. If |newSize| is larger than |oldSize|:
+   1. If |newSize| &minus; |oldSize| exceeds the available [=storage quota=], throw a {{QuotaExceededError}}.
+   1. Set [=this=].[=FileSystemSyncAccessHandle/[[file]]=]'s to a [=byte sequence=] formed by concatenating
+      |fileContents| with a [=byte sequence=]
+      containing |newSize| &minus; |oldSize| 0x00 bytes.
+   1. If the operations modifying the [=this=].[=FileSystemSyncAccessHandle/[[file]]=]'s [=file entry/binary data=] in the previous steps
+      failed, throw an {{InvalidStateError}}.
+1. Otherwise, if |newSize| is smaller than |oldSize|:
+   1. Set [=this=].[=FileSystemSyncAccessHandle/[[file]]=]'s to a [=byte sequence=] containing the first |newSize| bytes
+      in |fileContents|.
+   1. If the operations modifying the [=this=].[=FileSystemSyncAccessHandle/[[file]]=]'s [=file entry/binary data=] in the previous steps
+      failed, throw an {{InvalidStateError}}.
 
 </div>
 
@@ -1195,12 +1188,8 @@ these steps:
 The <dfn method for=FileSystemSyncAccessHandle>getSize()</dfn> method, when invoked, must run
 these steps:
 
-1. If [=this=].[=[[state]]=] is "`closed`", return [=a promise rejected with=] an {{InvalidStateError}}.
-1. Let |p| be [=a new promise=] created in the [=relevant Realm=] of [=this=].
-1. Run the following steps [=in parallel=]:
-  1. Let |size| be the [=byte sequence/length=] of [=this=].[=FileSystemSyncAccessHandle/[[file]]=]'s [=file entry/binary data=].
-  1. [=/Resolve=] |p| with |size|.
-1. Return |p|.
+1. If [=this=].[=[[state]]=] is "`closed`", throw an {{InvalidStateError}}.
+1. Return [=this=].[=FileSystemSyncAccessHandle/[[file]]=]'s [=file entry/binary data=]'s [=byte sequence/length=].
 
 
 </div>
@@ -1233,11 +1222,7 @@ these steps:
 The <dfn method for=FileSystemSyncAccessHandle>close()</dfn> method, when invoked, must run
 these steps:
 
-1. Let |p| be [=a new promise=] created in the [=relevant Realm=] of [=this=].
-1. Run the following steps [=in parallel=]:
-  1. Set [=this=].[=[[state]]=] to "`closed`".
-  1. [=/Resolve=] |p|.
-1. Return |p|.
+1. Set [=this=].[=[[state]]=] to "`closed`".
 
 </div>
 
