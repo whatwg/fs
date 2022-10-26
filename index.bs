@@ -1069,6 +1069,7 @@ in a [=/Realm=] |realm|, perform the following steps:
 <div algorithm>
 The <dfn method for=FileSystemSyncAccessHandle>read(|buffer|, {{FileSystemReadWriteOptions}}: |options|)</dfn> method steps are:
 
+
 1. If [=this=].[=[[state]]=] is "`closed`", throw an {{InvalidStateError}}.
 1. Let |bufferSize| be |buffer|'s [=byte length=].
 1. Let |fileContents| be [=this=].[=FileSystemSyncAccessHandle/[[file]]=]'s [=file entry/binary data=].
