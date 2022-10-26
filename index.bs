@@ -1189,8 +1189,7 @@ The <dfn method for=FileSystemSyncAccessHandle>getSize()</dfn> method, when invo
 these steps:
 
 1. If [=this=].[=[[state]]=] is "`closed`", throw an {{InvalidStateError}}.
-1. Let |size| be the [=byte sequence/length=] of [=this=].[=FileSystemSyncAccessHandle/[[file]]=]'s [=file entry/binary data=].
-1. Return |size|.
+1. Return [=this=].[=FileSystemSyncAccessHandle/[[file]]=]'s [=file entry/binary data=]'s [=byte sequence/length=].
 
 
 </div>
