@@ -244,7 +244,7 @@ associated [=FileSystemHandle/entry=].
 </div>
 
 <div algorithm>
-The <dfn method for=FileSystemHandle>isSameEntry(|other|)</dfn> method, when invoked, must run these steps:
+The <dfn method for=FileSystemHandle>isSameEntry(|other|)</dfn> method steps are:
 
 1. Let |realm| be [=this=]'s [=relevant Realm=].
 1. Let |p| be [=a new promise=] in |realm|.
@@ -287,7 +287,7 @@ A {{FileSystemFileHandle}}'s associated [=FileSystemHandle/entry=] must be a [=f
 </div>
 
 <div algorithm>
-The <dfn method for=FileSystemFileHandle>getFile()</dfn> method, when invoked, must run these steps:
+The <dfn method for=FileSystemFileHandle>getFile()</dfn> method steps are:
 
 1. Let |result| be [=a new promise=].
 1. Run the following steps [=in parallel=]:
@@ -341,7 +341,7 @@ combine the desire to run malware checks with the desire to let websites make fa
 modifications to existing large files.
 
 <div algorithm>
-The <dfn method for=FileSystemFileHandle>createWritable(|options|)</dfn> method, when invoked, must run these steps:
+The <dfn method for=FileSystemFileHandle>createWritable(|options|)</dfn> method steps are:
 
 1. Let |result| be [=a new promise=].
 1. Run the following steps [=in parallel=]:
@@ -383,7 +383,7 @@ The <dfn method for=FileSystemFileHandle>createWritable(|options|)</dfn> method,
 </div>
 
 <div algorithm>
-The <dfn method for=FileSystemFileHandle>createSyncAccessHandle()</dfn> method, when invoked, must run these steps:
+The <dfn method for=FileSystemFileHandle>createSyncAccessHandle()</dfn> method steps are:
 
 1. Let |result| be [=a new promise=].
 1. Run the following steps [=in parallel=]:
@@ -526,8 +526,7 @@ and its async iterator |iterator|:
 </div>
 
 <div algorithm>
-The <dfn method for=FileSystemDirectoryHandle>getFileHandle(|name|, |options|)</dfn> method, when invoked,
-must run these steps:
+The <dfn method for=FileSystemDirectoryHandle>getFileHandle(|name|, |options|)</dfn> method steps are:
 
 1. Let |result| be [=a new promise=].
 1. Run the following steps [=in parallel=]:
@@ -588,8 +587,7 @@ must run these steps:
 </div>
 
 <div algorithm>
-The <dfn method for=FileSystemDirectoryHandle>getDirectoryHandle(|name|, |options|)</dfn> method, when
-invoked, must run these steps:
+The <dfn method for=FileSystemDirectoryHandle>getDirectoryHandle(|name|, |options|)</dfn> method steps are:
 
 1. Let |result| be [=a new promise=].
 1. Run the following steps [=in parallel=]:
@@ -647,8 +645,7 @@ invoked, must run these steps:
 </div>
 
 <div algorithm>
-The <dfn method for=FileSystemDirectoryHandle>removeEntry(|name|, |options|)</dfn> method, when invoked, must run
-these steps:
+The <dfn method for=FileSystemDirectoryHandle>removeEntry(|name|, |options|)</dfn> method steps are:
 
 1. Let |result| be [=a new promise=].
 1. Run the following steps [=in parallel=]:
@@ -727,13 +724,11 @@ if (relative_path === null) {
 </div>
 
 <div algorithm>
-The <dfn method for=FileSystemDirectoryHandle>resolve(|possibleDescendant|)</dfn> method,
-when invoked, must return the result of [=entry/resolving=]
-|possibleDescendant|'s [=FileSystemHandle/entry=] relative to [=this=]'s [=FileSystemHandle/entry=].
+The <dfn method for=FileSystemDirectoryHandle>resolve(|possibleDescendant|)</dfn> method
+must return the result of [=entry/resolving=]|possibleDescendant|'s
+[=FileSystemHandle/entry=] relative to [=this=]'s [=FileSystemHandle/entry=].
 
 </div>
-
-
 
 ## The {{FileSystemWritableFileStream}} interface ## {#api-filesystemwritablefilestream}
 
@@ -960,8 +955,7 @@ runs these steps:
 </div>
 
 <div algorithm>
-The <dfn method for=FileSystemWritableFileStream>write(|data|)</dfn> method, when invoked, must run
-these steps:
+The <dfn method for=FileSystemWritableFileStream>write(|data|)</dfn> method steps are:
 
 1. Let |writer| be the result of [=WritableStream/getting a writer=] for [=this=].
 1. Let |result| be the result of [=WritableStreamDefaultWriter/writing a chunk=] to |writer| given
@@ -979,8 +973,7 @@ these steps:
 </div>
 
 <div algorithm>
-The <dfn method for=FileSystemWritableFileStream>seek(|position|)</dfn> method, when invoked, must run these
-steps:
+The <dfn method for=FileSystemWritableFileStream>seek(|position|)</dfn> method steps are:
 
 1. Let |writer| be the result of [=WritableStream/getting a writer=] for [=this=].
 1. Let |result| be the result of [=WritableStreamDefaultWriter/writing a chunk=] to |writer| given
@@ -1007,8 +1000,7 @@ steps:
 </div>
 
 <div algorithm>
-The <dfn method for=FileSystemWritableFileStream>truncate(|size|)</dfn> method, when invoked, must run these
-steps:
+The <dfn method for=FileSystemWritableFileStream>truncate(|size|)</dfn> method steps are:
 
 1. Let |writer| be the result of [=WritableStream/getting a writer=] for [=this=].
 1. Let |result| be the result of [=WritableStreamDefaultWriter/writing a chunk=] to |writer| given
@@ -1075,8 +1067,7 @@ in a [=/Realm=] |realm|, perform the following steps:
 
 // TODO(fivedots): Specify how Access Handles should react when reading from a file that has been modified externally.
 <div algorithm>
-The <dfn method for=FileSystemSyncAccessHandle>read(|buffer|, {{FileSystemReadWriteOptions}}: |options|)</dfn> method, when invoked, must run
-these steps:
+The <dfn method for=FileSystemSyncAccessHandle>read(|buffer|, {{FileSystemReadWriteOptions}}: |options|)</dfn> method steps are:
 
 1. If [=this=].[=[[state]]=] is "`closed`", throw an {{InvalidStateError}}.
 1. Let |bufferSize| be |buffer|'s [=byte length=].
@@ -1109,8 +1100,7 @@ these steps:
 
 // TODO(fivedots): Figure out how to properly check the available storage quota (in this method and others) by passing the right storage shelf.
 <div algorithm>
-The <dfn method for=FileSystemSyncAccessHandle>write(|buffer|, {{FileSystemReadWriteOptions}}: |options|)</dfn> method, when invoked, must run
-these steps:
+The <dfn method for=FileSystemSyncAccessHandle>write(|buffer|, {{FileSystemReadWriteOptions}}: |options|)</dfn> method steps are:
 
 1. If [=this=].[=[[state]]=] is "`closed`", throw an {{InvalidStateError}}.
 1. Let |writePosition| be |options|.{{FileSystemReadWriteOptions/at}}.
@@ -1156,8 +1146,7 @@ these steps:
 </div>
 
 <div algorithm>
-The <dfn method for=FileSystemSyncAccessHandle>truncate(|newSize|)</dfn> method, when invoked, must run
-these steps:
+The <dfn method for=FileSystemSyncAccessHandle>truncate(|newSize|)</dfn> method steps are:
 
 1. If [=this=].[=[[state]]=] is "`closed`", throw an {{InvalidStateError}}.
 1. Let |fileContents| be a copy of [=this=].[=FileSystemSyncAccessHandle/[[file]]=]'s [=file entry/binary data=].
@@ -1185,8 +1174,7 @@ these steps:
 </div>
 
 <div algorithm>
-The <dfn method for=FileSystemSyncAccessHandle>getSize()</dfn> method, when invoked, must run
-these steps:
+The <dfn method for=FileSystemSyncAccessHandle>getSize()</dfn> method steps are:
 
 1. If [=this=].[=[[state]]=] is "`closed`", throw an {{InvalidStateError}}.
 1. Return [=this=].[=FileSystemSyncAccessHandle/[[file]]=]'s [=file entry/binary data=]'s [=byte sequence/length=].
@@ -1202,8 +1190,7 @@ these steps:
 </div>
 
 <div algorithm>
-The <dfn method for=FileSystemSyncAccessHandle>flush()</dfn> method, when invoked, must run
-these steps:
+The <dfn method for=FileSystemSyncAccessHandle>flush()</dfn> method steps are:
 
 // TODO(fivedots): Fill in, after figuring out language to describe flushing at the OS level.
 
@@ -1219,8 +1206,7 @@ these steps:
 
 //TODO(fivedots): Figure out language to describe flushing the file at the OS level before closing the handle.
 <div algorithm>
-The <dfn method for=FileSystemSyncAccessHandle>close()</dfn> method, when invoked, must run
-these steps:
+The <dfn method for=FileSystemSyncAccessHandle>close()</dfn> method steps are:
 
 1. Set [=this=].[=[[state]]=] to "`closed`".
 
@@ -1255,8 +1241,7 @@ partial interface StorageManager {
 </div>
 
 <div algorithm>
-The <dfn method for=StorageManager>getDirectory()</dfn> method, when
-invoked, must run these steps:
+The <dfn method for=StorageManager>getDirectory()</dfn> method steps are:
 
 1. Let |environment| be the [=current settings object=].
 
