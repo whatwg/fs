@@ -229,12 +229,11 @@ Their [=deserialization steps=], given |serialized| and |value| are:
   :: Returns the [=entry/name=] of the entry represented by |handle|.
 </div>
 
-The <dfn attribute for=FileSystemHandle>kind</dfn> attribute must
-return {{FileSystemHandleKind/"file"}} if the associated [=FileSystemHandle/entry=] is a [=file entry=],
+The <dfn attribute for=FileSystemHandle>kind</dfn> getter steps are to
+return {{FileSystemHandleKind/"file"}} if this is a [=file entry=],
 and return {{FileSystemHandleKind/"directory"}} otherwise.
 
-The <dfn attribute for=FileSystemHandle>name</dfn> attribute must return the [=entry/name=] of the
-associated [=FileSystemHandle/entry=].
+The <dfn attribute for=FileSystemHandle>name</dfn> getter steps are to return the [=entry/name=] of this.
 
 ### The {{FileSystemHandle/isSameEntry()}} method ### {#api-filesystemhandle-issameentry}
 
@@ -299,9 +298,9 @@ The <dfn method for=FileSystemFileHandle>getFile()</dfn> method steps are:
   1. Let |f| be a new {{File}}.
   1. Set |f|'s <a spec=FileAPI>snapshot state</a> to the current state of |entry|.
   1. Set |f|'s underlying byte sequence to a copy of |entry|'s [=binary data=].
-  1. Initialize the value of |f|'s {{File/name}} attribute to |entry|'s [=entry/name=].
-  1. Initialize the value of |f|'s {{File/lastModified}} attribute to |entry|'s [=file entry/modification timestamp=].
-  1. Initialize the value of |f|'s {{Blob/type}} attribute to an [=implementation-defined=] value, based on for example |entry|'s [=entry/name=] or its file extension.
+  1. Set |f|.{{File/name}} to |entry|'s [=entry/name=].
+  1. Set |f|.{{File/lastModified}} to |entry|'s [=file entry/modification timestamp=].
+  1. Set |f|.{{Blob/type}} to an [=implementation-defined=] value, based on for example |entry|'s [=entry/name=] or its file extension.
 
      Issue: The reading and snapshotting behavior needs to be better specified in the [[FILE-API]] spec,
      for now this is kind of hand-wavy.
