@@ -724,9 +724,9 @@ if (relative_path === null) {
 </div>
 
 <div algorithm>
-The <dfn method for=FileSystemDirectoryHandle>resolve(|possibleDescendant|)</dfn> method
-must return the result of [=entry/resolving=]|possibleDescendant|'s
-[=FileSystemHandle/entry=] relative to [=this=]'s [=FileSystemHandle/entry=].
+The <dfn method for=FileSystemDirectoryHandle>resolve(|possibleDescendant|)</dfn> method steps are
+to return the result of [=entry/resolving=]|possibleDescendant|'s [=FileSystemHandle/entry=]
+relative to [=this=]'s [=FileSystemHandle/entry=].
 
 </div>
 
