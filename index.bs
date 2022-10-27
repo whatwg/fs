@@ -1206,9 +1206,8 @@ The <dfn method for=FileSystemSyncAccessHandle>flush()</dfn> method steps are:
 
 //TODO(fivedots): Figure out language to describe flushing the file at the OS level before closing the handle.
 <div algorithm>
-The <dfn method for=FileSystemSyncAccessHandle>close()</dfn> method steps are:
-
-1. Set [=this=].[=[[state]]=] to "`closed`".
+The <dfn method for=FileSystemSyncAccessHandle>close()</dfn> method steps are
+to set [=this=].[=[[state]]=] to "`closed`".
 
 </div>
 
