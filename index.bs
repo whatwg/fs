@@ -229,8 +229,8 @@ Their [=deserialization steps=], given |serialized| and |value| are:
   :: Returns the [=entry/name=] of the entry represented by |handle|.
 </div>
 
-The <dfn attribute for=FileSystemHandle>kind</dfn> getter steps are to return 
-{{FileSystemHandleKind/"file"}} if [=this=] is a [=file entry=]; otherwise 
+The <dfn attribute for=FileSystemHandle>kind</dfn> getter steps are to return
+{{FileSystemHandleKind/"file"}} if [=this=] is a [=file entry=]; otherwise
 {{FileSystemHandleKind/"directory"}}.
 
 The <dfn attribute for=FileSystemHandle>name</dfn> getter steps are to return [=this=]'s [=entry/name=].
