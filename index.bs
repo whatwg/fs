@@ -233,7 +233,7 @@ The <dfn attribute for=FileSystemHandle>kind</dfn> getter steps are to return
 {{FileSystemHandleKind/"file"}} if [=this=] is a [=file entry=]; otherwise 
 {{FileSystemHandleKind/"directory"}}.
 
-The <dfn attribute for=FileSystemHandle>name</dfn> getter steps are to return the [=entry/name=] of this.
+The <dfn attribute for=FileSystemHandle>name</dfn> getter steps are to return [=this=]'s [=entry/name=].
 
 ### The {{FileSystemHandle/isSameEntry()}} method ### {#api-filesystemhandle-issameentry}
 
