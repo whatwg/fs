@@ -93,8 +93,8 @@ a <dfn for="file entry">lock</dfn> (a string that may exclusively be "`open`", "
 and a <dfn for="file entry">shared lock count</dfn> (a number representing the number shared locks that are taken at a given point in time).
 
 <div algorithm>
-To <dfn for="file entry/lock">take</dfn> a [=file entry/lock=] with a |value| of "`exclusive`" or "`shared`" on a given [=file entry=] |file|,
-run these steps:
+
+To <dfn for="file entry/lock">take</dfn> a [=file entry/lock=] with a |value| of "`exclusive`" or "`shared`" on a given [=file entry=] |file|:
 
 1. Let |lock| be the |file|'s [=file entry/lock=].
 1. Let |count| be the |file|'s [=file entry/shared lock count=].
@@ -229,11 +229,11 @@ Their [=deserialization steps=], given |serialized| and |value| are:
   :: Returns the [=entry/name=] of the entry represented by |handle|.
 </div>
 
-The <dfn attribute for=FileSystemHandle>kind</dfn> getter steps are to
-return {{FileSystemHandleKind/"file"}} if this is a [=file entry=],
-and return {{FileSystemHandleKind/"directory"}} otherwise.
+The <dfn attribute for=FileSystemHandle>kind</dfn> getter steps are to return
+{{FileSystemHandleKind/"file"}} if [=this=] is a [=file entry=]; otherwise
+{{FileSystemHandleKind/"directory"}}.
 
-The <dfn attribute for=FileSystemHandle>name</dfn> getter steps are to return the [=entry/name=] of this.
+The <dfn attribute for=FileSystemHandle>name</dfn> getter steps are to return [=this=]'s [=entry/name=].
 
 ### The {{FileSystemHandle/isSameEntry()}} method ### {#api-filesystemhandle-issameentry}
 
@@ -453,7 +453,7 @@ support for example recursive iteration.
 
 <div algorithm="iterator initialization">
 The [=asynchronous iterator initialization steps=] for a {{FileSystemDirectoryHandle}} |handle|
-ant its async iterator |iterator| are:
+and its async iterator |iterator| are:
 
 1. Let |access| be the result of running |handle|'s [=FileSystemHandle/entry=]'s
    [=entry/query access=] given "`read`".
@@ -810,8 +810,8 @@ in a [=/Realm=] |realm|, run these steps:
       1. [=file entry/lock/release|Release the lock=] on |stream|.[=FileSystemWritableFileStream/[[file]]=].
       1. [=/Resolve=] |closeResult| with `undefined`.
    1. Return |closeResult|.
-1. Let |abortAlgorithm| be these steps:
-      1. [=file entry/lock/release|Release the lock=] on |stream|.[=FileSystemWritableFileStream/[[file]]=].
+1. Let |abortAlgorithm| be this step: [=file entry/lock/release|release the lock=] on
+   |stream|.[=FileSystemWritableFileStream/[[file]]=].
 1. Let |highWaterMark| be 1.
 1. Let |sizeAlgorithm| be an algorithm that returns `1`.
 1. [=WritableStream/Set up=] |stream| with <a for="WritableStream/set up"><var
