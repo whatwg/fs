@@ -93,8 +93,7 @@ a <dfn for="file entry">lock</dfn> (a string that may exclusively be "`open`", "
 and a <dfn for="file entry">shared lock count</dfn> (a number representing the number shared locks that are taken at a given point in time).
 
 <div algorithm>
-To <dfn for="file entry/lock">take</dfn> a [=file entry/lock=] with a |value| of "`exclusive`" or "`shared`" on a given [=file entry=] |file|,
-run the following steps:
+To <dfn for="file entry/lock">take</dfn> a [=file entry/lock=] with a |value| of "`exclusive`" or "`shared`" on a given [=file entry=] |file|:
 
 1. Let |lock| be the |file|'s [=file entry/lock=].
 1. Let |count| be the |file|'s [=file entry/shared lock count=].
@@ -116,7 +115,7 @@ run the following steps:
 
 <div algorithm>
 To <dfn for="file entry/lock">release</dfn> a [=file entry/lock=] on a given [=file entry=] |file|,
-run the following steps:
+run these steps:
 
 1. Let |lock| be the |file|'s associated [=file entry/lock=].
 1. Let |count| be the |file|'s [=file entry/shared lock count=].
@@ -156,10 +155,10 @@ directory on disk but an entry doesn't have to map to any file on disk).
 
 <div algorithm>
 To <dfn for="entry">resolve</dfn> an [=/entry=] |child| relative to a [=directory entry=] |root|,
-run the following steps:
+run these steps:
 
 1. Let |result| be [=a new promise=].
-1. Run the following steps [=in parallel=]:
+1. Run these steps [=in parallel=]:
   1. If |child| is [=the same as=] |root|,
      [=/resolve=] |result| with an empty list, and abort.
   1. Let |childPromises| be « ».
@@ -170,7 +169,7 @@ run the following steps:
       1. If |path| is not null:
         1. [=list/Prepend=] |entry|'s [=entry/name=] to |path|.
         1. [=/Resolve=] |result| with |path|.
-  1. [=Wait for all=] |childPromises|, with the following success steps:
+  1. [=Wait for all=] |childPromises|, with the these success steps:
     1. If |result| hasn't been resolved yet, [=/resolve=] |result| with `null`.
 1. Return |result|.
 
@@ -247,7 +246,7 @@ The <dfn method for=FileSystemHandle>isSameEntry(|other|)</dfn> method steps are
 
 1. Let |realm| be [=this=]'s [=relevant Realm=].
 1. Let |p| be [=a new promise=] in |realm|.
-1. Run the following steps [=in parallel=]:
+1. Run these steps [=in parallel=]:
   1. If [=this=]'s [=FileSystemHandle/entry=] is [=the same as=] |other|'s [=FileSystemHandle/entry=],
      [=/resolve=] |p| with true.
   1. Otherwise [=/resolve=] |p| with false.
@@ -289,7 +288,7 @@ A {{FileSystemFileHandle}}'s associated [=FileSystemHandle/entry=] must be a [=f
 The <dfn method for=FileSystemFileHandle>getFile()</dfn> method steps are:
 
 1. Let |result| be [=a new promise=].
-1. Run the following steps [=in parallel=]:
+1. Run these steps [=in parallel=]:
   1. Let |access| be the result of running [=this=]'s [=FileSystemHandle/entry=]'s
      [=entry/query access=] given "`read`".
   1. If |access| is not "{{PermissionState/granted}}",
@@ -343,7 +342,7 @@ modifications to existing large files.
 The <dfn method for=FileSystemFileHandle>createWritable(|options|)</dfn> method steps are:
 
 1. Let |result| be [=a new promise=].
-1. Run the following steps [=in parallel=]:
+1. Run these steps [=in parallel=]:
   1. Let |access| be the result of running [=this=]'s [=FileSystemHandle/entry=]'s
      [=entry/request access=] given "`readwrite`".
      If that throws an exception, [=reject=] |result| with that exception and abort.
@@ -385,7 +384,7 @@ The <dfn method for=FileSystemFileHandle>createWritable(|options|)</dfn> method 
 The <dfn method for=FileSystemFileHandle>createSyncAccessHandle()</dfn> method steps are:
 
 1. Let |result| be [=a new promise=].
-1. Run the following steps [=in parallel=]:
+1. Run these steps [=in parallel=]:
   1. Let |access| be the result of running [=this=]'s [=FileSystemHandle/entry=]'s
      [=entry/request access=] given "`readwrite`".
      If that throws an exception, [=reject=] |result| with that exception and abort.
@@ -528,7 +527,7 @@ and its async iterator |iterator|:
 The <dfn method for=FileSystemDirectoryHandle>getFileHandle(|name|, |options|)</dfn> method steps are:
 
 1. Let |result| be [=a new promise=].
-1. Run the following steps [=in parallel=]:
+1. Run these steps [=in parallel=]:
   1. If |name| is not a [=valid file name=], [=/reject=] |result| with a {{TypeError}} and abort.
 
   1. Let |entry| be [=this=]'s [=FileSystemHandle/entry=].
@@ -589,7 +588,7 @@ The <dfn method for=FileSystemDirectoryHandle>getFileHandle(|name|, |options|)</
 The <dfn method for=FileSystemDirectoryHandle>getDirectoryHandle(|name|, |options|)</dfn> method steps are:
 
 1. Let |result| be [=a new promise=].
-1. Run the following steps [=in parallel=]:
+1. Run these steps [=in parallel=]:
   1. If |name| is not a [=valid file name=], [=/reject=] |result| with a {{TypeError}} and abort.
 
   1. Let |entry| be [=this=]'s [=FileSystemHandle/entry=].
@@ -647,7 +646,7 @@ The <dfn method for=FileSystemDirectoryHandle>getDirectoryHandle(|name|, |option
 The <dfn method for=FileSystemDirectoryHandle>removeEntry(|name|, |options|)</dfn> method steps are:
 
 1. Let |result| be [=a new promise=].
-1. Run the following steps [=in parallel=]:
+1. Run these steps [=in parallel=]:
   1. If |name| is not a [=valid file name=], [=/reject=] |result| with a {{TypeError}} and abort.
 
   1. Let |entry| be [=this=]'s [=FileSystemHandle/entry=].
@@ -787,19 +786,19 @@ Similarly, when piping a {{ReadableStream}} into a {{FileSystemWritableFileStrea
 
 <div algorithm>
 To <dfn>create a new FileSystemWritableFileStream</dfn> given a [=file entry=] |file|
-in a [=/Realm=] |realm|, perform the following steps:
+in a [=/Realm=] |realm|, run these steps:
 
 1. Let |stream| be a [=new=] {{FileSystemWritableFileStream}} in |realm|.
 1. Set |stream|.[=FileSystemWritableFileStream/[[file]]=] to |file|.
 1. Let |writeAlgorithm| be an algorithm which takes a |chunk| argument
    and returns the result of running the [=write a chunk=] algorithm with |stream| and |chunk|.
-1. Let |closeAlgorithm| be the following steps:
+1. Let |closeAlgorithm| be these steps:
    1. Let |closeResult| be [=a new promise=].
-   1. Run the following steps [=in parallel=]:
+   1. Run these steps [=in parallel=]:
       1. Let |access| be the result of running |file|'s [=entry/query access=] given "`readwrite`".
       1. If |access| is not "{{PermissionState/granted}}",
          reject |closeResult| with a {{NotAllowedError}} and abort.
-      1. Perform [=implementation-defined=] malware scans and safe browsing checks.
+      1. Run [=implementation-defined=] malware scans and safe browsing checks.
          If these checks fail, [=/reject=] |closeResult| with an {{AbortError}} and abort.
       1. Set |stream|.[=FileSystemWritableFileStream/[[file]]=]'s [=file entry/binary data=] to |stream|.[=[[buffer]]=].
          If that throws an exception, [=/reject=] |closeResult| with that exception and abort.
@@ -810,8 +809,8 @@ in a [=/Realm=] |realm|, perform the following steps:
       1. [=file entry/lock/release|Release the lock=] on |stream|.[=FileSystemWritableFileStream/[[file]]=].
       1. [=/Resolve=] |closeResult| with `undefined`.
    1. Return |closeResult|.
-1. Let |abortAlgorithm| be the following step:
-      1. [=file entry/lock/release|Release the lock=] on |stream|.[=FileSystemWritableFileStream/[[file]]=].
+1. Let |abortAlgorithm| be this step: [=file entry/lock/release|release the lock=] on
+   |stream|.[=FileSystemWritableFileStream/[[file]]=].
 1. Let |highWaterMark| be 1.
 1. Let |sizeAlgorithm| be an algorithm that returns `1`.
 1. [=WritableStream/Set up=] |stream| with <a for="WritableStream/set up"><var
@@ -832,7 +831,7 @@ runs these steps:
 1. Let |input| be the result of [=converted to an IDL value|converting=] |chunk| to a {{FileSystemWriteChunkType}}.
    If this throws an exception, then return [=a promise rejected with=] that exception.
 1. Let |p| be [=a new promise=].
-1. Run the following steps [=in parallel=]:
+1. Run these steps [=in parallel=]:
    1. Let |access| be the result of running |stream|'s [=FileSystemWritableFileStream/[[file]]=]'s
       [=entry/query access=] given "`readwrite`".
    1. If |access| is not "{{PermissionState/granted}}",
@@ -1047,7 +1046,7 @@ contexts where asynchronous operations come with high overhead, e.g., WebAssembl
 
 <div algorithm>
 To <dfn>create a new FileSystemSyncAccessHandle</dfn> given a [=file entry=] |file|
-in a [=/Realm=] |realm|, perform the following steps:
+in a [=/Realm=] |realm|, run these steps:
 
 1. Let |handle| be a [=new=] {{FileSystemSyncAccessHandle}} in |realm|.
 1. Set |handle|.[=FileSystemSyncAccessHandle/[[file]]=] to |file|.
