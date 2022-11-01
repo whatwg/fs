@@ -93,7 +93,6 @@ a <dfn for="file entry">lock</dfn> (a string that may exclusively be "`open`", "
 and a <dfn for="file entry">shared lock count</dfn> (a number representing the number shared locks that are taken at a given point in time).
 
 <div algorithm>
-
 To <dfn for="file entry/lock">take</dfn> a [=file entry/lock=] with a |value| of "`exclusive`" or "`shared`" on a given [=file entry=] |file|:
 
 1. Let |lock| be the |file|'s [=file entry/lock=].
