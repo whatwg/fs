@@ -331,12 +331,15 @@ The <dfn method for=FileSystemFileHandle>getFile()</dfn> method steps are:
      {{FileSystemSyncAccessHandle|FileSystemSyncAccessHandles}} for the entry, until the stream is closed.
 </div>
 
-Issue(67): There has been some discussion around and desire for a "inPlace" mode for createWritable
-(where changes will be written to the actual underlying file as they are written to the writer, for
-example to support in-place modification of large files or things like databases). This is not
-currently implemented in Chrome. Implementing this is currently blocked on figuring out how to
-combine the desire to run malware checks with the desire to let websites make fast in-place
-modifications to existing large files.
+See <a href=...>WICG/file-system-access issue 67...</a> for discussion around
+and desire for a "inPlace" mode for createWritable (where changes will be
+written to the actual underlying file as they are written to the writer, for
+example to support in-place modification of large files or things like
+databases). This is not currently implemented in Chrome. Implementing this is
+currently blocked on figuring out how to combine the desire to run malware
+checks with the desire to let websites make fast in-place modifications to
+existing large files. In-place writes are available for files in the
+[=origin private file system=] via the {{FileSystemSyncAccessHandle}} interface.
 
 <div algorithm>
 The <dfn method for=FileSystemFileHandle>createWritable(|options|)</dfn> method steps are:
@@ -447,7 +450,7 @@ A {{FileSystemDirectoryHandle}}'s associated [=FileSystemHandle/entry=] must be 
      No guarantees are given either way.
 </div>
 
-Issue(173): In the future we might want to add arguments to the async iterable declaration to
+Issue(15): In the future we might want to add arguments to the async iterable declaration to
 support for example recursive iteration.
 
 <div algorithm="iterator initialization">
@@ -557,7 +560,7 @@ The <dfn method for=FileSystemDirectoryHandle>getFileHandle(|name|, |options|)</
   1. If creating |child| in the underlying file system throws an exception,
      [=/reject=] |result| with that exception and abort.
 
-     Issue(68): Better specify what possible exceptions this could throw.
+     Issue(11): Better specify what possible exceptions this could throw.
   1. [=/Resolve=] |result| with a new {{FileSystemFileHandle}} whose [=FileSystemHandle/entry=] is |child|.
 1. Return |result|.
 
@@ -617,7 +620,7 @@ The <dfn method for=FileSystemDirectoryHandle>getDirectoryHandle(|name|, |option
   1. If creating |child| in the underlying file system throws an exception,
      [=/reject=] |result| with that exception and abort.
 
-     Issue(68): Better specify what possible exceptions this could throw.
+     Issue(11): Better specify what possible exceptions this could throw.
   1. [=/Resolve=] |result| with a new {{FileSystemDirectoryHandle}} whose [=FileSystemHandle/entry=] is |child|.
 1. Return |result|.
 
@@ -669,7 +672,7 @@ The <dfn method for=FileSystemDirectoryHandle>removeEntry(|name|, |options|)</df
          non-atomically. Some files or directories might have been removed while other files
          or directories still exist.
 
-         Issue(68): Better specify what possible exceptions this could throw.
+         Issue(11): Better specify what possible exceptions this could throw.
       1. [=/Resolve=] |result| with `undefined`.
   1. [=/Reject=] |result| with a {{NotFoundError}}.
 1. Return |result|.
