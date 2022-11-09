@@ -331,15 +331,15 @@ The <dfn method for=FileSystemFileHandle>getFile()</dfn> method steps are:
      {{FileSystemSyncAccessHandle|FileSystemSyncAccessHandles}} for the entry, until the stream is closed.
 </div>
 
-See <a href=...>WICG/file-system-access issue 67...</a> for discussion around
-and desire for a "inPlace" mode for createWritable (where changes will be
-written to the actual underlying file as they are written to the writer, for
-example to support in-place modification of large files or things like
-databases). This is not currently implemented in Chrome. Implementing this is
-currently blocked on figuring out how to combine the desire to run malware
+See <a href=https://github.com/WICG/file-system-access/issues/67>WICG/file-system-access issue #67</a>
+for discussion around and desire for a "inPlace" mode for createWritable (where
+changes will be written to the actual underlying file as they are written to the
+writer, for example to support in-place modification of large files or things
+like databases). This is not currently implemented in Chrome. Implementing this
+is currently blocked on figuring out how to combine the desire to run malware
 checks with the desire to let websites make fast in-place modifications to
-existing large files. In-place writes are available for files in the
-[=origin private file system=] via the {{FileSystemSyncAccessHandle}} interface.
+existing large files. In-place writes are available for files in the [=origin
+private file system=] via the {{FileSystemSyncAccessHandle}} interface.
 
 <div algorithm>
 The <dfn method for=FileSystemFileHandle>createWritable(|options|)</dfn> method steps are:
