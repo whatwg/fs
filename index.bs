@@ -132,7 +132,8 @@ A <dfn export id=directory>directory entry</dfn> additionally consists of a [=/s
 Each member is either a [=/file entry=] or a [=/directory entry=].
 
 A [=/file system entry=] |entry| should be [=list/contained=] in the [=children=] of at most one
-[=directory entry=], and that directory entry is also known as |entry|'s <dfn for="file system entry" id=entry-parent>parent</dfn>.
+[=directory entry=], and that directory entry is also known as |entry|'s
+<dfn export for="file system entry" id=entry-parent>parent</dfn>.
 A [=/file system entry=]'s [=file system entry/parent=] is null if no such directory entry exists.
 
 Note: Two different [=/file system entries=] can represent the same file or directory on disk, in which
