@@ -1278,9 +1278,10 @@ The <dfn method for=StorageManager>getDirectory()</dfn> method steps are:
 
 
 <h2 class=no-num id="acks">Acknowledgments</h2>
+<span lang=nl>Randell Jesup</span>
+(<a href=https://www.mozilla.org/>Mozilla</a>, <a href=mailto:rjesup@mozilla.com>rjesup@mozilla.com</a>
 
-<p>This standard is written by <span lang=nl>Randell Jesup</span>
-(<a href=https://www.mozilla.org/>Mozilla</a>, <a href=mailto:rjesup@mozilla.com>rjesup@mozilla.com</a>, <span lang=nl>Marijn Kruisselbrink</span>
+<p>This standard is written by <span lang=nl>Marijn Kruisselbrink</span>
 (<a href=https://www.google.com/>Google</a>, <a href=mailto:mek@chromium.org>mek@chromium.org</a>)).
 
 
