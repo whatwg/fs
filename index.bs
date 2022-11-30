@@ -1092,7 +1092,7 @@ The <dfn method for=FileSystemSyncAccessHandle>read(|buffer|, {{FileSystemReadWr
     1. Otherwise set |result| to 0.
 1. Let |arrayBuffer| be |buffer|'s [=underlying buffer=].
 1. [=ArrayBuffer/write|Write=] |bytes| into |arrayBuffer|.
-1. Update the file cursor offset to be |readStart| + |result|.
+1. Update [=this=]'s [= FileSystemWritableFileStream/file position cursor=] to be |readStart| + |result|.
 1. Return |result|.
 
 </div>
@@ -1111,7 +1111,7 @@ The <dfn method for=FileSystemSyncAccessHandle>read(|buffer|, {{FileSystemReadWr
 The <dfn method for=FileSystemSyncAccessHandle>write(|buffer|, {{FileSystemReadWriteOptions}}: |options|)</dfn> method steps are:
 
 1. If [=this=].[=[[state]]=] is "`closed`", throw an {{InvalidStateError}}.
-1. Let |writePosition| be |options|.{{FileSystemReadWriteOptions/at}}, if specified, else the current file cursor offset.
+1. Let |writePosition| be |options|.{{FileSystemReadWriteOptions/at}}, if specified, else the current file offset.
 1. Let |fileContents| be a copy of [=this=].[=FileSystemSyncAccessHandle/[[file]]=]'s [=file entry/binary data=].
 1. Let |oldSize| be |fileContents|'s [=byte sequence/length=].
 1. Let |bufferSize| be |buffer|'s [=byte length=].
@@ -1142,7 +1142,7 @@ The <dfn method for=FileSystemSyncAccessHandle>write(|buffer|, {{FileSystemReadW
     1. If there were partial writes and the number of bytes that were written from |buffer| is known,
        return the number of bytes that were written from |buffer|.
     1. Otherwise throw an {{InvalidStateError}}.
-1. Update the file cursor offset to be at the end of the written |buffer|.
+1. Update [=this=]'s [= FileSystemWritableFileStream/file position cursor=] to be at the end of the written |buffer|.
 1. Return |bufferSize|.
 
 </div>
@@ -1175,7 +1175,7 @@ The <dfn method for=FileSystemSyncAccessHandle>truncate(|newSize|)</dfn> method 
       in |fileContents|.
    1. If the operations modifying the [=this=].[=FileSystemSyncAccessHandle/[[file]]=]'s [=file entry/binary data=] in the previous steps
       failed, throw an {{InvalidStateError}}.
-1. If the current file cursor offset is greater than |newSize|, the file cursor offset is set to |newSize|.
+1. If [=this=]'s current [= FileSystemWritableFileStream/file position cursor=] is greater than |newSize|, the [= FileSystemWritableFileStream/file position cursor=] is set to |newSize|.
 
 </div>
 
