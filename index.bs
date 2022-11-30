@@ -1092,7 +1092,7 @@ The <dfn method for=FileSystemSyncAccessHandle>read(|buffer|, {{FileSystemReadWr
     1. Otherwise set |result| to 0.
 1. Let |arrayBuffer| be |buffer|'s [=underlying buffer=].
 1. [=ArrayBuffer/write|Write=] |bytes| into |arrayBuffer|.
-1. Update [=this=]'s [= FileSystemWritableFileStream/file position cursor=] to be |readStart| + |result|.
+1. Set [=this=]'s [=FileSystemWritableFileStream/file position cursor=] to |readStart| + |result|.
 1. Return |result|.
 
 </div>
