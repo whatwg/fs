@@ -1078,7 +1078,7 @@ The <dfn method for=FileSystemSyncAccessHandle>read(|buffer|, {{FileSystemReadWr
 1. Let |bufferSize| be |buffer|'s [=byte length=].
 1. Let |fileContents| be [=this=].[=FileSystemSyncAccessHandle/[[file]]=]'s [=file entry/binary data=].
 1. Let |fileSize| be |fileContents|'s [=byte sequence/length=].
-1. Let |readStart| be |options|.{{FileSystemReadWriteOptions/at}}, if specified, else the current file cursor offset.
+1. Let |readStart| be |options|.{{FileSystemReadWriteOptions/at}}, if given; otherwise [=this=]'s [= FileSystemWritableFileStream/file position cursor=].
 1. If |readStart| is larger than |fileSize|:
     1. Update the file cursor offset to be |fileSize|.
     1. Return 0.
