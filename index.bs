@@ -1175,7 +1175,7 @@ The <dfn method for=FileSystemSyncAccessHandle>truncate(|newSize|)</dfn> method 
       in |fileContents|.
    1. If the operations modifying the [=this=].[=FileSystemSyncAccessHandle/[[file]]=]'s [=file entry/binary data=] in the previous steps
       failed, throw an {{InvalidStateError}}.
-1. If [=this=]'s current [= FileSystemWritableFileStream/file position cursor=] is greater than |newSize|, the [= FileSystemWritableFileStream/file position cursor=] is set to |newSize|.
+1. If [=this=]'s [=FileSystemWritableFileStream/file position cursor=] is greater than |newSize|, then set [=FileSystemWritableFileStream/file position cursor=] to |newSize|.
 
 </div>
 
