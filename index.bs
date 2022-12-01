@@ -1048,7 +1048,7 @@ as well as obtaining and changing the size of, a single file.
 A {{FileSystemSyncAccessHandle}} offers synchronous methods. This allows for higher performance on
 contexts where asynchronous operations come with high overhead, e.g., WebAssembly.
 
-A {{FileSystemSyncAccessHandle}} has a <dfn for="FileSystemWritableFileStream">file position cursor</dfn> initialized at byte offset 0 from the top of the file.
+A {{FileSystemSyncAccessHandle}} has a <dfn for="FileSystemSyncAccessHandle">file position cursor</dfn> initialized at byte offset 0 from the top of the file.
 
 <div algorithm>
 To <dfn>create a new FileSystemSyncAccessHandle</dfn> given a [=file entry=] |file|
