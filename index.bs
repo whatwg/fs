@@ -1048,7 +1048,7 @@ as well as obtaining and changing the size of, a single file.
 A {{FileSystemSyncAccessHandle}} offers synchronous methods. This allows for higher performance on
 contexts where asynchronous operations come with high overhead, e.g., WebAssembly.
 
-A {{FileSystemWritableFileStream}} has a <dfn for="FileSystemWritableFileStream">file position cursor</dfn> initialized at byte offset 0 from the top of the file.
+A {{FileSystemSyncAccessHandle}} has a <dfn for="FileSystemWritableFileStream">file position cursor</dfn> initialized at byte offset 0 from the top of the file.
 
 <div algorithm>
 To <dfn>create a new FileSystemSyncAccessHandle</dfn> given a [=file entry=] |file|
@@ -1078,9 +1078,9 @@ The <dfn method for=FileSystemSyncAccessHandle>read(|buffer|, {{FileSystemReadWr
 1. Let |bufferSize| be |buffer|'s [=byte length=].
 1. Let |fileContents| be [=this=].[=FileSystemSyncAccessHandle/[[file]]=]'s [=file entry/binary data=].
 1. Let |fileSize| be |fileContents|'s [=byte sequence/length=].
-1. Let |readStart| be |options|["{{FileSystemReadWriteOptions/at}}"], if given; otherwise [=this=]'s [=FileSystemWritableFileStream/file position cursor=].
+1. Let |readStart| be |options|["{{FileSystemReadWriteOptions/at}}"], if given; otherwise [=this=]'s [=FileSystemSyncAccessHandle/file position cursor=].
 1. If |readStart| is larger than |fileSize|:
-    1. Set [=this=]'s [=FileSystemWritableFileStream/file position cursor=] to |fileSize|.
+    1. Set [=this=]'s [=FileSystemSyncAccessHandle/file position cursor=] to |fileSize|.
     1. Return 0.
 1. Let |readEnd| be |readStart| + (|bufferSize| &minus; 1).
 1. If |readEnd| is larger than |fileSize|, set |readEnd| to |fileSize|.
@@ -1092,7 +1092,7 @@ The <dfn method for=FileSystemSyncAccessHandle>read(|buffer|, {{FileSystemReadWr
     1. Otherwise set |result| to 0.
 1. Let |arrayBuffer| be |buffer|'s [=underlying buffer=].
 1. [=ArrayBuffer/write|Write=] |bytes| into |arrayBuffer|.
-1. Set [=this=]'s [=FileSystemWritableFileStream/file position cursor=] to |readStart| + |result|.
+1. Set [=this=]'s [=FileSystemSyncAccessHandle/file position cursor=] to |readStart| + |result|.
 1. Return |result|.
 
 </div>
@@ -1111,7 +1111,7 @@ The <dfn method for=FileSystemSyncAccessHandle>read(|buffer|, {{FileSystemReadWr
 The <dfn method for=FileSystemSyncAccessHandle>write(|buffer|, {{FileSystemReadWriteOptions}}: |options|)</dfn> method steps are:
 
 1. If [=this=].[=[[state]]=] is "`closed`", throw an {{InvalidStateError}}.
-1. Let |writePosition| be |options|["{{FileSystemReadWriteOptions/at}}"], if given; otherwise [=this=]'s [=FileSystemWritableFileStream/file position cursor=].
+1. Let |writePosition| be |options|["{{FileSystemReadWriteOptions/at}}"], if given; otherwise [=this=]'s [=FileSystemSyncAccessHandle/file position cursor=].
 1. Let |fileContents| be a copy of [=this=].[=FileSystemSyncAccessHandle/[[file]]=]'s [=file entry/binary data=].
 1. Let |oldSize| be |fileContents|'s [=byte sequence/length=].
 1. Let |bufferSize| be |buffer|'s [=byte length=].
@@ -1141,10 +1141,10 @@ The <dfn method for=FileSystemSyncAccessHandle>write(|buffer|, {{FileSystemReadW
    failed:
     1. If there were partial writes and the number of bytes that were written from |buffer| is known:
         1. Let |bytesWritten| be the number of bytes that were written from |buffer|.
-        1. Set [=this=]'s [= FileSystemWritableFileStream/file position cursor=] to be |writePosition| + |bytesWritten|.
+        1. Set [=this=]'s [= FileSystemSyncAccessHandle/file position cursor=] to be |writePosition| + |bytesWritten|.
         1. Return |bytesWritten|.
     1. Otherwise throw an {{InvalidStateError}}.
-1. Set [=this=]'s [= FileSystemWritableFileStream/file position cursor=] to be |writePosition| + |bufferSize|.
+1. Set [=this=]'s [= FileSystemSyncAccessHandle/file position cursor=] to be |writePosition| + |bufferSize|.
 1. Return |bufferSize|.
 
 </div>
@@ -1177,7 +1177,7 @@ The <dfn method for=FileSystemSyncAccessHandle>truncate(|newSize|)</dfn> method 
       in |fileContents|.
    1. If the operations modifying the [=this=].[=FileSystemSyncAccessHandle/[[file]]=]'s [=file entry/binary data=] in the previous steps
       failed, throw an {{InvalidStateError}}.
-1. If [=this=]'s [=FileSystemWritableFileStream/file position cursor=] is greater than |newSize|, then set [=FileSystemWritableFileStream/file position cursor=] to |newSize|.
+1. If [=this=]'s [=FileSystemSyncAccessHandle/file position cursor=] is greater than |newSize|, then set [=FileSystemSyncAccessHandle/file position cursor=] to |newSize|.
 
 </div>
 
