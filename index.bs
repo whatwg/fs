@@ -1282,7 +1282,7 @@ The <dfn method for=StorageManager>getDirectory()</dfn> method steps are:
 (<a href=https://www.mozilla.org/>Mozilla</a>, <a href=mailto:rjesup@mozilla.com>rjesup@mozilla.com</a>
 
 <p>This standard is written by <span lang=nl>Marijn Kruisselbrink</span>
-(<a href=https://www.google.com/>Google</a>, <a href=mailto:mek@chromium.org>mek@chromium.org</a>)).
+(<a href=https://www.google.com/>Google</a>, <a href=mailto:mek@chromium.org>mek@chromium.org</a>).
 
 
 <p boilerplate=ipr>This Living Standard includes material copied from W3C WICG's
