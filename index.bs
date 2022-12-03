@@ -1158,7 +1158,6 @@ The <dfn method for=FileSystemSyncAccessHandle>write(|buffer|, {{FileSystemReadW
   :: Resizes the file associated with |handle| to be |newSize| bytes long. If |newSize| is larger than the current file size this pads the file with null bytes; otherwise it truncates the file.
 
   :: The file cursor is updated when {{truncate}} is called. If the cursor is smaller than |newSize|, it remains unchanged. If the cursor is larger than |newSize|, it is set to |newSize|.
-
 </div>
 
 <div algorithm>
