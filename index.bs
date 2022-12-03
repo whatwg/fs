@@ -1280,6 +1280,36 @@ The <dfn method for=StorageManager>getDirectory()</dfn> method steps are:
 
 <h2 class=no-num id="acks">Acknowledgments</h2>
 
+<p>Many thanks to
+Alex Danilo,
+Anne van Kesteren,
+Anoesj Sadraee,
+Austin Sullivan,
+Chase Phillips,
+Daseul Lee,
+Dru Knox,
+Edgar Chen,
+Emanuel Krivoy,
+Hazim Mohamed,
+Ingvar Stepanyan,
+Jari Jalkanen,
+Joshua Bell,
+Kagami Sascha Rosylight,
+Marcos Cáceres,
+Martin Thomson,
+Olivier Yiptong,
+Philip Jägenstedt,
+Randell Jesup,
+Richard Stotz,
+Ruth John,
+Sid Vishnoi,
+Sihui Liu,
+Stefan Sauer,
+Thomas Steiner,
+Victor Costan, and
+Youenn Fablet
+for being awesome!
+
 <p>This standard is written by <span lang=nl>Marijn Kruisselbrink</span>
 (<a href=https://www.google.com/>Google</a>, <a href=mailto:mek@chromium.org>mek@chromium.org</a>).
 
