@@ -1048,6 +1048,8 @@ as well as obtaining and changing the size of, a single file.
 A {{FileSystemSyncAccessHandle}} offers synchronous methods. This allows for higher performance on
 contexts where asynchronous operations come with high overhead, e.g., WebAssembly.
 
+A {{FileSystemSyncAccessHandle}} has a <dfn for="FileSystemSyncAccessHandle">file position cursor</dfn> initialized at byte offset 0 from the top of the file.
+
 <div algorithm>
 To <dfn>create a new FileSystemSyncAccessHandle</dfn> given a [=file entry=] |file|
 in a [=/Realm=] |realm|, run these steps:
@@ -1065,6 +1067,7 @@ in a [=/Realm=] |realm|, run these steps:
   : |handle| . {{FileSystemSyncAccessHandle/read()|read}}(|buffer|)
   : |handle| . {{FileSystemSyncAccessHandle/read()|read}}(|buffer|, { {{FileSystemReadWriteOptions/at}} })
   :: Reads the contents of the file associated with |handle| into |buffer|, optionally at a given offset.
+  :: The file cursor is updated when {{FileSystemSyncAccessHandle/read()}} is called to point to the byte after the last byte read.
 </div>
 
 Issue(35): Specify how Access Handles should react when reading from a file that has been modified externally.
@@ -1076,8 +1079,10 @@ The <dfn method for=FileSystemSyncAccessHandle>read(|buffer|, {{FileSystemReadWr
 1. Let |bufferSize| be |buffer|'s [=byte length=].
 1. Let |fileContents| be [=this=].[=FileSystemSyncAccessHandle/[[file]]=]'s [=file entry/binary data=].
 1. Let |fileSize| be |fileContents|'s [=byte sequence/length=].
-1. Let |readStart| be |options|.{{FileSystemReadWriteOptions/at}}.
-1. If |readStart| is larger than |fileSize|, return 0.
+1. Let |readStart| be |options|["{{FileSystemReadWriteOptions/at}}"], if given; otherwise [=this=]'s [=FileSystemSyncAccessHandle/file position cursor=].
+1. If |readStart| is larger than |fileSize|:
+    1. Set [=this=]'s [=FileSystemSyncAccessHandle/file position cursor=] to |fileSize|.
+    1. Return 0.
 1. Let |readEnd| be |readStart| + (|bufferSize| &minus; 1).
 1. If |readEnd| is larger than |fileSize|, set |readEnd| to |fileSize|.
 1. Let |bytes| be a [=byte sequence=] containing the bytes from |readStart| to |readEnd| of |fileContents|.
@@ -1088,6 +1093,7 @@ The <dfn method for=FileSystemSyncAccessHandle>read(|buffer|, {{FileSystemReadWr
     1. Otherwise set |result| to 0.
 1. Let |arrayBuffer| be |buffer|'s [=underlying buffer=].
 1. [=ArrayBuffer/write|Write=] |bytes| into |arrayBuffer|.
+1. Set [=this=]'s [=FileSystemSyncAccessHandle/file position cursor=] to |readStart| + |result|.
 1. Return |result|.
 
 </div>
@@ -1099,6 +1105,7 @@ The <dfn method for=FileSystemSyncAccessHandle>read(|buffer|, {{FileSystemReadWr
   : |handle| . {{FileSystemSyncAccessHandle/write()|write}}(|buffer|, { {{FileSystemReadWriteOptions/at}} })
   :: Writes the content of |buffer| into the file associated with |handle|, optionally at a given offset, and returns the number of written bytes.
      Checking the returned number of written bytes allows callers to detect and handle errors and partial writes.
+  :: The file cursor is updated when {{write}} is called to point to the byte after the last byte written.
 </div>
 
 <!-- TODO(fivedots): Figure out how to properly check the available storage quota (in this method and others) by passing the right storage shelf. -->
@@ -1106,7 +1113,7 @@ The <dfn method for=FileSystemSyncAccessHandle>read(|buffer|, {{FileSystemReadWr
 The <dfn method for=FileSystemSyncAccessHandle>write(|buffer|, {{FileSystemReadWriteOptions}}: |options|)</dfn> method steps are:
 
 1. If [=this=].[=[[state]]=] is "`closed`", throw an {{InvalidStateError}}.
-1. Let |writePosition| be |options|.{{FileSystemReadWriteOptions/at}}.
+1. Let |writePosition| be |options|["{{FileSystemReadWriteOptions/at}}"], if given; otherwise [=this=]'s [=FileSystemSyncAccessHandle/file position cursor=].
 1. Let |fileContents| be a copy of [=this=].[=FileSystemSyncAccessHandle/[[file]]=]'s [=file entry/binary data=].
 1. Let |oldSize| be |fileContents|'s [=byte sequence/length=].
 1. Let |bufferSize| be |buffer|'s [=byte length=].
@@ -1134,9 +1141,12 @@ The <dfn method for=FileSystemSyncAccessHandle>write(|buffer|, {{FileSystemReadW
 
 1. If the operations modifying the [=this=].[=FileSystemSyncAccessHandle/[[file]]=]'s [=file entry/binary data=] in the previous steps
    failed:
-    1. If there were partial writes and the number of bytes that were written from |buffer| is known,
-       return the number of bytes that were written from |buffer|.
+    1. If there were partial writes and the number of bytes that were written from |buffer| is known:
+        1. Let |bytesWritten| be the number of bytes that were written from |buffer|.
+        1. Set [=this=]'s [=FileSystemSyncAccessHandle/file position cursor=] to |writePosition| + |bytesWritten|.
+        1. Return |bytesWritten|.
     1. Otherwise throw an {{InvalidStateError}}.
+1. Set [=this=]'s [=FileSystemSyncAccessHandle/file position cursor=] to |writePosition| + |bufferSize|.
 1. Return |bufferSize|.
 
 </div>
@@ -1146,6 +1156,8 @@ The <dfn method for=FileSystemSyncAccessHandle>write(|buffer|, {{FileSystemReadW
 <div class="note domintro">
   : |handle| . {{FileSystemSyncAccessHandle/truncate()|truncate}}(|newSize|)
   :: Resizes the file associated with |handle| to be |newSize| bytes long. If |newSize| is larger than the current file size this pads the file with null bytes; otherwise it truncates the file.
+
+  :: The file cursor is updated when {{truncate}} is called. If the cursor is smaller than |newSize|, it remains unchanged. If the cursor is larger than |newSize|, it is set to |newSize|.
 </div>
 
 <div algorithm>
@@ -1166,6 +1178,7 @@ The <dfn method for=FileSystemSyncAccessHandle>truncate(|newSize|)</dfn> method 
       in |fileContents|.
    1. If the operations modifying the [=this=].[=FileSystemSyncAccessHandle/[[file]]=]'s [=file entry/binary data=] in the previous steps
       failed, throw an {{InvalidStateError}}.
+1. If [=this=]'s [=FileSystemSyncAccessHandle/file position cursor=] is greater than |newSize|, then set [=FileSystemSyncAccessHandle/file position cursor=] to |newSize|.
 
 </div>
 
