@@ -1067,7 +1067,7 @@ in a [=/Realm=] |realm|, run these steps:
   : |handle| . {{FileSystemSyncAccessHandle/read()|read}}(|buffer|)
   : |handle| . {{FileSystemSyncAccessHandle/read()|read}}(|buffer|, { {{FileSystemReadWriteOptions/at}} })
   :: Reads the contents of the file associated with |handle| into |buffer|, optionally at a given offset.
-  :: The file cursor is updated when {{read}} is called to point to the byte after the last byte read.
+  :: The file cursor is updated when {{FileSystemSyncAccessHandle/read()}} is called to point to the byte after the last byte read.
 </div>
 
 Issue(35): Specify how Access Handles should react when reading from a file that has been modified externally.
