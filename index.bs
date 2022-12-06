@@ -641,7 +641,6 @@ The <dfn method for=FileSystemDirectoryHandle>getDirectoryHandle(|name|, |option
   : await |directoryHandle| . {{FileSystemDirectoryHandle/removeEntry()|removeEntry}}(|name|, { {{FileSystemRemoveOptions/recursive}}: true })
   :: Removes the entry named |name| in the directory represented by |directoryHandle|.
      If that entry is a directory, its contents will also be deleted recursively.
-     recursively.
 
      Attempting to delete a file or directory that does not exist is considered success.
 </div>
