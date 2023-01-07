@@ -370,7 +370,7 @@ The <dfn method for=FileSystemFileHandle>createWritable(|options|)</dfn> method 
   : |handle| = await |fileHandle| . {{FileSystemFileHandle/createSyncAccessHandle()|createSyncAccessHandle}}()
   :: Returns a {{FileSystemSyncAccessHandle}} that can be used to read from/write to the file.
      Changes made through |handle| might be immediately reflected in the file represented by |fileHandle|.
-     To ensure the changes are reflected in this file, the handle can be flushed or closed.
+     To ensure the changes are reflected in this file, the handle can be flushed.
 
      Creating a {{FileSystemSyncAccessHandle}} [=file entry/lock/take|takes an exclusive lock=] on the
      [=FileSystemHandle/entry=] associated with |fileHandle|. This prevents the creation of
@@ -676,7 +676,6 @@ The <dfn method for=FileSystemDirectoryHandle>removeEntry(|name|, |options|)</df
       1. [=/Resolve=] |result| with `undefined`.
   1. [=/Reject=] |result| with a {{NotFoundError}}.
 1. Return |result|.
-
 
 </div>
 
@@ -1198,7 +1197,6 @@ The <dfn method for=FileSystemSyncAccessHandle>getSize()</dfn> method steps are:
 1. If [=this=].[=[[state]]=] is "`closed`", throw an {{InvalidStateError}}.
 1. Return [=this=].[=FileSystemSyncAccessHandle/[[file]]=]'s [=file entry/binary data=]'s [=byte sequence/length=].
 
-
 </div>
 
 ### The {{FileSystemSyncAccessHandle/flush()}} method ### {#api-filesystemsyncaccesshandle-flush}
@@ -1211,7 +1209,12 @@ The <dfn method for=FileSystemSyncAccessHandle>getSize()</dfn> method steps are:
 <div algorithm>
 The <dfn method for=FileSystemSyncAccessHandle>flush()</dfn> method steps are:
 
-Issue(71): Fill in, after figuring out language to describe flushing at the OS level.
+1. If [=this=].[=[[state]]=] is "`closed`", throw an {{InvalidStateError}}.
+1. Attempt to transfer all cached modifications of the file's content the file
+   system's underlying storage device.
+
+   Note: This may be a no-op on some file systems, such as in-memory file
+   systems, which do not have a "disk" to flush to.
 
 </div>
 
@@ -1219,15 +1222,18 @@ Issue(71): Fill in, after figuring out language to describe flushing at the OS l
 
 <div class="note domintro">
   : |handle| . {{FileSystemSyncAccessHandle/close()}}
-  :: Flushes the access handle and then closes it. Closing an access handle disables any further operations on it and
-     [=file entry/lock/release|releases the lock=] on the [=FileSystemHandle/entry=] associated with |handle|.
+  :: Closes the access handle. This disables any further operations on it and
+     [=file entry/lock/release|releases the lock=] on the
+     [=FileSystemHandle/entry=] associated with |handle|.
 </div>
 
 <div algorithm>
 The <dfn method for=FileSystemSyncAccessHandle>close()</dfn> method steps are
 to set [=this=].[=[[state]]=] to "`closed`".
 
-Issue(71): Figure out language to describe flushing the file at the OS level before closing the handle.
+Note: This method does not guarantee that all file modifications will be
+immediately reflected in the underlying storage device. Call the
+{{FileSystemSyncAccessHandle/flush()}} method if you require this guarantee.
 
 </div>
 
