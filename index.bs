@@ -1209,7 +1209,7 @@ The <dfn method for=FileSystemSyncAccessHandle>getSize()</dfn> method steps are:
 <div algorithm>
 The <dfn method for=FileSystemSyncAccessHandle>flush()</dfn> method steps are:
 
-1. If [=this=].[=[[state]]=] is "`closed`", throw an {{InvalidStateError}}.
+1. If [=this=].[=[[state]]=] is "`closed`", [=throw=] an "{{InvalidStateError}}" {{DOMException}}.
 1. Attempt to transfer all cached modifications of the file's content the file
    system's underlying storage device.
 
