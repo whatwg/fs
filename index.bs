@@ -1082,7 +1082,7 @@ The <dfn method for=FileSystemSyncAccessHandle>read(|buffer|, {{FileSystemReadWr
    |options|["{{FileSystemReadWriteOptions/at}}"] [=map/exists=]; otherwise
    [=this=]'s [=FileSystemSyncAccessHandle/file position cursor=].
 1. If the underlying file system does not support reading from a file offset of
-   |readStart|, throw a {{TypeError}}.
+   |readStart|, [=throw=] a {{TypeError}}.
 1. If |readStart| is larger than |fileSize|:
     1. Set [=this=]'s [=FileSystemSyncAccessHandle/file position cursor=] to |fileSize|.
     1. Return 0.
