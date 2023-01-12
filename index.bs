@@ -212,7 +212,7 @@ Their [=deserialization steps=], given |serialized| and |value| are:
 
 1. If |serialized|.\[[Origin]] is not [=same origin=] with
    |value|'s [=relevant settings object=]'s [=environment settings object/origin=],
-   then throw a "{{DataCloneError}}" {{DOMException}}.
+   then [=throw=] a "{{DataCloneError}}" {{DOMException}}.
 1. Set |value|'s [=FileSystemHandle/entry=] to |serialized|.\[[Entry]]
 
 </div>
@@ -293,7 +293,7 @@ The <dfn method for=FileSystemFileHandle>getFile()</dfn> method steps are:
   1. Let |access| be the result of running [=this=]'s [=FileSystemHandle/entry=]'s
      [=file system entry/query access=] given "`read`".
   1. If |access| is not "{{PermissionState/granted}}",
-     reject |result| with a "{{NotAllowedError}}" {{DOMException}} and abort.
+     [=/reject=] |result| with a "{{NotAllowedError}}" {{DOMException}} and abort.
   1. Let |entry| be [=this=]'s [=FileSystemHandle/entry=].
   1. Let |f| be a new {{File}}.
   1. Set |f|'s <a spec=FileAPI>snapshot state</a> to the current state of |entry|.
@@ -351,7 +351,7 @@ The <dfn method for=FileSystemFileHandle>createWritable(|options|)</dfn> method 
      [=file system entry/request access=] given "`readwrite`".
      If that throws an exception, [=reject=] |result| with that exception and abort.
   1. If |access| is not "{{PermissionState/granted}}",
-     reject |result| with a "{{NotAllowedError}}" {{DOMException}} and abort.
+     [=reject=] |result| with a "{{NotAllowedError}}" {{DOMException}} and abort.
   1. Let |entry| be [=this=]'s [=FileSystemHandle/entry=].
   1. Let |lockResult| be the result of [=file entry/lock/take|taking a lock=] with "`shared`" on |entry|.
   1. If |lockResult| is false, [=reject=] |result| with a "{{NoModificationAllowedError}}" {{DOMException}} and abort.
@@ -393,10 +393,10 @@ The <dfn method for=FileSystemFileHandle>createSyncAccessHandle()</dfn> method s
      [=file system entry/request access=] given "`readwrite`".
      If that throws an exception, [=reject=] |result| with that exception and abort.
   1. If |access| is not "{{PermissionState/granted}}",
-     reject |result| with a "{{NotAllowedError}}" {{DOMException}} and abort.
+     [=reject=] |result| with a "{{NotAllowedError}}" {{DOMException}} and abort.
   1. Let |entry| be [=this=]'s [=FileSystemHandle/entry=].
   1. If |entry| does not represent a [=/file system entry=] in an [=origin private file system=],
-     reject |result| with an "{{InvalidStateError}}" {{DOMException}} and abort.
+     [=reject=] |result| with an "{{InvalidStateError}}" {{DOMException}} and abort.
   1. Let |lockResult| be the result of [=file entry/lock/take|taking a lock=] with "`exclusive`" on |entry|.
   1. If |lockResult| is false, [=reject=] |result| with a "{{NoModificationAllowedError}}" {{DOMException}} and abort.
   1. Let |handle| be the result of [=create a new FileSystemSyncAccessHandle|creating a new FileSystemSyncAccessHandle=]
@@ -462,7 +462,7 @@ and its async iterator |iterator| are:
    [=file system entry/query access=] given "`read`".
 
 1. If |access| is not "{{PermissionState/granted}}",
-   throw a "{{NotAllowedError}}" {{DOMException}}.
+   [=throw=] a "{{NotAllowedError}}" {{DOMException}}.
 
 1. Set |iterator|'s <dfn for="FileSystemDirectoryHandle-iterator">past results</dfn> to an empty [=/set=].
 
@@ -480,7 +480,8 @@ and its async iterator |iterator|:
    [=file system entry/query access=] given "`read`".
 
 1. If |access| is not "{{PermissionState/granted}}",
-   reject |promise| with a "{{NotAllowedError}}" {{DOMException}} and return |promise|.
+   [=reject=] |promise| with a "{{NotAllowedError}}" {{DOMException}} and
+   return |promise|.
 
 1. Let |child| be a [=/file system entry=] in |directory|'s [=directory entry/children=],
    such that |child|'s [=file system entry/name=] is not contained in |iterator|'s [=past results=],
@@ -543,7 +544,7 @@ The <dfn method for=FileSystemDirectoryHandle>getFileHandle(|name|, |options|)</
     1. Let |access| be the result of running [=this=]'s [=FileSystemHandle/entry=]'s
        [=file system entry/query access=] given "`read`".
   1. If |access| is not "{{PermissionState/granted}}",
-     reject |result| with a "{{NotAllowedError}}" {{DOMException}} and abort.
+     [=/reject=] |result| with a "{{NotAllowedError}}" {{DOMException}} and abort.
 
   1. [=set/For each=] |child| of |entry|'s [=directory entry/children=]:
     1. If |child|'s [=file system entry/name=] equals |name|:
@@ -604,7 +605,7 @@ The <dfn method for=FileSystemDirectoryHandle>getDirectoryHandle(|name|, |option
     1. Let |access| be the result of running [=this=]'s [=FileSystemHandle/entry=]'s
        [=file system entry/query access=] given "`read`".
   1. If |access| is not "{{PermissionState/granted}}",
-     reject |result| with a "{{NotAllowedError}}" {{DOMException}} and abort.
+     [=/reject=] |result| with a "{{NotAllowedError}}" {{DOMException}} and abort.
 
   1. [=set/For each=] |child| of |entry|'s [=directory entry/children=]:
     1. If |child|'s [=file system entry/name=] equals |name|:
@@ -657,7 +658,7 @@ The <dfn method for=FileSystemDirectoryHandle>removeEntry(|name|, |options|)</df
      [=file system entry/request access=] given "`readwrite`".
      If that throws an exception, [=reject=] |result| with that exception and abort.
   1. If |access| is not "{{PermissionState/granted}}",
-     reject |result| with a "{{NotAllowedError}}" {{DOMException}} and abort.
+     [=/reject=] |result| with a "{{NotAllowedError}}" {{DOMException}} and abort.
 
   1. [=set/For each=] |child| of |entry|'s [=directory entry/children=]:
     1. If |child|'s [=file system entry/name=] equals |name|:
@@ -799,7 +800,8 @@ in a [=/Realm=] |realm|, run these steps:
    1. Run these steps [=in parallel=]:
       1. Let |access| be the result of running |file|'s [=file system entry/query access=] given "`readwrite`".
       1. If |access| is not "{{PermissionState/granted}}",
-         reject |closeResult| with a "{{NotAllowedError}}" {{DOMException}} and abort.
+         [=/reject=] |closeResult| with a "{{NotAllowedError}}" {{DOMException}}
+         and abort.
       1. Run [=implementation-defined=] malware scans and safe browsing checks.
          If these checks fail, [=/reject=] |closeResult| with an "{{AbortError}}" {{DOMException}} and abort.
       1. Set |stream|.[=FileSystemWritableFileStream/[[file]]=]'s [=file entry/binary data=] to |stream|.[=[[buffer]]=].
@@ -837,14 +839,14 @@ runs these steps:
    1. Let |access| be the result of running |stream|'s [=FileSystemWritableFileStream/[[file]]=]'s
       [=file system entry/query access=] given "`readwrite`".
    1. If |access| is not "{{PermissionState/granted}}",
-      reject |p| with a "{{NotAllowedError}}" {{DOMException}} and abort.
+      [=/reject=] |p| with a "{{NotAllowedError}}" {{DOMException}} and abort.
    1. Let |command| be |input|.{{WriteParams/type}} if |input| is a {{WriteParams}},
       and {{WriteCommandType/"write"}} otherwise.
    1. If |command| is {{WriteCommandType/"write"}}:
       1. Let |data| be |input|.{{WriteParams/data}} if |input| is a {{WriteParams}},
          and |input| otherwise.
       1. If |data| is `undefined`,
-         reject |p| with a {{TypeError}} and abort.
+         [=/reject=] |p| with a {{TypeError}} and abort.
       1. Let |writePosition| be |stream|.[=[[seekOffset]]=].
       1. If |input| is a {{WriteParams}} and |input|.{{WriteParams/position}} is not `undefined`,
          set |writePosition| to |input|.{{WriteParams/position}}.
@@ -1073,7 +1075,7 @@ Issue(35): Specify how Access Handles should react when reading from a file that
 <div algorithm>
 The <dfn method for=FileSystemSyncAccessHandle>read(|buffer|, {{FileSystemReadWriteOptions}}: |options|)</dfn> method steps are:
 
-1. If [=this=].[=[[state]]=] is "`closed`", throw an "{{InvalidStateError}}"
+1. If [=this=].[=[[state]]=] is "`closed`", [=throw=] an "{{InvalidStateError}}"
    {{DOMException}}.
 1. Let |bufferSize| be |buffer|'s [=byte length=].
 1. Let |fileContents| be [=this=].[=FileSystemSyncAccessHandle/[[file]]=]'s [=file entry/binary data=].
@@ -1115,13 +1117,13 @@ The <dfn method for=FileSystemSyncAccessHandle>read(|buffer|, {{FileSystemReadWr
 <div algorithm>
 The <dfn method for=FileSystemSyncAccessHandle>write(|buffer|, {{FileSystemReadWriteOptions}}: |options|)</dfn> method steps are:
 
-1. If [=this=].[=[[state]]=] is "`closed`", throw an "{{InvalidStateError}}"
+1. If [=this=].[=[[state]]=] is "`closed`", [=throw=] an "{{InvalidStateError}}"
    {{DOMException}}.
 1. Let |writePosition| be |options|["{{FileSystemReadWriteOptions/at}}"] if
    |options|["{{FileSystemReadWriteOptions/at}}"] [=map/exists=]; otherwise
    [=this=]'s [=FileSystemSyncAccessHandle/file position cursor=].
 1. If the underlying file system does not support writing to a file offset of
-   |writePosition|, throw a {{TypeError}}.
+   |writePosition|, [=throw=] a {{TypeError}}.
 1. Let |fileContents| be a copy of [=this=].[=FileSystemSyncAccessHandle/[[file]]=]'s [=file entry/binary data=].
 1. Let |oldSize| be |fileContents|'s [=byte sequence/length=].
 1. Let |bufferSize| be |buffer|'s [=byte length=].
@@ -1140,7 +1142,7 @@ The <dfn method for=FileSystemSyncAccessHandle>write(|buffer|, {{FileSystemReadW
       |oldSize| &minus; (|writePosition| + |bufferSize|) bytes of |fileContents|.
 1. Let |newSize| be |head|'s [=byte sequence/length=] + |bufferSize| + |tail|'s [=byte sequence/length=].
 1. If |newSize| &minus; |oldSize| exceeds the available [=storage quota=],
-   throw a "{{QuotaExceededError}}" {{DOMException}}.
+   [=throw=] a "{{QuotaExceededError}}" {{DOMException}}.
 1. Set [=this=].[=FileSystemSyncAccessHandle/[[file]]=]'s [=file entry/binary data=] to the concatenation of |head|, the contents of |buffer| and |tail|.
 
   Note: The mechanism used to access buffer's contents is left purposely vague.
@@ -1154,7 +1156,7 @@ The <dfn method for=FileSystemSyncAccessHandle>write(|buffer|, {{FileSystemReadW
         1. Let |bytesWritten| be the number of bytes that were written from |buffer|.
         1. Set [=this=]'s [=FileSystemSyncAccessHandle/file position cursor=] to |writePosition| + |bytesWritten|.
         1. Return |bytesWritten|.
-    1. Otherwise throw an "{{InvalidStateError}}" {{DOMException}}.
+    1. Otherwise [=throw=] an "{{InvalidStateError}}" {{DOMException}}.
 1. Set [=this=]'s [=FileSystemSyncAccessHandle/file position cursor=] to |writePosition| + |bufferSize|.
 1. Return |bufferSize|.
 
@@ -1172,24 +1174,25 @@ The <dfn method for=FileSystemSyncAccessHandle>write(|buffer|, {{FileSystemReadW
 <div algorithm>
 The <dfn method for=FileSystemSyncAccessHandle>truncate(|newSize|)</dfn> method steps are:
 
-1. If [=this=].[=[[state]]=] is "`closed`", throw an "{{InvalidStateError}}"
+1. If [=this=].[=[[state]]=] is "`closed`", [=throw=] an "{{InvalidStateError}}"
    {{DOMException}}.
 1. Let |fileContents| be a copy of [=this=].[=FileSystemSyncAccessHandle/[[file]]=]'s [=file entry/binary data=].
 1. 1. Let |oldSize| be the [=byte sequence/length=] of [=this=].[=FileSystemSyncAccessHandle/[[file]]=]'s [=file entry/binary data=].
 1. If the underlying file system does not support setting a file's size to
-   |newSize|, throw a {{TypeError}}.
+   |newSize|, [=throw=] a {{TypeError}}.
 1. If |newSize| is larger than |oldSize|:
-   1. If |newSize| &minus; |oldSize| exceeds the available [=storage quota=], throw a "{{QuotaExceededError}}" {{DOMException}}.
+   1. If |newSize| &minus; |oldSize| exceeds the available [=storage quota=],
+      [=throw=] a "{{QuotaExceededError}}" {{DOMException}}.
    1. Set [=this=].[=FileSystemSyncAccessHandle/[[file]]=]'s to a [=byte sequence=] formed by concatenating
       |fileContents| with a [=byte sequence=]
       containing |newSize| &minus; |oldSize| 0x00 bytes.
    1. If the operations modifying the [=this=].[=FileSystemSyncAccessHandle/[[file]]=]'s [=file entry/binary data=] in the previous steps
-      failed, throw an "{{InvalidStateError}}" {{DOMException}}.
+      failed, [=throw=] an "{{InvalidStateError}}" {{DOMException}}.
 1. Otherwise, if |newSize| is smaller than |oldSize|:
    1. Set [=this=].[=FileSystemSyncAccessHandle/[[file]]=]'s to a [=byte sequence=] containing the first |newSize| bytes
       in |fileContents|.
    1. If the operations modifying the [=this=].[=FileSystemSyncAccessHandle/[[file]]=]'s [=file entry/binary data=] in the previous steps
-      failed, throw an "{{InvalidStateError}}" {{DOMException}}.
+      failed, [=throw=] an "{{InvalidStateError}}" {{DOMException}}.
 1. If [=this=]'s [=FileSystemSyncAccessHandle/file position cursor=] is greater than |newSize|, then set [=FileSystemSyncAccessHandle/file position cursor=] to |newSize|.
 
 </div>
@@ -1204,7 +1207,7 @@ The <dfn method for=FileSystemSyncAccessHandle>truncate(|newSize|)</dfn> method 
 <div algorithm>
 The <dfn method for=FileSystemSyncAccessHandle>getSize()</dfn> method steps are:
 
-1. If [=this=].[=[[state]]=] is "`closed`", throw an "{{InvalidStateError}}"
+1. If [=this=].[=[[state]]=] is "`closed`", [=throw=] an "{{InvalidStateError}}"
    {{DOMException}}.
 1. Return [=this=].[=FileSystemSyncAccessHandle/[[file]]=]'s [=file entry/binary data=]'s [=byte sequence/length=].
 
