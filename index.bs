@@ -94,24 +94,29 @@ A <dfn export id=file>file entry</dfn> additionally consists of
 a <dfn for="file entry">lock</dfn> (a string that may exclusively be "`open`", "`taken-exclusive`" or "`taken-shared`")
 and a <dfn for="file entry">shared lock count</dfn> (a number representing the number shared locks that are taken at a given point in time).
 
+The <dfn id="file-system-lock-queue">file system lock queue</dfn> is a
+[=parallel queue=] to be used for all <a for=/>tasks</a> involving a
+[=file entry/lock=].
+
 <div algorithm>
 To <dfn for="file entry/lock">take</dfn> a [=file entry/lock=] with a |value| of "`exclusive`" or "`shared`" on a given [=file entry=] |file|:
 
 1. Let |lock| be the |file|'s [=file entry/lock=].
-1. Let |count| be the |file|'s [=file entry/shared lock count=].
-1. If |value| is "`exclusive`":
-   1. If |lock| is "`open`":
-     1. Set lock to "`taken-exclusive`".
-     1. Return true.
-1. If |value| is "`shared`":
-   1. If |lock| is "`open`":
-     1. Set |lock| to "`taken-shared`".
-     1. Set |count| to 1.
-     1. Return true.
-   1. Otherwise, if |lock| is "`taken-shared`":
-     1. Increase |count| by one.
-     1. Return true.
-1. Return false.
+1. [=Enqueue the following steps=] to the [=file system lock queue=]:
+  1. Let |count| be the |file|'s [=file entry/shared lock count=].
+  1. If |value| is "`exclusive`":
+     1. If |lock| is "`open`":
+       1. Set lock to "`taken-exclusive`".
+       1. Return true.
+  1. If |value| is "`shared`":
+     1. If |lock| is "`open`":
+       1. Set |lock| to "`taken-shared`".
+       1. Set |count| to 1.
+       1. Return true.
+     1. Otherwise, if |lock| is "`taken-shared`":
+       1. Increase |count| by one.
+       1. Return true.
+  1. Return false.
 
 </div>
 
@@ -120,11 +125,12 @@ To <dfn for="file entry/lock">release</dfn> a [=file entry/lock=] on a given [=f
 run these steps:
 
 1. Let |lock| be the |file|'s associated [=file entry/lock=].
-1. Let |count| be the |file|'s [=file entry/shared lock count=].
-1. If |lock| is "`taken-shared`":
-  1. Decrease |count| by one.
-  1. If |count| is 0, set |lock| to "`open`".
-1. Otherwise, set |lock| to "`open`".
+1. [=Enqueue the following steps=] to the [=file system lock queue=]:
+  1. Let |count| be the |file|'s [=file entry/shared lock count=].
+  1. If |lock| is "`taken-shared`":
+    1. Decrease |count| by one.
+    1. If |count| is 0, set |lock| to "`open`".
+  1. Otherwise, set |lock| to "`open`".
 
 </div>
 
