@@ -94,42 +94,51 @@ A <dfn export id=file>file entry</dfn> additionally consists of
 a <dfn for="file entry">lock</dfn> (a string that may exclusively be "`open`", "`taken-exclusive`" or "`taken-shared`")
 and a <dfn for="file entry">shared lock count</dfn> (a number representing the number shared locks that are taken at a given point in time).
 
-The <dfn id="file-system-lock-queue">file system lock queue</dfn> is a
-[=parallel queue=] to be used for all [=tasks=] involving a [=file entry/lock=].
+A user agent has an associated <dfn>file system lock queue</dfn> which is the
+result of [=starting a new parallel queue=]. This queue is to be used for all
+[=tasks=] involving a [=file entry/lock=].
 
 <div algorithm>
-To <dfn for="file entry/lock">take</dfn> a [=file entry/lock=] with a |value| of "`exclusive`" or "`shared`" on a given [=file entry=] |file|:
+To <dfn for="file entry/lock">take</dfn> a [=file entry/lock=] with a |value| of
+"`exclusive`" or "`shared`" on a given [=file entry=] |file|, with promise |p|,
+algorithm |onLockTakenAlgorithm|, and [=task source=] |replyTaskSource|:
 
-1. Let |lock| be the |file|'s [=file entry/lock=].
 1. [=Enqueue the following steps=] to the [=file system lock queue=]:
+  1. Let |lock| be the |file|'s [=file entry/lock=].
   1. Let |count| be the |file|'s [=file entry/shared lock count=].
   1. If |value| is "`exclusive`":
      1. If |lock| is "`open`":
        1. Set lock to "`taken-exclusive`".
-       1. Return true.
+       1. [=Queue a task=] to |replyTaskSource| to run |onLockTakenAlgorithm|
+          and return.
   1. If |value| is "`shared`":
      1. If |lock| is "`open`":
        1. Set |lock| to "`taken-shared`".
        1. Set |count| to 1.
-       1. Return true.
+       1. [=Queue a task=] to |replyTaskSource| to run |onLockTakenAlgorithm|
+          and return.
      1. Otherwise, if |lock| is "`taken-shared`":
        1. Increase |count| by one.
-       1. Return true.
-  1. Return false.
+       1. [=Queue a task=] to |replyTaskSource| to run |onLockTakenAlgorithm|
+          and return.
+  1. [=Reject=] |p| with a "{{NoModificationAllowedError}}" {{DOMException}}.
 
 </div>
 
 <div algorithm>
-To <dfn for="file entry/lock">release</dfn> a [=file entry/lock=] on a given [=file entry=] |file|,
-run these steps:
+To <dfn for="file entry/lock">release</dfn> a [=file entry/lock=] on a given
+[=file entry=] |file| with algorithm |onLockReleasedAlgorithm| and
+[=task source=] |replyTaskSource|:
 
-1. Let |lock| be the |file|'s associated [=file entry/lock=].
 1. [=Enqueue the following steps=] to the [=file system lock queue=]:
+  1. Let |lock| be the |file|'s associated [=file entry/lock=].
   1. Let |count| be the |file|'s [=file entry/shared lock count=].
   1. If |lock| is "`taken-shared`":
     1. Decrease |count| by one.
     1. If |count| is 0, set |lock| to "`open`".
   1. Otherwise, set |lock| to "`open`".
+  1. [=Queue a task=] to |replyTaskSource| to run |onLockReleasedAlgorithm|
+      and return.
 
 </div>
 
@@ -506,18 +515,17 @@ The <dfn method for=FileSystemFileHandle>createWritable(|options|)</dfn> method 
      If that throws an exception, [=reject=] |result| with that exception and abort.
   1. If |access| is not "{{PermissionState/granted}}",
      [=reject=] |result| with a "{{NotAllowedError}}" {{DOMException}} and abort.
-
   1. If |entry| is `null`, [=/reject=] |result| with a
      "{{NotFoundError}}" {{DOMException}} and abort.
   1. [=Assert=]: |entry| is a [=file entry=].
-
-  1. Let |lockResult| be the result of [=file entry/lock/take|taking a lock=] with "`shared`" on |entry|.
-  1. If |lockResult| is false, [=reject=] |result| with a "{{NoModificationAllowedError}}" {{DOMException}} and abort.
-  1. Let |stream| be the result of <a>creating a new `FileSystemWritableFileStream`</a>
-     for |entry| in [=this=]'s [=relevant realm=].
-  1. If |options|.{{FileSystemCreateWritableOptions/keepExistingData}} is true:
-    1. Set |stream|.[=[[buffer]]=] to a copy of |entry|'s [=file entry/binary data=].
-  1. [=/Resolve=] |result| with |stream|.
+  1. Let |onLockTakenAlgorithm| be these steps:
+    1. Let |stream| be the result of <a>creating a new `FileSystemWritableFileStream`</a>
+       for |entry| in [=this=]'s [=relevant realm=].
+    1. If |options|.{{FileSystemCreateWritableOptions/keepExistingData}} is true:
+      1. Set |stream|.[=[[buffer]]=] to a copy of |entry|'s [=file entry/binary data=].
+    1. [=/Resolve=] |result| with |stream|.
+  1. [=file entry/lock/take|Take a lock=] with "`shared`" on |entry| with
+     |result|, |onLockTakenAlgorithm|, and [=storage task source=].
 1. Return |result|.
 
 </div>
@@ -1055,8 +1063,9 @@ given a [=file entry=] |file| in a [=/Realm=] |realm|:
          Note: It is expected that this atomically updates the contents of the file on disk
          being written to.
 
-      1. [=file entry/lock/release|Release the lock=] on |stream|.[=FileSystemWritableFileStream/[[file]]=].
-      1. [=/Resolve=] |closeResult| with `undefined`.
+      1. Let |onLockReleasedAlgorithm| be this step: [=/Resolve=] |closeResult| with `undefined`.
+      1. [=file entry/lock/release|Release the lock=] on |stream|'s [=FileSystemWritableFileStream/[[file]]=]
+         with |onLockReleasedAlgorithm|, and the currently running [=task=]'s' [=task source|source=].
    1. Return |closeResult|.
 1. Let |abortAlgorithm| be this step: [=file entry/lock/release|release the lock=] on
    |stream|.[=FileSystemWritableFileStream/[[file]]=].
