@@ -100,8 +100,8 @@ result of [=starting a new parallel queue=]. This queue is to be used for all
 
 <div algorithm>
 To <dfn for="file entry/lock">take</dfn> a [=file entry/lock=] with a |value| of
-"`exclusive`" or "`shared`" on a given [=file entry=] |file|, with promise |p|,
-algorithm |onLockTakenAlgorithm|, and [=task source=] |replyTaskSource|:
+"`exclusive`" or "`shared`" on a given [=file entry=] |file| and with
+algorithm |resultAlgorithm|:
 
 1. [=Enqueue the following steps=] to the [=file system lock queue=]:
   1. Let |lock| be the |file|'s [=file entry/lock=].
@@ -109,26 +109,26 @@ algorithm |onLockTakenAlgorithm|, and [=task source=] |replyTaskSource|:
   1. If |value| is "`exclusive`":
      1. If |lock| is "`open`":
        1. Set lock to "`taken-exclusive`".
-       1. [=Queue a task=] to |replyTaskSource| to run |onLockTakenAlgorithm|
-          and return.
+       1. [=Queue a global task=] on the [=storage task source=] to run
+          |resultAlgorithm| with a value of "`success`" and return.
   1. If |value| is "`shared`":
      1. If |lock| is "`open`":
        1. Set |lock| to "`taken-shared`".
        1. Set |count| to 1.
-       1. [=Queue a task=] to |replyTaskSource| to run |onLockTakenAlgorithm|
-          and return.
+       1. [=Queue a global task=] on the [=storage task source=] to run
+          |resultAlgorithm| with a value of "`success`" and return.
      1. Otherwise, if |lock| is "`taken-shared`":
        1. Increase |count| by one.
-       1. [=Queue a task=] to |replyTaskSource| to run |onLockTakenAlgorithm|
-          and return.
-  1. [=Reject=] |p| with a "{{NoModificationAllowedError}}" {{DOMException}}.
+       1. [=Queue a global task=] on the [=storage task source=] to run
+          |resultAlgorithm| with a value of "`success`" and return.
+  1. [=Queue a global task=] on the [=storage task source=] to run
+     |resultAlgorithm| with a value of "`failure`" and return.
 
 </div>
 
 <div algorithm>
 To <dfn for="file entry/lock">release</dfn> a [=file entry/lock=] on a given
-[=file entry=] |file| with algorithm |onLockReleasedAlgorithm| and
-[=task source=] |replyTaskSource|:
+[=file entry=] |file| and with an optional algorithm |onLockReleasedAlgorithm|:
 
 1. [=Enqueue the following steps=] to the [=file system lock queue=]:
   1. Let |lock| be the |file|'s associated [=file entry/lock=].
@@ -137,8 +137,8 @@ To <dfn for="file entry/lock">release</dfn> a [=file entry/lock=] on a given
     1. Decrease |count| by one.
     1. If |count| is 0, set |lock| to "`open`".
   1. Otherwise, set |lock| to "`open`".
-  1. [=Queue a task=] to |replyTaskSource| to run |onLockReleasedAlgorithm|
-      and return.
+  1. If |onLockReleasedAlgorithm| was given, [=queue a global task=] on the
+     [=storage task source=] to run |onLockReleasedAlgorithm|.
 
 </div>
 
@@ -518,14 +518,17 @@ The <dfn method for=FileSystemFileHandle>createWritable(|options|)</dfn> method 
   1. If |entry| is `null`, [=/reject=] |result| with a
      "{{NotFoundError}}" {{DOMException}} and abort.
   1. [=Assert=]: |entry| is a [=file entry=].
-  1. Let |onLockTakenAlgorithm| be these steps:
+  1. Let |lockResultAlgorithm| be an algorithm which takes a |lockResult| and
+     runs these steps:
+    1. If |lockResult| is "`failure`", [=reject=] |result| with a
+       "{{NoModificationAllowedError}}" {{DOMException}} and abort.
     1. Let |stream| be the result of <a>creating a new `FileSystemWritableFileStream`</a>
        for |entry| in [=this=]'s [=relevant realm=].
     1. If |options|.{{FileSystemCreateWritableOptions/keepExistingData}} is true:
       1. Set |stream|.[=[[buffer]]=] to a copy of |entry|'s [=file entry/binary data=].
     1. [=/Resolve=] |result| with |stream|.
-  1. [=file entry/lock/take|Take a lock=] with "`shared`" on |entry| with
-     |result|, |onLockTakenAlgorithm|, and [=storage task source=].
+  1. [=file entry/lock/take|Take a lock=] with "`shared`" on |entry| and with
+     |lockResultAlgorithm|.
 1. Return |result|.
 
 </div>
@@ -571,11 +574,23 @@ The <dfn method for=FileSystemFileHandle>createSyncAccessHandle()</dfn> method s
 
   1. If |entry| does not represent a [=/file system entry=] in an [=origin private file system=],
      [=reject=] |result| with an "{{InvalidStateError}}" {{DOMException}} and abort.
+<<<<<<< HEAD
   1. Let |lockResult| be the result of [=file entry/lock/take|taking a lock=] with "`exclusive`" on |entry|.
   1. If |lockResult| is false, [=reject=] |result| with a "{{NoModificationAllowedError}}" {{DOMException}} and abort.
   1. Let |handle| be the result of <a>creating a new `FileSystemSyncAccessHandle`</a>
      for |entry| in [=this=]'s [=relevant realm=].
   1. [=/Resolve=] |result| with |handle|.
+=======
+  1. Let |lockResultAlgorithm| be an algorithm which takes a |lockResult| and
+     runs these steps:
+     1. If |lockResult| is "`failure`", [=reject=] |result| with a
+       "{{NoModificationAllowedError}}" {{DOMException}} and abort.
+     1. Let |handle| be the result of <a>creating a new `FileSystemSyncAccessHandle`</a>
+        for |entry| in [=this=]'s [=relevant realm=].
+     1. [=/Resolve=] |result| with |handle|.
+  1. Let |lockResult| be the result of [=file entry/lock/take|taking a lock=]
+     with "`exclusive`" on |entry| and with |lockResultAlgorithm|.
+>>>>>>> f840b90 (pass only one algorithm)
 1. Return |result|.
 
 </div>
@@ -1064,8 +1079,8 @@ given a [=file entry=] |file| in a [=/Realm=] |realm|:
          being written to.
 
       1. Let |onLockReleasedAlgorithm| be this step: [=/Resolve=] |closeResult| with `undefined`.
-      1. [=file entry/lock/release|Release the lock=] on |stream|'s [=FileSystemWritableFileStream/[[file]]=]
-         with |onLockReleasedAlgorithm|, and the currently running [=task=]'s' [=task source|source=].
+      1. [=file entry/lock/release|Release the lock=] on |stream|'s
+         [=FileSystemWritableFileStream/[[file]]=] with |onLockReleasedAlgorithm|.
    1. Return |closeResult|.
 1. Let |abortAlgorithm| be this step: [=file entry/lock/release|release the lock=] on
    |stream|.[=FileSystemWritableFileStream/[[file]]=].
