@@ -109,20 +109,23 @@ algorithm |resultAlgorithm|:
   1. If |value| is "`exclusive`":
      1. If |lock| is "`open`":
        1. Set lock to "`taken-exclusive`".
-       1. [=Queue a global task=] on the [=storage task source=] to run
-          |resultAlgorithm| with a value of "`success`" and return.
+       1. [=Queue a storage task=] given |file|'s [=relevant global object=] and
+          |resultAlgorithm| with a value of "`success`".
+       1. Return.
   1. If |value| is "`shared`":
      1. If |lock| is "`open`":
        1. Set |lock| to "`taken-shared`".
        1. Set |count| to 1.
-       1. [=Queue a global task=] on the [=storage task source=] to run
-          |resultAlgorithm| with a value of "`success`" and return.
+       1. [=Queue a storage task=] given |file|'s [=relevant global object=] and
+          |resultAlgorithm| with a value of "`success`".
+       1. Return.
      1. Otherwise, if |lock| is "`taken-shared`":
-       1. Increase |count| by one.
-       1. [=Queue a global task=] on the [=storage task source=] to run
-          |resultAlgorithm| with a value of "`success`" and return.
-  1. [=Queue a global task=] on the [=storage task source=] to run
-     |resultAlgorithm| with a value of "`failure`" and return.
+       1. Increase |count| by 1.
+       1. [=Queue a storage task=] given |file|'s [=relevant global object=] and
+          |resultAlgorithm| with a value of "`success`".
+       1. Return.
+  1. [=Queue a storage task=] given |file|'s [=relevant global object=] and
+     |resultAlgorithm| with a value of "`failure`".
 
 </div>
 
@@ -134,11 +137,11 @@ To <dfn for="file entry/lock">release</dfn> a [=file entry/lock=] on a given
   1. Let |lock| be the |file|'s associated [=file entry/lock=].
   1. Let |count| be the |file|'s [=file entry/shared lock count=].
   1. If |lock| is "`taken-shared`":
-    1. Decrease |count| by one.
+    1. Decrease |count| by 1.
     1. If |count| is 0, set |lock| to "`open`".
   1. Otherwise, set |lock| to "`open`".
-  1. If |onLockReleasedAlgorithm| was given, [=queue a global task=] on the
-     [=storage task source=] to run |onLockReleasedAlgorithm|.
+  1. If |onLockReleasedAlgorithm| was given, [=queue a storage task=] given
+     |file|'s [=relevant global object=] and |onLockReleasedAlgorithm|.
 
 </div>
 
@@ -1519,10 +1522,11 @@ The <dfn method for=FileSystemSyncAccessHandle>close()</dfn> method steps are:
 
 1. If [=this=]'s [=[[state]]=] is "`closed`", return.
 1. Set [=this=]'s [=[[state]]=] to "`closed`".
-1. Let |onLockReleasedAlgorithm| be an algorithm that does nothing.
+1. Set |lockReleased| to false.
+1. Let |onLockReleasedAlgorithm| be this step: Set |lockReleased| to true.
 1. [=file entry/lock/release|Release the lock=] on
    [=this=]'s [=FileSystemSyncAccessHandle/[[file]]=] with |onLockReleasedAlgorithm|.
-1. Wait for |onLockReleasedAlgorithm| to run.
+1. [=Pause=] until |lockReleased| is set to true.
 
 Note: This method does not guarantee that all file modifications will be
 immediately reflected in the underlying storage device. Call the
