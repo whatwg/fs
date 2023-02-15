@@ -577,13 +577,6 @@ The <dfn method for=FileSystemFileHandle>createSyncAccessHandle()</dfn> method s
 
   1. If |entry| does not represent a [=/file system entry=] in an [=origin private file system=],
      [=reject=] |result| with an "{{InvalidStateError}}" {{DOMException}} and abort.
-<<<<<<< HEAD
-  1. Let |lockResult| be the result of [=file entry/lock/take|taking a lock=] with "`exclusive`" on |entry|.
-  1. If |lockResult| is false, [=reject=] |result| with a "{{NoModificationAllowedError}}" {{DOMException}} and abort.
-  1. Let |handle| be the result of <a>creating a new `FileSystemSyncAccessHandle`</a>
-     for |entry| in [=this=]'s [=relevant realm=].
-  1. [=/Resolve=] |result| with |handle|.
-=======
   1. Let |lockResultAlgorithm| be an algorithm which takes a |lockResult| and
      runs these steps:
      1. If |lockResult| is "`failure`", [=reject=] |result| with a
@@ -591,9 +584,8 @@ The <dfn method for=FileSystemFileHandle>createSyncAccessHandle()</dfn> method s
      1. Let |handle| be the result of <a>creating a new `FileSystemSyncAccessHandle`</a>
         for |entry| in [=this=]'s [=relevant realm=].
      1. [=/Resolve=] |result| with |handle|.
-  1. Let |lockResult| be the result of [=file entry/lock/take|taking a lock=]
-     with "`exclusive`" on |entry| and with |lockResultAlgorithm|.
->>>>>>> f840b90 (pass only one algorithm)
+  1. [=file entry/lock/take|Take a lock=] with "`exclusive`" on |entry| and with
+     |lockResultAlgorithm|.
 1. Return |result|.
 
 </div>
