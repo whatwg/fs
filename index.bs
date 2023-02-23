@@ -94,54 +94,46 @@ A <dfn export id=file>file entry</dfn> additionally consists of
 a <dfn for="file entry">lock</dfn> (a string that may exclusively be "`open`", "`taken-exclusive`" or "`taken-shared`")
 and a <dfn for="file entry">shared lock count</dfn> (a number representing the number shared locks that are taken at a given point in time).
 
-A user agent has an associated <dfn>file system lock queue</dfn> which is the
+A user agent has an associated <dfn>file system queue</dfn> which is the
 result of [=starting a new parallel queue=]. This queue is to be used for all
-[=tasks=] involving a [=file entry/lock=].
+file sytem operations.
 
 <div algorithm>
 To <dfn for="file entry/lock">take</dfn> a [=file entry/lock=] with a |value| of
-"`exclusive`" or "`shared`" on a given [=file entry=] |file| and with
-algorithm |resultAlgorithm|:
+"`exclusive`" or "`shared`" on a given [=file entry=] |file|:
 
-1. [=Enqueue the following steps=] to the [=file system lock queue=]:
-  1. Let |lock| be the |file|'s [=file entry/lock=].
-  1. Let |count| be the |file|'s [=file entry/shared lock count=].
-  1. If |value| is "`exclusive`":
-     1. If |lock| is "`open`":
-       1. Set lock to "`taken-exclusive`".
-       1. [=Queue a storage task=] given |file|'s [=relevant global object=] and
-          |resultAlgorithm| with a value of "`success`".
-       1. Return.
-  1. If |value| is "`shared`":
-     1. If |lock| is "`open`":
-       1. Set |lock| to "`taken-shared`".
-       1. Set |count| to 1.
-       1. [=Queue a storage task=] given |file|'s [=relevant global object=] and
-          |resultAlgorithm| with a value of "`success`".
-       1. Return.
-     1. Otherwise, if |lock| is "`taken-shared`":
-       1. Increase |count| by 1.
-       1. [=Queue a storage task=] given |file|'s [=relevant global object=] and
-          |resultAlgorithm| with a value of "`success`".
-       1. Return.
-  1. [=Queue a storage task=] given |file|'s [=relevant global object=] and
-     |resultAlgorithm| with a value of "`failure`".
+1. Let |lock| be the |file|'s [=file entry/lock=].
+1. Let |count| be the |file|'s [=file entry/shared lock count=].
+1. If |value| is "`exclusive`":
+   1. If |lock| is "`open`":
+     1. Set lock to "`taken-exclusive`".
+     1. Return a value of "`success`".
+1. If |value| is "`shared`":
+   1. If |lock| is "`open`":
+     1. Set |lock| to "`taken-shared`".
+     1. Set |count| to 1.
+     1. Return a value of "`success`".
+   1. Otherwise, if |lock| is "`taken-shared`":
+     1. Increase |count| by 1.
+     1. Return a value of "`success`".
+1. Return a value of "`failure`".
+
+Note: These steps must be run on the [=file system queue=].
 
 </div>
 
 <div algorithm>
 To <dfn for="file entry/lock">release</dfn> a [=file entry/lock=] on a given
-[=file entry=] |file| and with an optional algorithm |onLockReleasedAlgorithm|:
+[=file entry=] |file|:
 
-1. [=Enqueue the following steps=] to the [=file system lock queue=]:
-  1. Let |lock| be the |file|'s associated [=file entry/lock=].
-  1. Let |count| be the |file|'s [=file entry/shared lock count=].
-  1. If |lock| is "`taken-shared`":
-    1. Decrease |count| by 1.
-    1. If |count| is 0, set |lock| to "`open`".
-  1. Otherwise, set |lock| to "`open`".
-  1. If |onLockReleasedAlgorithm| was given, [=queue a storage task=] given
-     |file|'s [=relevant global object=] and |onLockReleasedAlgorithm|.
+1. Let |lock| be the |file|'s associated [=file entry/lock=].
+1. Let |count| be the |file|'s [=file entry/shared lock count=].
+1. If |lock| is "`taken-shared`":
+  1. Decrease |count| by 1.
+  1. If |count| is 0, set |lock| to "`open`".
+1. Otherwise, set |lock| to "`open`".
+
+Note: These steps must be run on the [=file system queue=].
 
 </div>
 
@@ -511,27 +503,32 @@ The <dfn method for=FileSystemFileHandle>createWritable(|options|)</dfn> method 
 
 1. Let |result| be [=a new promise=].
 1. Let |locator| be [=this=]'s [=FileSystemHandle/locator=].
-1. Run these steps [=in parallel=]:
+1. Let |realm| be [=this=]'s [=relevant Realm=].
+1. [=Enqueue the following steps=] to the [=file system queue=]:
   1. Let |entry| be the result of [=locating an entry=] given |locator|.
   1. Let |access| be the result of running |entry|'s
      [=file system entry/request access=] given "`readwrite`".
-     If that throws an exception, [=reject=] |result| with that exception and abort.
+     If that throws an exception, [=reject=] |result| with that exception and
+     abort these steps.
   1. If |access| is not "{{PermissionState/granted}}",
-     [=reject=] |result| with a "{{NotAllowedError}}" {{DOMException}} and abort.
+     [=reject=] |result| with a "{{NotAllowedError}}" {{DOMException}} and
+     abort these steps.
+
   1. If |entry| is `null`, [=/reject=] |result| with a
      "{{NotFoundError}}" {{DOMException}} and abort.
   1. [=Assert=]: |entry| is a [=file entry=].
-  1. Let |lockResultAlgorithm| be an algorithm which takes a |lockResult| and
-     runs these steps:
-    1. If |lockResult| is "`failure`", [=reject=] |result| with a
-       "{{NoModificationAllowedError}}" {{DOMException}} and abort.
-    1. Let |stream| be the result of <a>creating a new `FileSystemWritableFileStream`</a>
-       for |entry| in [=this=]'s [=relevant realm=].
-    1. If |options|.{{FileSystemCreateWritableOptions/keepExistingData}} is true:
-      1. Set |stream|.[=[[buffer]]=] to a copy of |entry|'s [=file entry/binary data=].
-    1. [=/Resolve=] |result| with |stream|.
-  1. [=file entry/lock/take|Take a lock=] with "`shared`" on |entry| and with
-     |lockResultAlgorithm|.
+
+  1. Let |lockResult| be the result of [=file entry/lock/take|taking a lock=]
+     with "`shared`" on |entry|.
+  1. If |lockResult| is "`failure`", [=reject=] |result| with a
+     "{{NoModificationAllowedError}}" {{DOMException}} and abort these steps.
+
+  1. Let |stream| be the result of <a>creating a new `FileSystemWritableFileStream`</a>
+     for |entry| in |realm|.
+  1. If |options|'s {{FileSystemCreateWritableOptions/keepExistingData}} is true:
+     1. Set |stream|'s [=[[buffer]]=] to a copy of |entry|'s [=file entry/binary data=].
+  1. [=/Resolve=] |result| with |stream|.
+
 1. Return |result|.
 
 </div>
@@ -563,29 +560,33 @@ The <dfn method for=FileSystemFileHandle>createSyncAccessHandle()</dfn> method s
 
 1. Let |result| be [=a new promise=].
 1. Let |locator| be [=this=]'s [=FileSystemHandle/locator=].
-1. Run these steps [=in parallel=]:
+1. Let |realm| be [=this=]'s [=relevant Realm=].
+1. [=Enqueue the following steps=] to the [=file system queue=]:
   1. Let |entry| be the result of [=locating an entry=] given |locator|.
   1. Let |access| be the result of running |entry|'s
      [=file system entry/request access=] given "`readwrite`".
-     If that throws an exception, [=reject=] |result| with that exception and abort.
-  1. If |access| is not "{{PermissionState/granted}}",
-     [=reject=] |result| with a "{{NotAllowedError}}" {{DOMException}} and abort.
+     If that throws an exception, [=reject=] |result| with that exception and
+     abort these steps.
+  1. If |access| is not "{{PermissionState/granted}}", [=reject=] |result| with
+     a "{{NotAllowedError}}" {{DOMException}} and abort these steps.
 
   1. If |entry| is `null`, [=/reject=] |result| with a
      "{{NotFoundError}}" {{DOMException}} and abort.
   1. [=Assert=]: |entry| is a [=file entry=].
 
   1. If |entry| does not represent a [=/file system entry=] in an [=origin private file system=],
-     [=reject=] |result| with an "{{InvalidStateError}}" {{DOMException}} and abort.
-  1. Let |lockResultAlgorithm| be an algorithm which takes a |lockResult| and
-     runs these steps:
-     1. If |lockResult| is "`failure`", [=reject=] |result| with a
-       "{{NoModificationAllowedError}}" {{DOMException}} and abort.
-     1. Let |handle| be the result of <a>creating a new `FileSystemSyncAccessHandle`</a>
-        for |entry| in [=this=]'s [=relevant realm=].
-     1. [=/Resolve=] |result| with |handle|.
-  1. [=file entry/lock/take|Take a lock=] with "`exclusive`" on |entry| and with
-     |lockResultAlgorithm|.
+     [=reject=] |result| with an "{{InvalidStateError}}" {{DOMException}} and
+     abort these steps.
+
+  1. Let |lockResult| be the result of [=file entry/lock/take|taking a lock=]
+     with "`exclusive`" on |entry|.
+  1. If |lockResult| is "`failure`", [=reject=] |result| with a
+     "{{NoModificationAllowedError}}" {{DOMException}} and abort these steps.
+
+  1. Let |handle| be the result of <a>creating a new `FileSystemSyncAccessHandle`</a>
+     for |entry| in |realm|.
+  1. [=/Resolve=] |result| with |handle|.
+
 1. Return |result|.
 
 </div>
@@ -1055,30 +1056,38 @@ To
 given a [=file entry=] |file| in a [=/Realm=] |realm|:
 
 1. Let |stream| be a [=new=] {{FileSystemWritableFileStream}} in |realm|.
-1. Set |stream|.[=FileSystemWritableFileStream/[[file]]=] to |file|.
+1. Set |stream|'s [=FileSystemWritableFileStream/[[file]]=] to |file|.
 1. Let |writeAlgorithm| be an algorithm which takes a |chunk| argument
    and returns the result of running the [=write a chunk=] algorithm with |stream| and |chunk|.
 1. Let |closeAlgorithm| be these steps:
    1. Let |closeResult| be [=a new promise=].
-   1. Run these steps [=in parallel=]:
-      1. Let |access| be the result of running |file|'s [=file system entry/query access=] given "`readwrite`".
+   1. [=Enqueue the following steps=] to the [=file system queue=]:
+      1. Let |access| be the result of running |file|'s
+         [=file system entry/query access=] given "`readwrite`".
       1. If |access| is not "{{PermissionState/granted}}",
          [=/reject=] |closeResult| with a "{{NotAllowedError}}" {{DOMException}}
-         and abort.
+         and abort these steps.
+
       1. Run [=implementation-defined=] malware scans and safe browsing checks.
-         If these checks fail, [=/reject=] |closeResult| with an "{{AbortError}}" {{DOMException}} and abort.
-      1. Set |stream|.[=FileSystemWritableFileStream/[[file]]=]'s [=file entry/binary data=] to |stream|.[=[[buffer]]=].
-         If that throws an exception, [=/reject=] |closeResult| with that exception and abort.
+         If these checks fail, [=/reject=] |closeResult| with an
+         "{{AbortError}}" {{DOMException}} and abort these steps.
+      1. Set |stream|'s [=FileSystemWritableFileStream/[[file]]=]'s
+         [=file entry/binary data=] to |stream|'s [=[[buffer]]=].
+         If that throws an exception, [=/reject=] |closeResult| with that
+         exception and abort these steps.
 
-         Note: It is expected that this atomically updates the contents of the file on disk
-         being written to.
+         Note: It is expected that this atomically updates the contents of the
+         file on disk being written to.
 
-      1. Let |onLockReleasedAlgorithm| be this step: [=/Resolve=] |closeResult| with `undefined`.
-      1. [=file entry/lock/release|Release the lock=] on |stream|'s
-         [=FileSystemWritableFileStream/[[file]]=] with |onLockReleasedAlgorithm|.
+      1. [=file entry/lock/release|Release the lock=] on
+         |stream|'s [=FileSystemWritableFileStream/[[file]]=].
+      1. [=/Resolve=] |closeResult| with `undefined`.
+
    1. Return |closeResult|.
-1. Let |abortAlgorithm| be this step: [=file entry/lock/release|release the lock=] on
-   |stream|.[=FileSystemWritableFileStream/[[file]]=].
+1. Let |abortAlgorithm| be these steps:
+   1. [=enqueue steps|Enqueue this step=] to the [=file system queue=]:
+     1. [=file entry/lock/release|release the lock=] on
+        |stream|'s [=FileSystemWritableFileStream/[[file]]=].
 1. Let |highWaterMark| be 1.
 1. Let |sizeAlgorithm| be an algorithm that returns `1`.
 1. [=WritableStream/Set up=] |stream| with <a for="WritableStream/set up"><var
@@ -1515,10 +1524,11 @@ The <dfn method for=FileSystemSyncAccessHandle>close()</dfn> method steps are:
 1. If [=this=]'s [=[[state]]=] is "`closed`", return.
 1. Set [=this=]'s [=[[state]]=] to "`closed`".
 1. Set |lockReleased| to false.
-1. Let |onLockReleasedAlgorithm| be this step: Set |lockReleased| to true.
-1. [=file entry/lock/release|Release the lock=] on
-   [=this=]'s [=FileSystemSyncAccessHandle/[[file]]=] with |onLockReleasedAlgorithm|.
-1. [=Pause=] until |lockReleased| is set to true.
+1. Let |file| be [=this=]'s [=FileSystemSyncAccessHandle/[[file]]=].
+1. [=Enqueue the following steps=] to the [=file system queue=]:
+  1. [=file entry/lock/release|Release the lock=] on |file|.
+  1. Set |lockReleased| to true.
+1. [=Pause=] until |lockReleased| is true.
 
 Note: This method does not guarantee that all file modifications will be
 immediately reflected in the underlying storage device. Call the
