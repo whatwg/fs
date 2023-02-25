@@ -15,6 +15,7 @@ spec:webidl; type:dfn; text:resolve
 
 <pre class=anchors>
 urlPrefix: https://tc39.es/ecma262/; spec: ECMA-262
+  type: dfn; text: current realm; url: current realm
   type: dfn; text: realm; url: realm
 urlPrefix: https://storage.spec.whatwg.org/; spec: storage
   type: dfn; text: storage; url: site-storage
@@ -59,6 +60,8 @@ different storage mechanism with a different API for such files. The entry point
 
 A <dfn export id="entry">file system entry</dfn> is either a [=file entry=] or a [=directory entry=].
 
+<!-- TODO: Consider tying access checks to a path, to support handles which don't map to an entry -->
+
 Each [=/file system entry=] has an associated <dfn for="file system entry" id=entry-query-access>query access</dfn> algorithm, which takes "`read`"
 or "`readwrite`" <var ignore>mode</var> and returns a {{PermissionState}}. Unless specified
 otherwise it returns "{{PermissionState/denied}}". The algorithm is allowed to throw.
@@ -89,6 +92,8 @@ A <dfn export id=file>file entry</dfn> additionally consists of
 <dfn for="file entry">modification timestamp</dfn> (a number representing the number of milliseconds since the <a spec=FileAPI>Unix Epoch</a>),
 a <dfn for="file entry">lock</dfn> (a string that may exclusively be "`open`", "`taken-exclusive`" or "`taken-shared`")
 and a <dfn for="file entry">shared lock count</dfn> (a number representing the number shared locks that are taken at a given point in time).
+
+<!-- TODO: Consider tying a locks to a path, to support moves -->
 
 <div algorithm>
 To <dfn for="file entry/lock">take</dfn> a [=file entry/lock=] with a |value| of "`exclusive`" or "`shared`" on a given [=file entry=] |file|:
@@ -147,11 +152,9 @@ Exactly how external changes are reflected in the data structures defined by thi
 as well as how changes made to the data structures defined here are reflected externally
 is left up to individual user-agent implementations.
 
-A [=/file system entry=] |a| is <dfn for="entry">the same as</dfn> an [=/file system entry=] |b| if |a| is equal to |b|, or
-if |a| and |b| are backed by the same file or directory on the local file system.
-
-Issue(59): Explain better how entries map to files on disk (multiple entries can map to the same file or
-directory on disk but an entry doesn't have to map to any file on disk).
+A [=/file system entry=] |a| is <dfn for="file system entry">the same entry as</dfn>
+a [=/file system entry=] |b| if |a| is equal to |b|, or if |a| and |b| are
+backed by the same file or directory on the local file system.
 
 <div algorithm>
 
@@ -160,7 +163,7 @@ run these steps:
 
 1. Let |result| be [=a new promise=].
 1. Run these steps [=in parallel=]:
-  1. If |child| is [=the same as=] |root|,
+  1. If |child| is [=the same entry as=] |root|,
      [=/resolve=] |result| with an empty list, and abort.
   1. Let |childPromises| be « ».
   1. [=set/For each=] |entry| of |root|'s [=FileSystemHandle/entry=]'s [=children=]:
@@ -175,6 +178,33 @@ run these steps:
 1. Return |result|.
 
 </div>
+
+A <dfn export>file system path</dfn> represents a potential location of a
+[=/file system entry=]. For example, this may be to a virtual path that is
+mapped to real location on disk or in memory, may correspond directly to a
+path on the local file system, or may not correspond to any file on disk at all.
+
+The <dfn local-lt=locating>locate</dfn> algorithm takes a [=/file system path=] and
+returns either a [=/file system entry=] or `null`. The steps of this algorithm
+are [=implementation-defined=].
+
+The <dfn local-lt="getting the path">get the path</dfn> algorithm takes a
+[=/file system entry=] and returns a [=/file system path=].
+If [=locating=] a [=/file system path=] |path| returns a [=/file system entry=] |entry|,
+then [=getting the path=] of |entry| must return |path|.
+
+Each [=/file system path=] has an associated <dfn for="file system path">name</dfn> (a [=string=]),
+which represents the last path component of the file path. For example, if
+[=/file system path=] |path| corresponds to a location represented by a
+virtual path of `data/drafts/example.txt` relative to the root directory of an
+[=origin private file system=], |path|'s [=file system path/name=] should be `example.txt`.
+
+If [=locating=] a [=/file system path=] |path| returns a [=/file system entry=] |entry|, then
+|path|'s [=file system path/name=] must equal |entry|'s [=file system entry/name=].
+
+A [=/file system path=] |a| is <dfn for="file system path">the same path as</dfn>
+a [=/file system path=] |b| if |a| represents the same potential location of a
+[=/file system entry=] as |b|.
 
 ## The {{FileSystemHandle}} interface ## {#api-filesystemhandle}
 
@@ -193,9 +223,18 @@ interface FileSystemHandle {
 };
 </xmp>
 
-A {{FileSystemHandle}} object represents a [=/file system entry=]. Each {{FileSystemHandle}} object is associated
-with an <dfn for=FileSystemHandle export>entry</dfn> (a [=/file system entry=]). Multiple separate objects implementing
-the {{FileSystemHandle}} interface can all be associated with the same [=/file system entry=] simultaneously.
+A {{FileSystemHandle}} object represents a [=/file system path=].
+Each {{FileSystemHandle}} object is associated with a
+<dfn for=FileSystemHandle export>path</dfn> (a [=/file system path=]).
+Multiple separate objects implementing the {{FileSystemHandle}} interface can
+all be associated with the same [=/file system path=] simultaneously.
+
+<div algorithm>
+To <dfn for=FileSystemHandle id=get-handle-entry local-lt="getting the entry">get the entry</dfn>
+of a given {{FileSystemHandle}} |handle|, return the result of running
+[=locate=] given |handle|'s [=FileSystemHandle/path=].
+
+</div>
 
 <div algorithm="serialization steps">
 {{FileSystemHandle}} objects are [=serializable objects=].
@@ -203,7 +242,7 @@ the {{FileSystemHandle}} interface can all be associated with the same [=/file s
 Their [=serialization steps=], given |value|, |serialized| and <var ignore>forStorage</var> are:
 
 1. Set |serialized|.\[[Origin]] to |value|'s [=relevant settings object=]'s [=environment settings object/origin=].
-1. Set |serialized|.\[[Entry]] to |value|'s [=FileSystemHandle/entry=].
+1. Set |serialized|.\[[Path]] to |value|'s [=FileSystemHandle/path=].
 
 </div>
 
@@ -213,7 +252,7 @@ Their [=deserialization steps=], given |serialized| and |value| are:
 1. If |serialized|.\[[Origin]] is not [=same origin=] with
    |value|'s [=relevant settings object=]'s [=environment settings object/origin=],
    then [=throw=] a "{{DataCloneError}}" {{DOMException}}.
-1. Set |value|'s [=FileSystemHandle/entry=] to |serialized|.\[[Entry]]
+1. Set |value|'s [=FileSystemHandle/path=] to |serialized|.\[[Path]]
 
 </div>
 
@@ -226,14 +265,15 @@ Their [=deserialization steps=], given |serialized| and |value| are:
      of a directory.
 
   : |handle| . {{FileSystemHandle/name}}
-  :: Returns the [=file system entry/name=] of the entry represented by |handle|.
+  :: Returns the last path component of |handle|'s [=FileSystemHandle/path=].
 </div>
 
 The <dfn attribute for=FileSystemHandle>kind</dfn> getter steps are to return
 {{FileSystemHandleKind/"file"}} if [=this=] is a [=file entry=]; otherwise
 {{FileSystemHandleKind/"directory"}}.
 
-The <dfn attribute for=FileSystemHandle>name</dfn> getter steps are to return [=this=]'s [=file system entry/name=].
+The <dfn attribute for=FileSystemHandle>name</dfn> getter steps are to return
+[=this=]'s [=FileSystemHandle/path=]'s [=file system path/name=].
 
 ### The {{FileSystemHandle/isSameEntry()}} method ### {#api-filesystemhandle-issameentry}
 
@@ -248,7 +288,7 @@ The <dfn method for=FileSystemHandle>isSameEntry(|other|)</dfn> method steps are
 1. Let |realm| be [=this=]'s [=relevant Realm=].
 1. Let |p| be [=a new promise=] in |realm|.
 1. Run these steps [=in parallel=]:
-  1. If [=this=]'s [=FileSystemHandle/entry=] is [=the same as=] |other|'s [=FileSystemHandle/entry=],
+  1. If [=this=]'s [=FileSystemHandle/path=] is [=the same path as=] |other|'s [=FileSystemHandle/path=],
      [=/resolve=] |p| with true.
   1. Otherwise [=/resolve=] |p| with false.
 1. Return |p|.
@@ -271,7 +311,18 @@ interface FileSystemFileHandle : FileSystemHandle {
 };
 </xmp>
 
-A {{FileSystemFileHandle}}'s associated [=FileSystemHandle/entry=] must be a [=file entry=].
+A {{FileSystemFileHandle}}'s associated [=FileSystemHandle/path=]
+is expected to [=locate=] a [=file entry=].
+
+<div algorithm>
+To <dfn local-lt="creating a new FileSystemFileHandle">create a new FileSystemFileHandle</dfn>
+given a [=file entry=] |entry| in a [=/Realm=] |realm|, run these steps:
+
+1. Let |handle| be a [=new=] {{FileSystemFileHandle}} in |realm|.
+1. Set |handle|'s [=FileSystemHandle/path=] to the result of [=getting the path=] of |entry|.
+1. Return |handle|.
+
+</div>
 
 {{FileSystemFileHandle}} objects are [=serializable objects=]. Their [=serialization steps=] and
 [=deserialization steps=] are the same as those for {{FileSystemHandle}}.
@@ -280,7 +331,8 @@ A {{FileSystemFileHandle}}'s associated [=FileSystemHandle/entry=] must be a [=f
 
 <div class="note domintro">
   : <var ignore>file</var> = await |fileHandle| . {{FileSystemFileHandle/getFile()}}
-  :: Returns a {{File}} representing the state on disk of the entry represented by |handle|.
+  :: Returns a {{File}} representing the state on disk of the [=file entry=]
+     [=locate|locatable=] by |handle|'s [=FileSystemHandle/path=].
      If the file on disk changes or is removed after this method is called, the returned
      {{File}} object will likely be no longer readable.
 </div>
@@ -289,12 +341,18 @@ A {{FileSystemFileHandle}}'s associated [=FileSystemHandle/entry=] must be a [=f
 The <dfn method for=FileSystemFileHandle>getFile()</dfn> method steps are:
 
 1. Let |result| be [=a new promise=].
+1. Let |entry| be the the result of [=getting the entry=] for [=this=].
 1. Run these steps [=in parallel=]:
   1. Let |access| be the result of running [=this=]'s [=FileSystemHandle/entry=]'s
      [=file system entry/query access=] given "`read`".
   1. If |access| is not "{{PermissionState/granted}}",
      [=/reject=] |result| with a "{{NotAllowedError}}" {{DOMException}} and abort.
-  1. Let |entry| be [=this=]'s [=FileSystemHandle/entry=].
+
+  1. If |entry| is `null`, [=/reject=] |result| with a
+     "{{NotFoundError}}" {{DOMException}} and abort.
+  1. If |entry| is not a [=file entry=] [=/reject=] |result| with a
+     "{{TypeMismatchError}}" {{DOMException}} and abort.
+
   1. Let |f| be a new {{File}}.
   1. Set |f|'s <a spec=FileAPI>snapshot state</a> to the current state of |entry|.
   1. Set |f|'s underlying byte sequence to a copy of |entry|'s [=binary data=].
@@ -315,21 +373,24 @@ The <dfn method for=FileSystemFileHandle>getFile()</dfn> method steps are:
   : |stream| = await |fileHandle| . {{FileSystemFileHandle/createWritable()}}
   : |stream| = await |fileHandle| . {{FileSystemFileHandle/createWritable()|createWritable}}({ {{FileSystemCreateWritableOptions/keepExistingData}}: true/false })
   :: Returns a {{FileSystemWritableFileStream}} that can be used to write to the file. Any changes made through
-     |stream| won't be reflected in the file represented by |fileHandle| until the stream has been closed.
-     User agents try to ensure that no partial writes happen, i.e. the file represented by
-     |fileHandle| will either contain its old contents or it will contain whatever data was written
+     |stream| won't be reflected in the [=file entry=] [=locate|locatable=] by
+     |fileHandle|'s [=FileSystemHandle/path=] until the stream has been closed.
+     User agents try to ensure that no partial writes happen, i.e. the file
+     will either contain its old contents or it will contain whatever data was written
      through |stream| up until the stream has been closed.
 
-     This is typically implemented by writing data to a temporary file, and only replacing the file
-     represented by |fileHandle| with the temporary file when the writable filestream is closed.
+     This is typically implemented by writing data to a temporary file, and only replacing the
+     [=file entry=] [=locate|locatable=] by |fileHandle|'s [=FileSystemHandle/path=]
+     with the temporary file when the writable filestream is closed.
 
      If {{FileSystemCreateWritableOptions/keepExistingData}} is false or not specified,
      the temporary file starts out empty,
      otherwise the existing file is first copied to this temporary file.
 
      Creating a {{FileSystemWritableFileStream}} [=file entry/lock/take|takes a shared lock=] on the
-     [=FileSystemHandle/entry=] associated with |fileHandle|. This prevents the creation of
-     {{FileSystemSyncAccessHandle|FileSystemSyncAccessHandles}} for the entry, until the stream is closed.
+     [=file entry=] [=locate|locatable=] with |fileHandle|'s [=FileSystemHandle/path=].
+     This prevents the creation of {{FileSystemSyncAccessHandle|FileSystemSyncAccessHandles}}
+     for the entry, until the stream is closed.
 </div>
 
 <p class=XXX>See <a href=https://github.com/WICG/file-system-access/issues/67>WICG/file-system-access issue #67</a>
@@ -346,13 +407,19 @@ private file system=] via the {{FileSystemSyncAccessHandle}} interface.
 The <dfn method for=FileSystemFileHandle>createWritable(|options|)</dfn> method steps are:
 
 1. Let |result| be [=a new promise=].
+1. Let |entry| be the the result of [=getting the entry=] for [=this=].
 1. Run these steps [=in parallel=]:
   1. Let |access| be the result of running [=this=]'s [=FileSystemHandle/entry=]'s
      [=file system entry/request access=] given "`readwrite`".
      If that throws an exception, [=reject=] |result| with that exception and abort.
   1. If |access| is not "{{PermissionState/granted}}",
      [=reject=] |result| with a "{{NotAllowedError}}" {{DOMException}} and abort.
-  1. Let |entry| be [=this=]'s [=FileSystemHandle/entry=].
+
+  1. If |entry| is `null`, [=/reject=] |result| with a
+     "{{NotFoundError}}" {{DOMException}} and abort.
+  1. If |entry| is not a [=file entry=], [=/reject=] |result| with a
+     "{{TypeMismatchError}}" {{DOMException}} and abort.
+
   1. Let |lockResult| be the result of [=file entry/lock/take|taking a lock=] with "`shared`" on |entry|.
   1. If |lockResult| is false, [=reject=] |result| with a "{{NoModificationAllowedError}}" {{DOMException}} and abort.
   1. Let |stream| be the result of <a>creating a new <code>FileSystemWritableFileStream</code></a>
@@ -369,12 +436,14 @@ The <dfn method for=FileSystemFileHandle>createWritable(|options|)</dfn> method 
 <div class="note domintro">
   : |handle| = await |fileHandle| . {{FileSystemFileHandle/createSyncAccessHandle()|createSyncAccessHandle}}()
   :: Returns a {{FileSystemSyncAccessHandle}} that can be used to read from/write to the file.
-     Changes made through |handle| might be immediately reflected in the file represented by |fileHandle|.
+     Changes made through |handle| might be immediately reflected in the
+     [=file entry=] [=locate|locatable=] by |fileHandle|'s [=FileSystemHandle/path=].
      To ensure the changes are reflected in this file, the handle can be flushed.
 
      Creating a {{FileSystemSyncAccessHandle}} [=file entry/lock/take|takes an exclusive lock=] on the
-     [=FileSystemHandle/entry=] associated with |fileHandle|. This prevents the creation of
-     further {{FileSystemSyncAccessHandle}}s or {{FileSystemWritableFileStream}}s
+     [=file entry=] [=locate|locatable=] with |fileHandle|'s [=FileSystemHandle/path=].
+     This prevents the creation of further {{FileSystemSyncAccessHandle|FileSystemSyncAccessHandles}}
+     or {{FileSystemWritableFileStream|FileSystemWritableFileStreams}}
      for the entry, until the access handle is closed.
 
      The returned {{FileSystemSyncAccessHandle}} offers synchronous methods. This allows for higher performance
@@ -388,13 +457,19 @@ The <dfn method for=FileSystemFileHandle>createWritable(|options|)</dfn> method 
 The <dfn method for=FileSystemFileHandle>createSyncAccessHandle()</dfn> method steps are:
 
 1. Let |result| be [=a new promise=].
+1. Let |entry| be the the result of [=getting the entry=] for [=this=].
 1. Run these steps [=in parallel=]:
   1. Let |access| be the result of running [=this=]'s [=FileSystemHandle/entry=]'s
      [=file system entry/request access=] given "`readwrite`".
      If that throws an exception, [=reject=] |result| with that exception and abort.
   1. If |access| is not "{{PermissionState/granted}}",
      [=reject=] |result| with a "{{NotAllowedError}}" {{DOMException}} and abort.
-  1. Let |entry| be [=this=]'s [=FileSystemHandle/entry=].
+
+  1. If |entry| is `null`, [=/reject=] |result| with a
+     "{{NotFoundError}}" {{DOMException}} and abort.
+  1. If |entry| is not a [=file entry=], [=/reject=] |result| with a
+     "{{TypeMismatchError}}" {{DOMException}} and abort.
+
   1. If |entry| does not represent a [=/file system entry=] in an [=origin private file system=],
      [=reject=] |result| with an "{{InvalidStateError}}" {{DOMException}} and abort.
   1. Let |lockResult| be the result of [=file entry/lock/take|taking a lock=] with "`exclusive`" on |entry|.
@@ -434,7 +509,18 @@ interface FileSystemDirectoryHandle : FileSystemHandle {
 };
 </xmp>
 
-A {{FileSystemDirectoryHandle}}'s associated [=FileSystemHandle/entry=] must be a [=directory entry=].
+A {{FileSystemDirectoryHandle}}'s associated [=FileSystemHandle/path=]
+is expected to [=locate=] a [=directory entry=].
+
+<div algorithm>
+To <dfn local-lt="creating a new FileSystemDirectoryHandle">create a new FileSystemDirectoryHandle</dfn>
+given a [=directory entry=] |entry| in a [=/Realm=] |realm|, run these steps:
+
+1. Let |handle| be a [=new=] {{FileSystemDirectoryHandle}} in |realm|.
+1. Set |handle|'s [=FileSystemHandle/path=] to the result of [=getting the path=] of |entry|.
+1. Return |handle|.
+
+</div>
 
 {{FileSystemDirectoryHandle}} objects are [=serializable objects=]. Their [=serialization steps=] and
 [=deserialization steps=] are the same as those for {{FileSystemHandle}}.
@@ -446,9 +532,10 @@ A {{FileSystemDirectoryHandle}}'s associated [=FileSystemHandle/entry=] must be 
   : for await (let [|name|, |handle|] of |directoryHandle| . entries()) {}
   : for await (let |handle| of |directoryHandle| . values()) {}
   : for await (let |name| of |directoryHandle| . keys()) {}
-  :: Iterates over all entries whose parent is the entry represented by |directoryHandle|. Entries
-     that are created or deleted while the iteration is in progress might or might not be included.
-     No guarantees are given either way.
+  :: Iterates over all entries whose parent is the [=directory entry=]
+     [=locate|locatable=] by |directoryHandle|'s [=FileSystemHandle/path=].
+     Entries that are created or deleted while the iteration is in progress
+     might or might not be included. No guarantees are given either way.
 </div>
 
 Issue(15): In the future we might want to add arguments to the async iterable declaration to
@@ -474,7 +561,11 @@ and its async iterator |iterator|:
 
 1. Let |promise| be [=a new promise=].
 
-1. Let |directory| be |handle|'s [=FileSystemHandle/entry=].
+1. Let |directory| be the the result of [=getting the entry=] for |handle|.
+1. If |directory| is `null`, [=/reject=] |result| with a
+   "{{NotFoundError}}" {{DOMException}} and abort.
+1. If |directory| is not a [=directory entry=], [=/reject=] |result| with a
+   "{{TypeMismatchError}}" {{DOMException}} and abort.
 
 1. Let |access| be the result of running |handle|'s [=FileSystemHandle/entry=]'s
    [=file system entry/query access=] given "`read`".
@@ -498,9 +589,11 @@ and its async iterator |iterator|:
 1. Otherwise:
   1. [=set/Append=] |child|'s [=file system entry/name=] to |iterator|'s [=past results=].
   1. If |child| is a [=file entry=]:
-    1. Let |result| be a new {{FileSystemFileHandle}} associated with |child|.
+    1. Let |result| be the result of [=creating a new FileSystemFileHandle=]
+       with |child| in |handle|'s [=relevant Realm=].
   1. Otherwise:
-    1. Let |result| be a new {{FileSystemDirectoryHandle}} associated with |child|.
+    1. Let |result| be the result of [=creating a new FileSystemDirectoryHandle=]
+       with |child| in |handle|'s [=relevant Realm=].
   1. [=/Resolve=] |promise| with (|child|'s [=file system entry/name=], |result|).
 
 1. Return |promise|.
@@ -512,12 +605,14 @@ and its async iterator |iterator|:
 <div class="note domintro">
   : |fileHandle| = await |directoryHandle| . {{FileSystemDirectoryHandle/getFileHandle()|getFileHandle}}(|name|)
   : |fileHandle| = await |directoryHandle| . {{FileSystemDirectoryHandle/getFileHandle()|getFileHandle}}(|name|, { {{FileSystemGetFileOptions/create}}: false })
-  :: Returns a handle for a file named |name| in the directory represented by |directoryHandle|. If
-     no such file exists, this rejects.
+  :: Returns a handle for a file named |name| in the [=directory entry=]
+     [=locate|locatable=] by |directoryHandle|'s [=FileSystemHandle/path=].
+     If no such file exists, this rejects.
 
   : |fileHandle| = await |directoryHandle| . {{FileSystemDirectoryHandle/getFileHandle()|getFileHandle}}(|name|, { {{FileSystemGetFileOptions/create}}: true })
-  :: Returns a handle for a file named |name| in the directory represented by |directoryHandle|. If
-     no such file exists, this creates a new file. If no file with named |name| can be created this
+  :: Returns a handle for a file named |name| in the [=directory entry=]
+     [=locate|locatable=] by |directoryHandle|'s [=FileSystemHandle/path=].
+     If no such file exists, this creates a new file. If no file with named |name| can be created this
      rejects. Creation can fail because there already is a directory with the same name, because the
      name uses characters that aren't supported in file names on the underlying file system, or
      because the user agent for security reasons decided not to allow creation of the file.
@@ -532,10 +627,11 @@ and its async iterator |iterator|:
 The <dfn method for=FileSystemDirectoryHandle>getFileHandle(|name|, |options|)</dfn> method steps are:
 
 1. Let |result| be [=a new promise=].
+1. Let |realm| be [=this=]'s [=relevant Realm=].
+1. Let |entry| be the the result of [=getting the entry=] for [=this=].
 1. Run these steps [=in parallel=]:
   1. If |name| is not a [=valid file name=], [=/reject=] |result| with a {{TypeError}} and abort.
 
-  1. Let |entry| be [=this=]'s [=FileSystemHandle/entry=].
   1. If |options|.{{FileSystemGetFileOptions/create}} is true:
     1. Let |access| be the result of running [=this=]'s [=FileSystemHandle/entry=]'s
        [=file system entry/request access=] given "`readwrite`".
@@ -546,11 +642,17 @@ The <dfn method for=FileSystemDirectoryHandle>getFileHandle(|name|, |options|)</
   1. If |access| is not "{{PermissionState/granted}}",
      [=/reject=] |result| with a "{{NotAllowedError}}" {{DOMException}} and abort.
 
+  1. If |entry| is `null`, [=/reject=] |result| with a
+     "{{NotFoundError}}" {{DOMException}} and abort.
+  1. If |entry| is not a [=directory entry=], [=/reject=] |result| with a
+     "{{TypeMismatchError}}" {{DOMException}} and abort.
+
   1. [=set/For each=] |child| of |entry|'s [=directory entry/children=]:
     1. If |child|'s [=file system entry/name=] equals |name|:
       1. If |child| is a [=directory entry=]:
         1. [=/Reject=] |result| with a "{{TypeMismatchError}}" {{DOMException}} and abort.
-      1. [=/Resolve=] |result| with a new {{FileSystemFileHandle}} whose [=FileSystemHandle/entry=] is |child| and abort.
+      1. [=/Resolve=] |result| with the result of
+         [=creating a new FileSystemFileHandle=] with |child| in |realm| and abort.
   1. If |options|.{{FileSystemGetFileOptions/create}} is false:
     1. [=/Reject=] |result| with a "{{NotFoundError}}" {{DOMException}} and abort.
   1. Let |child| be a new [=file entry=] whose [=query access=] and [=request access=] algorithms
@@ -563,7 +665,8 @@ The <dfn method for=FileSystemDirectoryHandle>getFileHandle(|name|, |options|)</
      [=/reject=] |result| with that exception and abort.
 
      Issue(11): Better specify what possible exceptions this could throw.
-  1. [=/Resolve=] |result| with a new {{FileSystemFileHandle}} whose [=FileSystemHandle/entry=] is |child|.
+  1. [=/Resolve=] |result| with the result of
+     [=creating a new FileSystemFileHandle=] with |child| in |realm|.
 1. Return |result|.
 
 </div>
@@ -573,12 +676,14 @@ The <dfn method for=FileSystemDirectoryHandle>getFileHandle(|name|, |options|)</
 <div class="note domintro">
   : |subdirHandle| = await |directoryHandle| . {{FileSystemDirectoryHandle/getDirectoryHandle()|getDirectoryHandle}}(|name|)
   : |subdirHandle| = await |directoryHandle| . {{FileSystemDirectoryHandle/getDirectoryHandle()|getDirectoryHandle}}(|name|, { {{FileSystemGetDirectoryOptions/create}}: false })
-  :: Returns a handle for a directory named |name| in the directory represented by
-    |directoryHandle|. If no such directory exists, this rejects.
+  :: Returns a handle for a directory named |name| in the [=directory entry=]
+     [=locate|locatable=] by |directoryHandle|'s [=FileSystemHandle/path=].
+     If no such directory exists, this rejects.
 
   : |subdirHandle| = await |directoryHandle| . {{FileSystemDirectoryHandle/getDirectoryHandle()|getDirectoryHandle}}(|name|, { {{FileSystemGetDirectoryOptions/create}}: true })
-  :: Returns a handle for a directory named |name| in the directory represented by
-     |directoryHandle|. If no such directory exists, this creates a new directory. If creating the
+  :: Returns a handle for a directory named |name| in the [=directory entry=]
+     [=locate|locatable=] by |directoryHandle|'s [=FileSystemHandle/path=] .
+     If no such directory exists, this creates a new directory. If creating the
      directory failed, this rejects. Creation can fail because there already is a file with the same
      name, or because the name uses characters that aren't supported in file names on the underlying
      file system.
@@ -593,10 +698,11 @@ The <dfn method for=FileSystemDirectoryHandle>getFileHandle(|name|, |options|)</
 The <dfn method for=FileSystemDirectoryHandle>getDirectoryHandle(|name|, |options|)</dfn> method steps are:
 
 1. Let |result| be [=a new promise=].
+1. Let |realm| be [=this=]'s [=relevant Realm=].
+1. Let |entry| be the the result of [=getting the entry=] for [=this=].
 1. Run these steps [=in parallel=]:
   1. If |name| is not a [=valid file name=], [=/reject=] |result| with a {{TypeError}} and abort.
 
-  1. Let |entry| be [=this=]'s [=FileSystemHandle/entry=].
   1. If |options|.{{FileSystemGetDirectoryOptions/create}} is true:
     1. Let |access| be the result of running [=this=]'s [=FileSystemHandle/entry=]'s
        [=file system entry/request access=] given "`readwrite`".
@@ -607,11 +713,17 @@ The <dfn method for=FileSystemDirectoryHandle>getDirectoryHandle(|name|, |option
   1. If |access| is not "{{PermissionState/granted}}",
      [=/reject=] |result| with a "{{NotAllowedError}}" {{DOMException}} and abort.
 
+  1. If |entry| is `null`, [=/reject=] |result| with a
+     "{{NotFoundError}}" {{DOMException}} and abort.
+  1. If |entry| is not a [=directory entry=], [=/reject=] |result| with a
+     "{{TypeMismatchError}}" {{DOMException}} and abort.
+
   1. [=set/For each=] |child| of |entry|'s [=directory entry/children=]:
     1. If |child|'s [=file system entry/name=] equals |name|:
       1. If |child| is a [=file entry=]:
         1. [=/Reject=] |result| with a "{{TypeMismatchError}}" {{DOMException}} and abort.
-      1. [=/Resolve=] |result| with a new {{FileSystemDirectoryHandle}} whose [=FileSystemHandle/entry=] is |child| and abort.
+      1. [=/Resolve=] |result| with the result of
+         [=creating a new FileSystemDirectoryHandle=] with |child| in |realm| and abort.
   1. If |options|.{{FileSystemGetFileOptions/create}} is false:
     1. [=/Reject=] |result| with a "{{NotFoundError}}" {{DOMException}} and abort.
   1. Let |child| be a new [=directory entry=] whose [=query access=] and [=request access=]
@@ -623,7 +735,8 @@ The <dfn method for=FileSystemDirectoryHandle>getDirectoryHandle(|name|, |option
      [=/reject=] |result| with that exception and abort.
 
      Issue(11): Better specify what possible exceptions this could throw.
-  1. [=/Resolve=] |result| with a new {{FileSystemDirectoryHandle}} whose [=FileSystemHandle/entry=] is |child|.
+  1. [=/Resolve=] |result| with the result of
+     [=creating a new FileSystemDirectoryHandle=] with |child| in |realm|.
 1. Return |result|.
 
 </div>
@@ -633,14 +746,16 @@ The <dfn method for=FileSystemDirectoryHandle>getDirectoryHandle(|name|, |option
 <div class="note domintro">
   : await |directoryHandle| . {{FileSystemDirectoryHandle/removeEntry()|removeEntry}}(|name|)
   : await |directoryHandle| . {{FileSystemDirectoryHandle/removeEntry()|removeEntry}}(|name|, { {{FileSystemRemoveOptions/recursive}}: false })
-  :: If the directory represented by |directoryHandle| contains a file named |name|, or an empty
+  :: If the [=directory entry=] [=locate|locatable=] by |directoryHandle|'s
+     [=FileSystemHandle/path=] contains a file named |name|, or an empty
      directory named |name|, this will attempt to delete that file or directory.
 
      Attempting to delete a file or directory that does not exist is considered success,
      while attempting to delete a non-empty directory will result in a promise rejection.
 
   : await |directoryHandle| . {{FileSystemDirectoryHandle/removeEntry()|removeEntry}}(|name|, { {{FileSystemRemoveOptions/recursive}}: true })
-  :: Removes the entry named |name| in the directory represented by |directoryHandle|.
+  :: Removes the [=/file system entry=] named |name| in the [=directory entry=]
+     [=locate|locatable=] by |directoryHandle|'s [=FileSystemHandle/path=].
      If that entry is a directory, its contents will also be deleted recursively.
 
      Attempting to delete a file or directory that does not exist is considered success.
@@ -650,15 +765,20 @@ The <dfn method for=FileSystemDirectoryHandle>getDirectoryHandle(|name|, |option
 The <dfn method for=FileSystemDirectoryHandle>removeEntry(|name|, |options|)</dfn> method steps are:
 
 1. Let |result| be [=a new promise=].
+1. Let |entry| be the the result of [=getting the entry=] for [=this=].
 1. Run these steps [=in parallel=]:
   1. If |name| is not a [=valid file name=], [=/reject=] |result| with a {{TypeError}} and abort.
 
-  1. Let |entry| be [=this=]'s [=FileSystemHandle/entry=].
   1. Let |access| be the result of running [=this=]'s [=FileSystemHandle/entry=]'s
      [=file system entry/request access=] given "`readwrite`".
      If that throws an exception, [=reject=] |result| with that exception and abort.
   1. If |access| is not "{{PermissionState/granted}}",
      [=/reject=] |result| with a "{{NotAllowedError}}" {{DOMException}} and abort.
+
+  1. If |entry| is `null`, [=/reject=] |result| with a
+     "{{NotFoundError}}" {{DOMException}} and abort.
+  1. If |entry| is not a [=directory entry=], [=/reject=] |result| with a
+     "{{TypeMismatchError}}" {{DOMException}} and abort.
 
   1. [=set/For each=] |child| of |entry|'s [=directory entry/children=]:
     1. If |child|'s [=file system entry/name=] equals |name|:
@@ -725,9 +845,11 @@ if (relative_path === null) {
 </div>
 
 <div algorithm>
-The <dfn method for=FileSystemDirectoryHandle>resolve(|possibleDescendant|)</dfn> method steps are
-to return the result of [=file system entry/resolving=] |possibleDescendant|'s [=FileSystemHandle/entry=]
-relative to [=this=]'s [=FileSystemHandle/entry=].
+The <dfn method for=FileSystemDirectoryHandle>resolve(|possibleDescendant|)</dfn> method steps are:
+
+1. Let |entry| be the the result of [=getting the entry=] for [=this=].
+1. Let |possibleDescendantEntry| be the the result of [=getting the entry=] for |possibleDescendant|.
+1. Return the result of [=file system entry/resolving=] |possibleDescendantEntry| relative to |entry|.
 
 </div>
 
@@ -1305,8 +1427,8 @@ The <dfn method for=StorageManager>getDirectory()</dfn> method steps are:
   1. Set |dir|'s [=directory entry/children=] to an empty [=/set=].
   1. Set |map|["root"] to |dir|.
 
-1. Return [=a promise resolved with=] a new {{FileSystemDirectoryHandle}},
-   whose associated [=FileSystemHandle/entry=] is |map|["root"].
+1. Return [=a promise resolved with=] the result of
+   [=creating a new FileSystemDirectoryHandle=] with |map|["root"] in the [=current realm=].
 
 </div>
 
