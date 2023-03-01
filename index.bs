@@ -456,7 +456,7 @@ support for example recursive iteration.
 
 <div algorithm="iterator initialization">
 The [=asynchronous iterator initialization steps=] for a {{FileSystemDirectoryHandle}} |handle|
-and its async iterator |iterator| are:
+and its async |iterator| are:
 
 1. Let |access| be the result of running |handle|'s [=FileSystemHandle/entry=]'s
    [=file system entry/query access=] given "`read`".
