@@ -60,8 +60,6 @@ different storage mechanism with a different API for such files. The entry point
 
 A <dfn export id="entry">file system entry</dfn> is either a [=file entry=] or a [=directory entry=].
 
-<!-- TODO: Consider tying access checks to a path, to support handles which don't map to an entry -->
-
 Each [=/file system entry=] has an associated <dfn for="file system entry" id=entry-query-access>query access</dfn> algorithm, which takes "`read`"
 or "`readwrite`" <var ignore>mode</var> and returns a {{PermissionState}}. Unless specified
 otherwise it returns "{{PermissionState/denied}}". The algorithm is allowed to throw.
@@ -92,8 +90,6 @@ A <dfn export id=file>file entry</dfn> additionally consists of
 <dfn for="file entry">modification timestamp</dfn> (a number representing the number of milliseconds since the <a spec=FileAPI>Unix Epoch</a>),
 a <dfn for="file entry">lock</dfn> (a string that may exclusively be "`open`", "`taken-exclusive`" or "`taken-shared`")
 and a <dfn for="file entry">shared lock count</dfn> (a number representing the number shared locks that are taken at a given point in time).
-
-<!-- TODO: Consider tying a locks to a path, to support moves -->
 
 <div algorithm>
 To <dfn for="file entry/lock">take</dfn> a [=file entry/lock=] with a |value| of "`exclusive`" or "`shared`" on a given [=file entry=] |file|:
@@ -153,8 +149,8 @@ as well as how changes made to the data structures defined here are reflected ex
 is left up to individual user-agent implementations.
 
 A [=/file system entry=] |a| is <dfn for="file system entry">the same entry as</dfn>
-a [=/file system entry=] |b| if |a| is equal to |b|, or if |a| and |b| are
-backed by the same file or directory on the local file system.
+a [=/file system entry=] |b| if |a| is equal to |b|, or if [=getting the path=]
+of |a| returns [=the same path as=] [=getting the path=] of |b|.
 
 <div algorithm>
 
@@ -174,37 +170,45 @@ run these steps:
         1. [=list/Prepend=] |entry|'s [=file system entry/name=] to |path|.
         1. [=/Resolve=] |result| with |path|.
   1. [=Wait for all=] |childPromises|, with the these success steps:
-    1. If |result| hasn't been resolved yet, [=/resolve=] |result| with `null`.
+    1. If |result| hasn't been resolved yet, [=/resolve=] |result| with null.
 1. Return |result|.
 
 </div>
 
-A <dfn export>file system path</dfn> represents a potential location of a
-[=/file system entry=]. For example, this may be to a virtual path that is
-mapped to real location on disk or in memory, may correspond directly to a
-path on the local file system, or may not correspond to any file on disk at all.
+A <dfn export>file system path</dfn> is an opaque string that represents a
+potential location of a [=/file system entry=].
+For example, this may be a virtual path that is mapped to real location on disk
+or in memory, may correspond directly to a path on the local file system, or may
+not correspond to any file on disk at all.
 
 The <dfn local-lt=locating>locate</dfn> algorithm takes a [=/file system path=] and
-returns either a [=/file system entry=] or `null`. The steps of this algorithm
+returns either a [=/file system entry=] or null. The steps of this algorithm
 are [=implementation-defined=].
 
 The <dfn local-lt="getting the path">get the path</dfn> algorithm takes a
 [=/file system entry=] and returns a [=/file system path=].
-If [=locating=] a [=/file system path=] |path| returns a [=/file system entry=] |entry|,
-then [=getting the path=] of |entry| must return |path|.
+If [=locating=] a [=/file system path=] |path| returns a [=/file system entry=]
+|entry|, then [=getting the path=] of |entry| must return |path| if no
+intermediate file system operations were run. Typically the steps are symmetric
+to the [=locate=] algorithm.
 
-Each [=/file system path=] has an associated <dfn for="file system path">name</dfn> (a [=string=]),
-which represents the last path component of the file path. For example, if
-[=/file system path=] |path| corresponds to a location represented by a
-virtual path of `data/drafts/example.txt` relative to the root directory of an
-[=origin private file system=], |path|'s [=file system path/name=] should be `example.txt`.
+Each [=/file system path=] has an associated <dfn for="file system path">name</dfn> (a [=string=]).
+If [=locating=] [=/file system path=] |path| returns a
+[=/file system entry=] |entry|, then |entry|'s [=file system entry/name=]
+must be the same as |path|'s[=file system path/name=].
+
+Note: This generally represents the last path component of the file path as
+perceived by the user. For example, if [=/file system path=] |path| corresponds
+to a location represented by a virtual path of `data/drafts/example.txt`
+relative to the root directory of an [=origin private file system=], |path|'s
+[=file system path/name=] should be `example.txt`. There is no expectation,
+however, that a file called `example.txt` lives anywhere on disk.
 
 If [=locating=] a [=/file system path=] |path| returns a [=/file system entry=] |entry|, then
 |path|'s [=file system path/name=] must equal |entry|'s [=file system entry/name=].
 
 A [=/file system path=] |a| is <dfn for="file system path">the same path as</dfn>
-a [=/file system path=] |b| if |a| represents the same potential location of a
-[=/file system entry=] as |b|.
+a [=/file system path=] |b| if |a| is |b|.
 
 ## The {{FileSystemHandle}} interface ## {#api-filesystemhandle}
 
@@ -226,8 +230,9 @@ interface FileSystemHandle {
 A {{FileSystemHandle}} object represents a [=/file system path=].
 Each {{FileSystemHandle}} object is associated with a
 <dfn for=FileSystemHandle export>path</dfn> (a [=/file system path=]).
-Multiple separate objects implementing the {{FileSystemHandle}} interface can
-all be associated with the same [=/file system path=] simultaneously.
+
+Note: Multiple {{FileSystemHandle}} objects can have
+[=the same path as|the same=] [=path=].
 
 <div algorithm>
 To <dfn for=FileSystemHandle id=get-handle-entry local-lt="getting the entry">get the entry</dfn>
