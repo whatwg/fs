@@ -107,18 +107,18 @@ To <dfn for="file entry/lock">take</dfn> a [=file entry/lock=] with a |value| of
 1. If |value| is "`exclusive`":
    1. If |lock| is "`open`":
      1. Set lock to "`taken-exclusive`".
-     1. Return a value of "`success`".
+     1. Return "`success`".
 1. If |value| is "`shared`":
    1. If |lock| is "`open`":
      1. Set |lock| to "`taken-shared`".
      1. Set |count| to 1.
-     1. Return a value of "`success`".
+     1. Return "`success`".
    1. Otherwise, if |lock| is "`taken-shared`":
      1. Increase |count| by 1.
-     1. Return a value of "`success`".
-1. Return a value of "`failure`".
+     1. Return "`success`".
+1. Return "`failure`".
 
-Note: These steps must be run on the [=file system queue=].
+Note: These steps have to be run on the [=file system queue=].
 
 </div>
 
@@ -133,7 +133,7 @@ To <dfn for="file entry/lock">release</dfn> a [=file entry/lock=] on a given
   1. If |count| is 0, set |lock| to "`open`".
 1. Otherwise, set |lock| to "`open`".
 
-Note: These steps must be run on the [=file system queue=].
+Note: These steps have to be run on the [=file system queue=].
 
 </div>
 
@@ -504,7 +504,8 @@ The <dfn method for=FileSystemFileHandle>createWritable(|options|)</dfn> method 
 1. Let |result| be [=a new promise=].
 1. Let |locator| be [=this=]'s [=FileSystemHandle/locator=].
 1. Let |realm| be [=this=]'s [=relevant Realm=].
-1. [=Enqueue the following steps=] to the [=file system queue=]:
+1. [=Queue a storage task=] with [=this=]'s [=relevant global object=] to
+   [=enqueue the following steps=] to the [=file system queue=]:
   1. Let |entry| be the result of [=locating an entry=] given |locator|.
   1. Let |access| be the result of running |entry|'s
      [=file system entry/request access=] given "`readwrite`".
