@@ -15,7 +15,7 @@ spec:webidl; type:dfn; text:resolve
 
 <pre class=anchors>
 urlPrefix: https://tc39.es/ecma262/; spec: ECMA-262
-  type: dfn; text: current realm; url: current realm
+  type: dfn; text: current realm; url: current-realm
   type: dfn; text: realm; url: realm
 urlPrefix: https://storage.spec.whatwg.org/; spec: storage
   type: dfn; text: storage; url: site-storage
