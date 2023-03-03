@@ -19,6 +19,7 @@ urlPrefix: https://tc39.es/ecma262/; spec: ECMA-262
   type: dfn; text: realm; url: realm
 urlPrefix: https://storage.spec.whatwg.org/; spec: storage
   type: dfn; text: storage; url: site-storage
+  type: dfn; text: storage bucket; url: storage-bucket
 </pre>
 
 <style>
@@ -158,11 +159,28 @@ run these steps:
 
 1. Let |result| be [=a new promise=].
 1. Run these steps [=in parallel=]:
-  1. If |child|'s [=FileSystemHandle/locator=] is [=the same locator as=]
-     |root|'s [=FileSystemHandle/locator=],
+  1. If |child|'s [=FileSystemHandle/locator=]'s [=file system locator/root=]
+     is not |root|'s [=FileSystemHandle/locator=]'s [=file system locator/root=],
+     [=/resolve=] |result| with null, and abort.
+
+  1. Let |childPath| be |child|'s [=FileSystemHandle/locator=]'s [=file system locator/path=].
+  1. Let |rootPath| be |root|'s [=FileSystemHandle/locator=]'s [=file system locator/path=].
+  1. If |childPath| is [=the same path as=] |rootPath|,
      [=/resolve=] |result| with an empty list, and abort.
 
-   <!-- TODO(a-sully): Figure out how to resolve locators. -->
+  1. If |rootPath|'s [=list/size=] is greater than |childPath|'s [=list/size=],
+     [=/resolve=] |result| with null, and abort.
+
+  1. [=list/For each=] |index| of |rootPath|'s [=list/indices=]:
+    1. If |rootPath|.\[[|index|]] is not |childPath|.\[[|index|]], then
+       [=/resolve=] |result| with null, and abort.
+
+  1. Let |relativePath| be an empty [=/list=].
+  1. [=list/For each=] |index| of [=the range=] from |rootPath|'s [=list/size=]
+     to |rootPath|'s [=list/size=], exclusive,
+     [=list/append=] |childPath|.\[[|index|]] to |relativePath|.
+
+  1. [=/Resolve=] |result| with |relativePath|.
 
 1. Return |result|.
 
@@ -172,24 +190,40 @@ A <dfn export>file system locator</dfn> represents a potential location of a
 [=/file system entry=]. A [=/file system locator=] is either a [=file locator=]
 or a [=directory locator=].
 
-Each [=/file system locator=] has an associated <dfn for="file system locator" id=locator-path>path</dfn> (a [=/file system path=])
-and an associated <dfn for="file system locator" id=locator-kind>kind</dfn> (a {{FileSystemHandleKind}}).
+Each [=/file system locator=] has an associated <dfn export for="file system locator" id=locator-path>path</dfn> (a [=/file system path=]),
+a <dfn export for="file system locator" id=locator-kind>kind</dfn> (a {{FileSystemHandleKind}}), and
+a <dfn export for="file system locator" id=locator-root>root</dfn> (an opaque string).
 
-A <dfn>file locator</dfn> is a [=/file system locator=] whose
+A <dfn export>file locator</dfn> is a [=/file system locator=] whose
 [=file system locator/kind=] is {{FileSystemHandleKind/"file"}}.
-A <dfn>directory locator</dfn> is a [=/file system locator=] whose
+A <dfn export>directory locator</dfn> is a [=/file system locator=] whose
 [=file system locator/kind=] is {{FileSystemHandleKind/"directory"}}.
 
-A [=/file system locator=] |a| is <dfn for="file system locator">the same locator as</dfn>
-a [=/file system locator=] |b| if |a| is |b|.
+A <dfn export>file system root</dfn> is an opaque string whose value is
+[=implementation-defined=].
 
-The <dfn local-lt="locating an entry">locate an entry</dfn> algorithm takes a
+<p class=example id=example-locator>For a [=/file system locator=] |locator|
+whichs [=locate an entry|locates to=] a [=file entry=] |entry| that conceptually
+exists at the path `data/drafts/example.txt` relative to the root directory of
+the [=origin private file system=],
+|locator|'s [=file system locator/kind=] has to be {{FileSystemHandleKind/"file"}},
+|locator|'s [=file system locator/path=] might be « "`data`", "`drafts`", "`example.txt`" », and
+|locator|'s [=file system locator/root=] might include relevant identifying
+information such as the [=storage bucket=] and the disk drive.
+
+A [=/file system locator=] |a| is <dfn for="file system locator">the same locator as</dfn>
+a [=/file system locator=] |b| if
+|a|'s [=file system locator/kind=] is |b|'s [=file system locator/kind=],
+|a|'s [=file system locator/root=] is |b|'s [=file system locator/root=], and
+|a|'s [=file system locator/path=] is [=the same path as=] |b|'s [=file system locator/path=].
+
+The <dfn export data-lt="locating an entry">locate an entry</dfn> algorithm takes a
 [=/file system locator=] |locator| and returns either a [=/file system entry=] or null.
 If |locator| is a [=file locator=], this method must return either a [=file entry=] or null.
 If |locator| is a [=directory locator=], this method must return either a [=directory entry=] or null.
 The steps of this algorithm are [=implementation-defined=].
 
-The <dfn local-lt="getting the locator">get the locator</dfn> algorithm takes a
+The <dfn export data-lt="getting the locator">get the locator</dfn> algorithm takes a
 [=/file system entry=] |entry| and returns a [=/file system locator=] |locator|.
 
 If |entry| is a [=file entry=], |locator| must be a [=file locator=].
@@ -201,11 +235,10 @@ Typically the steps are symmetric to the [=locate an entry=] algorithm.
 
 If [=locating an entry=] given [=/file system locator=] |locator| returns a
 [=/file system entry=] |entry|, then |entry|'s [=file system entry/name=] must
-be the same [=valid file name=] as the last [=list/item=] of
+be the same [=string=] as the last [=list/item=] of
 |locator|'s [=file system locator/path=].
 
-A <dfn export>file system path</dfn> is a [=/list=] of one or more
-[=valid file name|valid file names=].
+A <dfn export>file system path</dfn> is a [=/list=] of one or more [=strings=].
 This may be a virtual path that is mapped to real location on disk or in memory,
 may correspond directly to a path on the local file system, or may not
 correspond to any file on disk at all. The actual physical location of the
@@ -214,6 +247,12 @@ corresponding [=/file system entry=] is [=implementation-defined=].
 <p class=example id=example-path>Let |path| be the [=/list=]
 « "`data`", "`drafts`", "`example.txt`" ».
 There is no expectation that a file named `example.txt` exists anywhere on disk.
+
+A [=/file system path=] |a| is <dfn for="file system path">the same path as</dfn>
+a [=/file system path=] |b| if
+|a|'s [=list/size=] is the same as |b|'s [=list/size=] and
+[=list/for each=] |index| of |a|'s [=list/indices=]
+|a|.\[[|index|]] is |b|.\[[|index|]].
 
 ## The {{FileSystemHandle}} interface ## {#api-filesystemhandle}
 
@@ -276,7 +315,7 @@ The <dfn attribute for=FileSystemHandle>kind</dfn> getter steps are to return
 [=this=]'s [=FileSystemHandle/locator=]'s [=file system locator/kind=].
 
 The <dfn attribute for=FileSystemHandle>name</dfn> getter steps are to return
-the last [=list/item=] (a [=valid file name=]) of [=this=]'s
+the last [=list/item=] (a [=string=]) of [=this=]'s
 [=FileSystemHandle/locator=]'s [=file system locator/path=].
 
 ### The {{FileSystemHandle/isSameEntry()}} method ### {#api-filesystemhandle-issameentry}
