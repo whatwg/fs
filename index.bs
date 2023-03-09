@@ -194,6 +194,8 @@ A <dfn export>file system locator</dfn> represents a potential location of a
 [=/file system entry=]. A [=/file system locator=] is either a [=file locator=]
 or a [=directory locator=].
 
+<!-- TODO(a-sully): Consider giving each locator a Storage Bucket. -->
+
 Each [=/file system locator=] has an associated <dfn export for="file system locator" id=locator-path>path</dfn> (a [=/file system path=]),
 a <dfn export for="file system locator" id=locator-kind>kind</dfn> (a {{FileSystemHandleKind}}), and
 a <dfn export for="file system locator" id=locator-root>root</dfn> (an opaque [=string=]).
@@ -264,7 +266,7 @@ a [=/file system path=] |b| if
 [=list/for each=] |index| of |a|'s [=list/indices=]
 |a|.\[[|index|]] is |b|.\[[|index|]].
 
-Note: The contents of a [=/file system locator=], including its
+<p class=warning> The contents of a [=/file system locator=], including its
 [=file system locator/path=], are not expected to be shared in their entirety
 with the website process. The [=/file system path=] might contain components
 which are not known to the website unless the [=/file system locator=] is later
@@ -332,7 +334,7 @@ The <dfn attribute for=FileSystemHandle>kind</dfn> getter steps are to return
 
 The <dfn attribute for=FileSystemHandle>name</dfn> getter steps are to return
 the empty [=string=] if [=this=] is the root directory of the
-[=origin private file system=], otherwise the last [=list/item=] (a [=string=])
+[=origin private file system=]; otherwise the last [=list/item=] (a [=string=])
 of [=this=]'s [=FileSystemHandle/locator=]'s [=file system locator/path=].
 
 ### The {{FileSystemHandle/isSameEntry()}} method ### {#api-filesystemhandle-issameentry}
@@ -737,7 +739,7 @@ The <dfn method for=FileSystemDirectoryHandle>getFileHandle(|name|, |options|)</
 
 1. Let |result| be [=a new promise=].
 1. Let |realm| be [=this=]'s [=relevant Realm=].
-1. Let |locator| [=this=]'s [=FileSystemHandle/locator=].
+1. Let |locator| be [=this=]'s [=FileSystemHandle/locator=].
 1. Let |entry| be the result of [=locating an entry=] given |locator|.
 1. Run these steps [=in parallel=]:
   1. If |name| is not a [=valid file name=], [=/reject=] |result| with a {{TypeError}} and abort.
@@ -811,7 +813,7 @@ The <dfn method for=FileSystemDirectoryHandle>getDirectoryHandle(|name|, |option
 
 1. Let |result| be [=a new promise=].
 1. Let |realm| be [=this=]'s [=relevant Realm=].
-1. Let |locator| [=this=]'s [=FileSystemHandle/locator=].
+1. Let |locator| be [=this=]'s [=FileSystemHandle/locator=].
 1. Let |entry| be the result of [=locating an entry=] given |locator|.
 1. Run these steps [=in parallel=]:
   1. If |name| is not a [=valid file name=], [=/reject=] |result| with a {{TypeError}} and abort.
