@@ -223,32 +223,31 @@ a [=/file system locator=] |b| if
 |a|'s [=file system locator/root=] is |b|'s [=file system locator/root=], and
 |a|'s [=file system locator/path=] is [=the same path as=] |b|'s [=file system locator/path=].
 
-The <dfn export data-lt="locating an entry">locate an entry</dfn> algorithm takes a
-[=/file system locator=] |locator| and returns either a [=/file system entry=] or null.
-If |locator| is a [=file locator=], this method must return either a [=file entry=] or null.
-If |locator| is a [=directory locator=], this method must return either a [=directory entry=] or null.
-The steps of this algorithm are [=implementation-defined=].
+<div algorithm>
+The <dfn export data-lt="locating an entry">locate an entry</dfn> algorithm given a
+[=/file system locator=] |locator| runs an [=implementation-defined=] series of steps adhering to
+these constraints:
 
-The <dfn export data-lt="getting the locator">get the locator</dfn> algorithm takes a
-[=/file system entry=] |entry| and returns a [=/file system locator=] |locator|.
+<ul>
+ <li><p>If |locator| is a [=file locator=], they return a [=file entry=] or null.
+ <li><p>If |locator| is a [=directory locator=], they return a [=directory entry=] or null.
+ <li><p>If these steps return |entry|, then [=getting the locator=] with |entry| returns |locator|,
+ provided no intermediate file system operations were run.
+</ul>
+</div>
 
-If |entry| is a [=file entry=], |locator| must be a [=file locator=].
-If |entry| is a [=directory entry=], |locator| must be a [=directory locator=].
-If [=locating an entry=] given [=/file system locator=] |locator| returns a
-[=/file system entry=] |entry|, then [=getting the locator=] of |entry|
-must return |locator| if no intermediate file system operations were run.
-Typically the steps are symmetric to the [=locate an entry=] algorithm.
+<div algorithm>
+The <dfn export data-lt="getting the locator">get the locator</dfn> algorithm given
+[=/file system entry=] |entry| runs an [=implementation-defined=] series of steps adhering to these
+constraints:
 
-If |entry| is the root directory of the [=origin private file system=], then
-|entry|'s [=file system entry/name=] must be the empty string and
-[=getting the locator=] of |entry| must return a [=/file system locator=]
-whose [=file system locator/path=] is [=list/empty=].
-
-If [=locating an entry=] given [=/file system locator=] |locator| returns a
-[=/file system entry=] |entry| that is not the root directory of the
-[=origin private file system=], then |entry|'s [=file system entry/name=] must
-be the same [=string=] as the last [=list/item=] of
-|locator|'s [=file system locator/path=].
+<ul>
+ <li><p>If |entry| is a [=file entry=], they return a [=file locator=].
+ <li><p>If |entry| is a [=directory entry=], they return a [=directory locator=].
+ <li><p>If these steps return |locator|, then [=locating an entry=] with |locator| returns |entry|,
+ provided no intermediate file system operations were run.
+</ul>
+</div>
 
 A <dfn export>file system path</dfn> is a [=/list=] of one or more [=strings=].
 This may be a virtual path that is mapped to real location on disk or in memory,
@@ -378,9 +377,9 @@ Note: A {{FileSystemFileHandle}}'s associated [=FileSystemHandle/locator=]'s
 [=file system locator/kind=] is {{FileSystemHandleKind/"file"}}.
 
 <div algorithm>
-To <dfn data-lt="creating a child FileSystemFileHandle">create a child <code>FileSystemFileHandle</code></dfn>
-given a [=directory locator=] |parentLocator| and a [=file system entry/name=] |name|
-in a [=/Realm=] |realm|, run these steps:
+To
+<dfn data-lt="creating a child FileSystemFileHandle">create a child <code>FileSystemFileHandle</code></dfn>
+given a [=directory locator=] |parentLocator| and a string |name| in a [=/Realm=] |realm|:
 
 1. Let |handle| be a [=new=] {{FileSystemFileHandle}} in |realm|.
 1. Let |childType| be {{FileSystemHandleKind/"file"}}.
@@ -598,9 +597,9 @@ Note: A {{FileSystemDirectoryHandle}}'s associated [=FileSystemHandle/locator=]'
 [=file system locator/kind=] is {{FileSystemHandleKind/"directory"}}.
 
 <div algorithm>
-To <dfn data-lt="creating a child FileSystemDirectoryHandle">create a child <code>FileSystemDirectoryHandle</code></dfn>
-given a [=directory locator=] |parentLocator| and a [=file system entry/name=] |name|
-in a [=/Realm=] |realm|, run these steps:
+To
+<dfn data-lt="creating a child FileSystemDirectoryHandle">create a child <code>FileSystemDirectoryHandle</code></dfn>
+given a [=directory locator=] |parentLocator| and a string |name| in a [=/Realm=] |realm|:
 
 1. Let |handle| be a [=new=] {{FileSystemDirectoryHandle}} in |realm|.
 1. Let |childType| be {{FileSystemHandleKind/"directory"}}.
