@@ -788,8 +788,9 @@ Similarly, when piping a {{ReadableStream}} into a {{FileSystemWritableFileStrea
 </div>
 
 <div algorithm>
-To <dfn local-lt="creating a new FileSystemWritableFileStream">create a new <code>FileSystemWritableFileStream</code></dfn>
-given a [=file entry=] |file| in a [=/Realm=] |realm|, run these steps:
+To
+<dfn local-lt="creating a new FileSystemWritableFileStream">create a new <code>FileSystemWritableFileStream</code></dfn>
+given a [=file entry=] |file| in a [=/Realm=] |realm|:
 
 1. Let |stream| be a [=new=] {{FileSystemWritableFileStream}} in |realm|.
 1. Set |stream|.[=FileSystemWritableFileStream/[[file]]=] to |file|.
@@ -1051,8 +1052,9 @@ contexts where asynchronous operations come with high overhead, e.g., WebAssembl
 A {{FileSystemSyncAccessHandle}} has a <dfn for="FileSystemSyncAccessHandle">file position cursor</dfn> initialized at byte offset 0 from the top of the file.
 
 <div algorithm>
-To <dfn local-lt="creating a new FileSystemSyncAccessHandle">create a new <code>FileSystemSyncAccessHandle</code></dfn>
-given a [=file entry=] |file| in a [=/Realm=] |realm|, run these steps:
+To
+<dfn local-lt="creating a new FileSystemSyncAccessHandle">create a new <code>FileSystemSyncAccessHandle</code></dfn>
+given a [=file entry=] |file| in a [=/Realm=] |realm|:
 
 1. Let |handle| be a [=new=] {{FileSystemSyncAccessHandle}} in |realm|.
 1. Set |handle|.[=FileSystemSyncAccessHandle/[[file]]=] to |file|.
