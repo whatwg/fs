@@ -355,7 +355,7 @@ The <dfn method for=FileSystemFileHandle>createWritable(|options|)</dfn> method 
   1. Let |entry| be [=this=]'s [=FileSystemHandle/entry=].
   1. Let |lockResult| be the result of [=file entry/lock/take|taking a lock=] with "`shared`" on |entry|.
   1. If |lockResult| is false, [=reject=] |result| with a "{{NoModificationAllowedError}}" {{DOMException}} and abort.
-  1. Let |stream| be the result of [=create a new FileSystemWritableFileStream|creating a new FileSystemWritableFileStream=]
+  1. Let |stream| be the result of <a>creating a new <code>FileSystemWritableFileStream</code></a>
      for |entry| in [=this=]'s [=relevant realm=].
   1. If |options|.{{FileSystemCreateWritableOptions/keepExistingData}} is true:
     1. Set |stream|.[=[[buffer]]=] to a copy of |entry|'s [=file entry/binary data=].
@@ -399,7 +399,7 @@ The <dfn method for=FileSystemFileHandle>createSyncAccessHandle()</dfn> method s
      [=reject=] |result| with an "{{InvalidStateError}}" {{DOMException}} and abort.
   1. Let |lockResult| be the result of [=file entry/lock/take|taking a lock=] with "`exclusive`" on |entry|.
   1. If |lockResult| is false, [=reject=] |result| with a "{{NoModificationAllowedError}}" {{DOMException}} and abort.
-  1. Let |handle| be the result of [=create a new FileSystemSyncAccessHandle|creating a new FileSystemSyncAccessHandle=]
+  1. Let |handle| be the result of <a>creating a new <code>FileSystemSyncAccessHandle</code></a>
      for |entry| in [=this=]'s [=relevant realm=].
   1. [=/Resolve=] |result| with |handle|.
 1. Return |result|.
@@ -788,8 +788,9 @@ Similarly, when piping a {{ReadableStream}} into a {{FileSystemWritableFileStrea
 </div>
 
 <div algorithm>
-To <dfn>create a new FileSystemWritableFileStream</dfn> given a [=file entry=] |file|
-in a [=/Realm=] |realm|, run these steps:
+To
+<dfn local-lt="creating a new FileSystemWritableFileStream">create a new <code>FileSystemWritableFileStream</code></dfn>
+given a [=file entry=] |file| in a [=/Realm=] |realm|:
 
 1. Let |stream| be a [=new=] {{FileSystemWritableFileStream}} in |realm|.
 1. Set |stream|.[=FileSystemWritableFileStream/[[file]]=] to |file|.
@@ -1051,8 +1052,9 @@ contexts where asynchronous operations come with high overhead, e.g., WebAssembl
 A {{FileSystemSyncAccessHandle}} has a <dfn for="FileSystemSyncAccessHandle">file position cursor</dfn> initialized at byte offset 0 from the top of the file.
 
 <div algorithm>
-To <dfn>create a new FileSystemSyncAccessHandle</dfn> given a [=file entry=] |file|
-in a [=/Realm=] |realm|, run these steps:
+To
+<dfn local-lt="creating a new FileSystemSyncAccessHandle">create a new <code>FileSystemSyncAccessHandle</code></dfn>
+given a [=file entry=] |file| in a [=/Realm=] |realm|:
 
 1. Let |handle| be a [=new=] {{FileSystemSyncAccessHandle}} in |realm|.
 1. Set |handle|.[=FileSystemSyncAccessHandle/[[file]]=] to |file|.
