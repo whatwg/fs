@@ -227,17 +227,14 @@ The <dfn export data-lt="locating an entry">locate an entry</dfn> algorithm give
 [=/file system locator=] |locator| runs an [=implementation-defined=] series of steps adhering to
 these constraints:
 
-<ul>
- <li><p>If |locator| is a [=file locator=], they return a [=file entry=] or null.
- <li><p>If |locator| is a [=directory locator=], they return a [=directory entry=] or null.
- <li><p>If these steps return |entry|, then:
-  <ul>
-   <li><p>[=Getting the locator=] with |entry| returns |locator|,
-   provided no intermediate file system operations were run.
-   <li><p>|entry|'s [=file system entry/name=] must be the same [=string=] as
-   the last [=list/item=] of |locator|'s [=file system locator/path=].
-  </ul>
-</ul>
+- If |locator| is a [=file locator=], they return a [=file entry=] or null.
+- If |locator| is a [=directory locator=], they return a [=directory entry=] or null.
+- If these steps return |entry|, then:
+  - [=Getting the locator=] with |entry| returns |locator|,
+    provided no intermediate file system operations were run.
+  - |entry|'s [=file system entry/name=] must be the same [=string=] as
+    the last [=list/item=] of |locator|'s [=file system locator/path=].
+
 </div>
 
 <div algorithm>
@@ -245,17 +242,14 @@ The <dfn export data-lt="getting the locator">get the locator</dfn> algorithm gi
 [=/file system entry=] |entry| runs an [=implementation-defined=] series of steps adhering to these
 constraints:
 
-<ul>
- <li><p>If |entry| is a [=file entry=], they return a [=file locator=].
- <li><p>If |entry| is a [=directory entry=], they return a [=directory locator=].
- <li><p>If these steps return |locator|, then:
-  <ul>
-   <li><p>[=Locating an entry=] with |locator| returns |entry|,
-   provided no intermediate file system operations were run.
-   <li><p>|entry|'s [=file system entry/name=] must be the same [=string=] as
-   the last [=list/item=] of |locator|'s [=file system locator/path=].
-  </ul>
-</ul>
+- If |entry| is a [=file entry=], they return a [=file locator=].
+- If |entry| is a [=directory entry=], they return a [=directory locator=].
+- If these steps return |locator|, then:
+  - [=Locating an entry=] with |locator| returns |entry|,
+    provided no intermediate file system operations were run.
+  - |entry|'s [=file system entry/name=] must be the same [=string=] as
+    the last [=list/item=] of |locator|'s [=file system locator/path=].
+
 </div>
 
 A <dfn export>file system path</dfn> is a [=/list=] of one or more [=strings=].
@@ -386,7 +380,7 @@ Note: A {{FileSystemFileHandle}}'s associated [=FileSystemHandle/locator=]'s
 
 <div algorithm>
 To
-<dfn data-lt="creating a child FileSystemFileHandle">create a child <code>FileSystemFileHandle</code></dfn>
+<dfn data-lt="creating a child FileSystemFileHandle">create a child `FileSystemFileHandle`</code></dfn>
 given a [=directory locator=] |parentLocator| and a string |name| in a [=/Realm=] |realm|:
 
 1. Let |handle| be a [=new=] {{FileSystemFileHandle}} in |realm|.
@@ -404,7 +398,7 @@ given a [=directory locator=] |parentLocator| and a string |name| in a [=/Realm=
 
 <div algorithm>
 To
-<dfn export data-lt="creating a new FileSystemFileHandle">create a new <code>FileSystemFileHandle</code></dfn>
+<dfn export data-lt="creating a new FileSystemFileHandle">create a new `FileSystemFileHandle`</dfn>
 given a [=/file system root=] |root| and a [=/file system path=] |path|
 in a [=/Realm=] |realm|:
 
@@ -515,7 +509,7 @@ The <dfn method for=FileSystemFileHandle>createWritable(|options|)</dfn> method 
 
   1. Let |lockResult| be the result of [=file entry/lock/take|taking a lock=] with "`shared`" on |entry|.
   1. If |lockResult| is false, [=reject=] |result| with a "{{NoModificationAllowedError}}" {{DOMException}} and abort.
-  1. Let |stream| be the result of <a>creating a new <code>FileSystemWritableFileStream</code></a>
+  1. Let |stream| be the result of <a>creating a new `FileSystemWritableFileStream`</a>
      for |entry| in [=this=]'s [=relevant realm=].
   1. If |options|.{{FileSystemCreateWritableOptions/keepExistingData}} is true:
     1. Set |stream|.[=[[buffer]]=] to a copy of |entry|'s [=file entry/binary data=].
@@ -567,7 +561,7 @@ The <dfn method for=FileSystemFileHandle>createSyncAccessHandle()</dfn> method s
      [=reject=] |result| with an "{{InvalidStateError}}" {{DOMException}} and abort.
   1. Let |lockResult| be the result of [=file entry/lock/take|taking a lock=] with "`exclusive`" on |entry|.
   1. If |lockResult| is false, [=reject=] |result| with a "{{NoModificationAllowedError}}" {{DOMException}} and abort.
-  1. Let |handle| be the result of <a>creating a new <code>FileSystemSyncAccessHandle</code></a>
+  1. Let |handle| be the result of <a>creating a new `FileSystemSyncAccessHandle`</a>
      for |entry| in [=this=]'s [=relevant realm=].
   1. [=/Resolve=] |result| with |handle|.
 1. Return |result|.
@@ -607,7 +601,7 @@ Note: A {{FileSystemDirectoryHandle}}'s associated [=FileSystemHandle/locator=]'
 
 <div algorithm>
 To
-<dfn data-lt="creating a child FileSystemDirectoryHandle">create a child <code>FileSystemDirectoryHandle</code></dfn>
+<dfn data-lt="creating a child FileSystemDirectoryHandle">create a child `FileSystemDirectoryHandle`</dfn>
 given a [=directory locator=] |parentLocator| and a string |name| in a [=/Realm=] |realm|:
 
 1. Let |handle| be a [=new=] {{FileSystemDirectoryHandle}} in |realm|.
@@ -625,7 +619,7 @@ given a [=directory locator=] |parentLocator| and a string |name| in a [=/Realm=
 
 <div algorithm>
 To
-<dfn export data-lt="creating a new FileSystemDirectoryHandle">create a new <code>FileSystemDirectoryHandle</code></dfn>
+<dfn export data-lt="creating a new FileSystemDirectoryHandle">create a new `FileSystemDirectoryHandle`</dfn>
 given a [=/file system root=] |root| and a [=/file system path=] |path|
 in a [=/Realm=] |realm|:
 
@@ -707,11 +701,11 @@ and its async iterator |iterator|:
 1. Otherwise:
   1. [=set/Append=] |child|'s [=file system entry/name=] to |iterator|'s [=past results=].
   1. If |child| is a [=file entry=]:
-    1. Let |result| be the result of <a>creating a child <code>FileSystemFileHandle</code></a>
+    1. Let |result| be the result of <a>creating a child `FileSystemFileHandle`</a>
        with |handle|'s [=FileSystemHandle/locator=] and
        |child|'s [=file system entry/name=] in |handle|'s [=relevant Realm=].
   1. Otherwise:
-    1. Let |result| be the result of <a>creating a child <code>FileSystemDirectoryHandle</code></a>
+    1. Let |result| be the result of <a>creating a child `FileSystemDirectoryHandle`</a>
        with |handle|'s [=FileSystemHandle/locator=] and
        |child|'s [=file system entry/name=] in |handle|'s [=relevant Realm=].
   1. [=/Resolve=] |promise| with (|child|'s [=file system entry/name=], |result|).
@@ -773,7 +767,7 @@ The <dfn method for=FileSystemDirectoryHandle>getFileHandle(|name|, |options|)</
       1. If |child| is a [=directory entry=]:
         1. [=/Reject=] |result| with a "{{TypeMismatchError}}" {{DOMException}} and abort.
       1. [=/Resolve=] |result| with the result of
-         <a>creating a child <code>FileSystemFileHandle</code></a> with |locator| and
+         <a>creating a child `FileSystemFileHandle`</a> with |locator| and
          |child|'s [=file system entry/name=] in |realm| and abort.
   1. If |options|.{{FileSystemGetFileOptions/create}} is false:
     1. [=/Reject=] |result| with a "{{NotFoundError}}" {{DOMException}} and abort.
@@ -788,7 +782,7 @@ The <dfn method for=FileSystemDirectoryHandle>getFileHandle(|name|, |options|)</
 
      Issue(11): Better specify what possible exceptions this could throw.
   1. [=/Resolve=] |result| with the result of
-     <a>creating a child <code>FileSystemFileHandle</code></a> with |locator| and
+     <a>creating a child `FileSystemFileHandle`</a> with |locator| and
      |child|'s [=file system entry/name=] in |realm|.
 1. Return |result|.
 
@@ -846,7 +840,7 @@ The <dfn method for=FileSystemDirectoryHandle>getDirectoryHandle(|name|, |option
       1. If |child| is a [=file entry=]:
         1. [=/Reject=] |result| with a "{{TypeMismatchError}}" {{DOMException}} and abort.
       1. [=/Resolve=] |result| with the result of
-         <a>creating a child <code>FileSystemDirectoryHandle</code></a> with
+         <a>creating a child `FileSystemDirectoryHandle`</a> with
          |locator| and |child|'s [=file system entry/name=] in |realm| and abort.
   1. If |options|.{{FileSystemGetFileOptions/create}} is false:
     1. [=/Reject=] |result| with a "{{NotFoundError}}" {{DOMException}} and abort.
@@ -860,7 +854,7 @@ The <dfn method for=FileSystemDirectoryHandle>getDirectoryHandle(|name|, |option
 
      Issue(11): Better specify what possible exceptions this could throw.
   1. [=/Resolve=] |result| with the result of
-     <a>creating a child <code>FileSystemDirectoryHandle</code></a> with
+     <a>creating a child `FileSystemDirectoryHandle`</a> with
      |locator| and |child|'s [=file system entry/name=] in |realm|.
 1. Return |result|.
 
@@ -1035,7 +1029,7 @@ Similarly, when piping a {{ReadableStream}} into a {{FileSystemWritableFileStrea
 
 <div algorithm>
 To
-<dfn local-lt="creating a new FileSystemWritableFileStream">create a new <code>FileSystemWritableFileStream</code></dfn>
+<dfn local-lt="creating a new FileSystemWritableFileStream">create a new `FileSystemWritableFileStream`</dfn>
 given a [=file entry=] |file| in a [=/Realm=] |realm|:
 
 1. Let |stream| be a [=new=] {{FileSystemWritableFileStream}} in |realm|.
@@ -1299,7 +1293,7 @@ A {{FileSystemSyncAccessHandle}} has a <dfn for="FileSystemSyncAccessHandle">fil
 
 <div algorithm>
 To
-<dfn local-lt="creating a new FileSystemSyncAccessHandle">create a new <code>FileSystemSyncAccessHandle</code></dfn>
+<dfn local-lt="creating a new FileSystemSyncAccessHandle">create a new `FileSystemSyncAccessHandle`</dfn>
 given a [=file entry=] |file| in a [=/Realm=] |realm|:
 
 1. Let |handle| be a [=new=] {{FileSystemSyncAccessHandle}} in |realm|.
@@ -1553,7 +1547,7 @@ The <dfn method for=StorageManager>getDirectory()</dfn> method steps are:
 
 1. Let |root| be an [=implementation-defined=] opaque [=string=].
 1. Let |path| be « the empty string ».
-1. Let |handle| be the result of <a>creating a new <code>FileSystemDirectoryHandle</code></a>.
+1. Let |handle| be the result of <a>creating a new `FileSystemDirectoryHandle`</a>.
    given |root| and |path| in the [=current realm=].
 
   Note: |root| might include relevant identifying information such as the
