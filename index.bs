@@ -158,8 +158,7 @@ if |a| and |b| are backed by the same file or directory on the local file system
 <div algorithm>
 
 To <dfn for="file system locator" id=locator-resolve>resolve</dfn> a
-[=/file system locator=] |child| relative to a [=directory locator=] |root|,
-run these steps:
+[=/file system locator=] |child| relative to a [=directory locator=] |root|:
 
 1. Let |result| be [=a new promise=].
 1. Run these steps [=in parallel=]:
@@ -231,8 +230,13 @@ these constraints:
 <ul>
  <li><p>If |locator| is a [=file locator=], they return a [=file entry=] or null.
  <li><p>If |locator| is a [=directory locator=], they return a [=directory entry=] or null.
- <li><p>If these steps return |entry|, then [=getting the locator=] with |entry| returns |locator|,
- provided no intermediate file system operations were run.
+ <li><p>If these steps return |entry|, then:
+  <ul>
+   <li><p>[=Getting the locator=] with |entry| returns |locator|,
+   provided no intermediate file system operations were run.
+   <li><p>|entry|'s [=file system entry/name=] must be the same [=string=] as
+   the last [=list/item=] of |locator|'s [=file system locator/path=].
+  </ul>
 </ul>
 </div>
 
@@ -244,8 +248,13 @@ constraints:
 <ul>
  <li><p>If |entry| is a [=file entry=], they return a [=file locator=].
  <li><p>If |entry| is a [=directory entry=], they return a [=directory locator=].
- <li><p>If these steps return |locator|, then [=locating an entry=] with |locator| returns |entry|,
- provided no intermediate file system operations were run.
+ <li><p>If these steps return |locator|, then:
+  <ul>
+   <li><p>[=Locating an entry=] with |locator| returns |entry|,
+   provided no intermediate file system operations were run.
+   <li><p>|entry|'s [=file system entry/name=] must be the same [=string=] as
+   the last [=list/item=] of |locator|'s [=file system locator/path=].
+  </ul>
 </ul>
 </div>
 
@@ -332,9 +341,8 @@ The <dfn attribute for=FileSystemHandle>kind</dfn> getter steps are to return
 [=this=]'s [=FileSystemHandle/locator=]'s [=file system locator/kind=].
 
 The <dfn attribute for=FileSystemHandle>name</dfn> getter steps are to return
-the empty [=string=] if [=this=] is the root directory of the
-[=origin private file system=]; otherwise the last [=list/item=] (a [=string=])
-of [=this=]'s [=FileSystemHandle/locator=]'s [=file system locator/path=].
+the last [=list/item=] (a [=string=]) of
+[=this=]'s [=FileSystemHandle/locator=]'s [=file system locator/path=].
 
 ### The {{FileSystemHandle/isSameEntry()}} method ### {#api-filesystemhandle-issameentry}
 
@@ -395,9 +403,10 @@ given a [=directory locator=] |parentLocator| and a string |name| in a [=/Realm=
 </div>
 
 <div algorithm>
-To <dfn export data-lt="creating a new FileSystemFileHandle">create a new <code>FileSystemFileHandle</code></dfn>
+To
+<dfn export data-lt="creating a new FileSystemFileHandle">create a new <code>FileSystemFileHandle</code></dfn>
 given a [=/file system root=] |root| and a [=/file system path=] |path|
-in a [=/Realm=] |realm|, run these steps:
+in a [=/Realm=] |realm|:
 
 1. Let |handle| be a [=new=] {{FileSystemFileHandle}} in |realm|.
 1. Set |handle|'s [=FileSystemHandle/locator=] to a [=/file system locator=] whose
@@ -615,9 +624,10 @@ given a [=directory locator=] |parentLocator| and a string |name| in a [=/Realm=
 </div>
 
 <div algorithm>
-To <dfn export data-lt="creating a new FileSystemDirectoryHandle">create a new <code>FileSystemDirectoryHandle</code></dfn>
+To
+<dfn export data-lt="creating a new FileSystemDirectoryHandle">create a new <code>FileSystemDirectoryHandle</code></dfn>
 given a [=/file system root=] |root| and a [=/file system path=] |path|
-in a [=/Realm=] |realm|, run these steps:
+in a [=/Realm=] |realm|:
 
 1. Let |handle| be a [=new=] {{FileSystemDirectoryHandle}} in |realm|.
 1. Set |handle|'s [=FileSystemHandle/locator=] to a [=/file system locator=] whose
@@ -1542,7 +1552,7 @@ The <dfn method for=StorageManager>getDirectory()</dfn> method steps are:
   1. Set |map|["root"] to |dir|.
 
 1. Let |root| be an [=implementation-defined=] opaque [=string=].
-1. Let |path| be « ».
+1. Let |path| be « the empty string ».
 1. Let |handle| be the result of <a>creating a new <code>FileSystemDirectoryHandle</code></a>.
    given |root| and |path| in the [=current realm=].
 
