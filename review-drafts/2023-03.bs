@@ -1,5 +1,7 @@
 <pre class=metadata>
 Group: WHATWG
+Status: RD
+Date: 2023-03-20
 H1: File System
 Shortname: fs
 Text Macro: TWITTER whatfilesystem
