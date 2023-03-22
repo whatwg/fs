@@ -169,7 +169,7 @@ To <dfn for="file system locator" id=locator-resolve>resolve</dfn> a
   1. Let |childPath| be |child|'s [=FileSystemHandle/locator=]'s [=file system locator/path=].
   1. Let |rootPath| be |root|'s [=FileSystemHandle/locator=]'s [=file system locator/path=].
   1. If |childPath| is [=the same path as=] |rootPath|,
-     [=/resolve=] |result| with an empty list, and abort.
+     [=/resolve=] |result| with « », and abort.
 
   1. If |rootPath|'s [=list/size=] is greater than |childPath|'s [=list/size=],
      [=/resolve=] |result| with null, and abort.
@@ -229,11 +229,11 @@ these constraints:
 
 - If |locator| is a [=file locator=], they return a [=file entry=] or null.
 - If |locator| is a [=directory locator=], they return a [=directory entry=] or null.
-- If these steps return |entry|, then:
+- If these steps return a non-null |entry|, then:
   - [=Getting the locator=] with |entry| returns |locator|,
     provided no intermediate file system operations were run.
-  - |entry|'s [=file system entry/name=] must be the same [=string=] as
-    the last [=list/item=] of |locator|'s [=file system locator/path=].
+  - |entry|'s [=file system entry/name=] is the last [=list/item=] of |locator|'s
+    [=file system locator/path=].
 
 </div>
 
@@ -247,8 +247,8 @@ constraints:
 - If these steps return |locator|, then:
   - [=Locating an entry=] with |locator| returns |entry|,
     provided no intermediate file system operations were run.
-  - |entry|'s [=file system entry/name=] must be the same [=string=] as
-    the last [=list/item=] of |locator|'s [=file system locator/path=].
+  - |entry|'s [=file system entry/name=] is the last [=list/item=] of |locator|'s
+    [=file system locator/path=].
 
 </div>
 
@@ -291,9 +291,8 @@ interface FileSystemHandle {
 };
 </xmp>
 
-A {{FileSystemHandle}} object represents a [=/file system locator=].
-Each {{FileSystemHandle}} object is associated with a
-<dfn for=FileSystemHandle export>locator</dfn> (a [=/file system locator=]).
+A {{FileSystemHandle}} object is associated with a <dfn for=FileSystemHandle export>locator</dfn> (a
+[=/file system locator=]).
 
 Note: Multiple {{FileSystemHandle}} objects can have
 [=the same locator as|the same=] [=/file system locator=].
