@@ -120,11 +120,11 @@ The [Storage Buckets API](https://wicg.github.io/storage-buckets/explainer.html)
 
 ### What if I try it anyways?
 
-The promise will be rejected with a `NotSupportedError``DOMException`.
+The promise will be rejected with a `InvalidModificationError` `DOMException`.
 
 ## What about moving files from the local file system to a remote machine, or vice-versa?
 
-The File System specification frequently mentions “the underlying file system.” If the file does not correspond to a file on the underlying file system, the user agent may reject the move operation with a `NotSupportedError``DOMException`.
+The File System specification frequently mentions “the underlying file system.” If the file does not correspond to a file on the underlying file system, the user agent may reject the move operation with a `NotSupportedError` `DOMException`.
 
 Note that remote file systems may be mounted as directories on the local file system. The user agent is encouraged to support this use case, since the underlying operating system should be able to handle the move. The recommended rule of thumb is: if you can `mv` it you can `move()` it.
 
@@ -163,7 +163,7 @@ Previously, we had discussed requiring write permission to both the source and d
 
 Moving a file will require obtaining an exclusive lock to both the source and destination files. For example, if a source or destination file has an open `FileSystemSyncAccessHandle` or `FileSystemWritableFileStream`, it cannot be moved.
 
-For files outside of the OPFS, these are cross-site locks. For example, if site A is actively writing to file `Y`, site B’s` Y.move(Z)``` request will be denied with a "file locked" error. While this is technically a cross-site interaction, we do not foresee any security concerns with this behavior because:
+For files outside of the OPFS, these are cross-site locks. For example, if site A is actively writing to file `Y`, site B’s` Y.move(Z)` request will be denied with a "file locked" error. While this is technically a cross-site interaction, we do not foresee any security concerns with this behavior because:
 
 * A site will only encounter a file locked by another site if the user has explicitly granted access to the same file on multiple sites
 * A site can tell that the file is locked, but nothing more (i.e. not by whom)
