@@ -1,4 +1,4 @@
-# The FileSystemHandle::remove() method
+# The FileSystemHandle.remove() method
 
 # Authors:
 
@@ -15,13 +15,13 @@ This explainer proposes a "remove self" method for a `FileSystemHandle`.
 Currently, it is not possible to remove a file or directory given its handle.
 You must obtain the handle of the parent directory, which there is no
 straightforward way to do and may not be possible in some cases, and call
-`FileSystemDirectoryHandle::removeEntry()`.
+`FileSystemDirectoryHandle.removeEntry()`.
 
 ## Goals
 
 * Allow removal of any entry a site has write access to
 * Avoid surprises by matching the behavior and API shape of
-  `FileSystemDirectoryHandle::removeEntry()`
+  `FileSystemDirectoryHandle.removeEntry()`
 
 ## Use Cases
 
@@ -64,7 +64,7 @@ which the file picker opens. See
 There some significant downsides to this approach, most notably the inability
 to use the `FileSystemSyncAccessHandle` interface for non-OPFS files.
 Additionally, if a well-behaving application wants to clear all its associated
-data, it currently cannot remove the root of the directory. 
+data, it currently cannot remove the root of the directory.
 
 ```javascript
 // Application asks "Where shall I save my data?"
