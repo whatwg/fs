@@ -61,16 +61,31 @@ different storage mechanism with a different API for such files. The entry point
 
 A <dfn export id="entry">file system entry</dfn> is either a [=file entry=] or a [=directory entry=].
 
-Each [=/file system entry=] has an associated <dfn for="file system entry" id=entry-query-access>query access</dfn> algorithm, which takes "`read`"
-or "`readwrite`" <var ignore>mode</var> and returns a {{PermissionState}}. Unless specified
-otherwise it returns "{{PermissionState/denied}}". The algorithm is allowed to throw.
+Each [=/file system entry=] has an associated
+<dfn for="file system entry" id=entry-query-access>query access</dfn>
+algorithm, which takes "`read`" or "`readwrite`" <var ignore>mode</var> and
+returns either a {{PermissionState}} or an [=exception/error name=] that must be
+listed in the [=error names table=].
+Unless specified otherwise it returns "{{PermissionState/denied}}".
 
-Each [=/file system entry=] has an associated <dfn for="file system entry" id=entry-request-access>request access</dfn> algorithm, which takes
-"`read`" or "`readwrite`" <var ignore>mode</var> and returns a {{PermissionState}}. Unless specified
-otherwise it returns "{{PermissionState/denied}}". The algorithm is allowed to throw.
+Each [=/file system entry=] has an associated
+<dfn for="file system entry" id=entry-request-access>request access</dfn>
+algorithm, which takes "`read`" or "`readwrite`" <var ignore>mode</var> and
+returns either a {{PermissionState}} or an [=exception/error name=] that must be
+listed in the [=error names table=].
+Unless specified otherwise it returns "{{PermissionState/denied}}".
 
-Note: Implementations that only implement this specification and not dependent specifications do not
-need to bother implementing [=/file system entry=]'s [=file system entry/query access=] and [=file system entry/request access=].
+<p class=warning> Dependent specifications may consider this API a
+[=powerful feature=]. However, unlike other [=powerful features=] whose
+[=permission request algorithm=] may throw, [=/file system entry=]'s
+[=file system entry/query access=] and [=file system entry/request access=]
+algorithms must run [=in parallel=] on the [=file system queue=] and are
+therefore not allowed to throw. Instead, the caller is expected to [=/reject=]
+as appropriate should these algorithms return an [=exception/error name=].
+
+Note: Implementations that only implement this specification and not dependent
+specifications do not need to bother implementing [=/file system entry=]'s
+[=file system entry/query access=] and [=file system entry/request access=].
 
 Issue(101): Make access check algorithms associated with a FileSystemHandle.
 
@@ -504,31 +519,33 @@ The <dfn method for=FileSystemFileHandle>createWritable(|options|)</dfn> method 
 1. Let |result| be [=a new promise=].
 1. Let |locator| be [=this=]'s [=FileSystemHandle/locator=].
 1. Let |realm| be [=this=]'s [=relevant Realm=].
-1. [=Queue a storage task=] with [=this=]'s [=relevant global object=] to
-   [=enqueue the following steps=] to the [=file system queue=]:
+1. Let |global| be [=this=]'s [=relevant global object=].
+1. [=Enqueue the following steps=] to the [=file system queue=]:
   1. Let |entry| be the result of [=locating an entry=] given |locator|.
   1. Let |access| be the result of running |entry|'s
      [=file system entry/request access=] given "`readwrite`".
-     If that throws an exception, [=reject=] |result| with that exception and
-     abort these steps.
-  1. If |access| is not "{{PermissionState/granted}}",
-     [=reject=] |result| with a "{{NotAllowedError}}" {{DOMException}} and
-     abort these steps.
+  1. If |access| is not "{{PermissionState/granted}}":
+    1. Set |requestAccessError| to |access| if |access| is an
+       [=exception/error name=]; otherwise, "{{NotAllowedError}}".
+    1. [=Queue a storage task=] with |global| to [=/reject=] |result| with a
+       |requestAccessError| {{DOMException}} and abort these steps.
 
-  1. If |entry| is `null`, [=/reject=] |result| with a
-     "{{NotFoundError}}" {{DOMException}} and abort.
+  1. If |entry| is `null`, [=queue a storage task=] with |global| to [=/reject=]
+     |result| with a "{{NotFoundError}}" {{DOMException}} and abort these steps.
   1. [=Assert=]: |entry| is a [=file entry=].
 
   1. Let |lockResult| be the result of [=file entry/lock/take|taking a lock=]
      with "`shared`" on |entry|.
-  1. If |lockResult| is "`failure`", [=reject=] |result| with a
+  1. If |lockResult| is "`failure`", [=queue a storage task=] with |global| to
+     [=/reject=] |result| with a
      "{{NoModificationAllowedError}}" {{DOMException}} and abort these steps.
 
-  1. Let |stream| be the result of <a>creating a new `FileSystemWritableFileStream`</a>
-     for |entry| in |realm|.
-  1. If |options|'s {{FileSystemCreateWritableOptions/keepExistingData}} is true:
-     1. Set |stream|'s [=[[buffer]]=] to a copy of |entry|'s [=file entry/binary data=].
-  1. [=/Resolve=] |result| with |stream|.
+  1. [=Queue a storage task=] with |global| to run these steps:
+    1. Let |stream| be the result of <a>creating a new `FileSystemWritableFileStream`</a>
+       for |entry| in |realm|.
+    1. If |options|'s {{FileSystemCreateWritableOptions/keepExistingData}} is true:
+       1. Set |stream|'s [=[[buffer]]=] to a copy of |entry|'s [=file entry/binary data=].
+    1. [=/Resolve=] |result| with |stream|.
 
 1. Return |result|.
 
@@ -562,31 +579,36 @@ The <dfn method for=FileSystemFileHandle>createSyncAccessHandle()</dfn> method s
 1. Let |result| be [=a new promise=].
 1. Let |locator| be [=this=]'s [=FileSystemHandle/locator=].
 1. Let |realm| be [=this=]'s [=relevant Realm=].
+1. Let |global| be [=this=]'s [=relevant global object=].
 1. [=Enqueue the following steps=] to the [=file system queue=]:
   1. Let |entry| be the result of [=locating an entry=] given |locator|.
   1. Let |access| be the result of running |entry|'s
      [=file system entry/request access=] given "`readwrite`".
-     If that throws an exception, [=reject=] |result| with that exception and
-     abort these steps.
-  1. If |access| is not "{{PermissionState/granted}}", [=reject=] |result| with
-     a "{{NotAllowedError}}" {{DOMException}} and abort these steps.
+  1. If |access| is not "{{PermissionState/granted}}":
+    1. Set |requestAccessError| to |access| if |access| is an
+       [=exception/error name=]; otherwise, "{{NotAllowedError}}".
+    1. [=Queue a storage task=] with |global| to [=/reject=] |result| with a
+       |requestAccessError| {{DOMException}} and abort these steps.
 
-  1. If |entry| is `null`, [=/reject=] |result| with a
-     "{{NotFoundError}}" {{DOMException}} and abort.
+  1. If |entry| is `null`, [=queue a storage task=] with |global| to [=/reject=]
+     |result| with a "{{NotFoundError}}" {{DOMException}} and abort these steps.
   1. [=Assert=]: |entry| is a [=file entry=].
 
-  1. If |entry| does not represent a [=/file system entry=] in an [=origin private file system=],
-     [=reject=] |result| with an "{{InvalidStateError}}" {{DOMException}} and
+  1. If |entry| does not represent a [=/file system entry=] in an
+     [=origin private file system=], [=queue a storage task=] with |global| to
+     [=/reject=] |result| with an "{{InvalidStateError}}" {{DOMException}} and
      abort these steps.
 
   1. Let |lockResult| be the result of [=file entry/lock/take|taking a lock=]
      with "`exclusive`" on |entry|.
-  1. If |lockResult| is "`failure`", [=reject=] |result| with a
+  1. If |lockResult| is "`failure`", [=queue a storage task=] with |global| to
+     [=/reject=] |result| with a
      "{{NoModificationAllowedError}}" {{DOMException}} and abort these steps.
 
-  1. Let |handle| be the result of <a>creating a new `FileSystemSyncAccessHandle`</a>
-     for |entry| in |realm|.
-  1. [=/Resolve=] |result| with |handle|.
+  1. [=Queue a storage task=] with |global| to run these steps:
+    1. Let |handle| be the result of <a>creating a new `FileSystemSyncAccessHandle`</a>
+       for |entry| in |realm|.
+    1. [=/Resolve=] |result| with |handle|.
 
 1. Return |result|.
 
@@ -707,7 +729,7 @@ and its async iterator |iterator|:
    [=file system entry/query access=] given "`read`".
 
 1. If |access| is not "{{PermissionState/granted}}",
-   [=reject=] |promise| with a "{{NotAllowedError}}" {{DOMException}} and
+   [=/reject=] |promise| with a "{{NotAllowedError}}" {{DOMException}} and
    return |promise|.
 
 1. Let |child| be a [=/file system entry=] in |directory|'s [=directory entry/children=],
@@ -774,7 +796,7 @@ The <dfn method for=FileSystemDirectoryHandle>getFileHandle(|name|, |options|)</
   1. If |options|.{{FileSystemGetFileOptions/create}} is true:
     1. Let |access| be the result of running |entry|'s
        [=file system entry/request access=] given "`readwrite`".
-       If that throws an exception, [=reject=] |result| with that exception and abort.
+       If that throws an exception, [=/reject=] |result| with that exception and abort.
   1. Otherwise:
     1. Let |access| be the result of running |entry|'s
        [=file system entry/query access=] given "`read`".
@@ -848,7 +870,7 @@ The <dfn method for=FileSystemDirectoryHandle>getDirectoryHandle(|name|, |option
   1. If |options|.{{FileSystemGetDirectoryOptions/create}} is true:
     1. Let |access| be the result of running |entry|'s
        [=file system entry/request access=] given "`readwrite`".
-       If that throws an exception, [=reject=] |result| with that exception and abort.
+       If that throws an exception, [=/reject=] |result| with that exception and abort.
   1. Otherwise:
     1. Let |access| be the result of running |entry|'s
        [=file system entry/query access=] given "`read`".
@@ -915,7 +937,7 @@ The <dfn method for=FileSystemDirectoryHandle>removeEntry(|name|, |options|)</df
   1. Let |entry| be the result of [=locating an entry=] given |locator|.
   1. Let |access| be the result of running |entry|'s
      [=file system entry/request access=] given "`readwrite`".
-     If that throws an exception, [=reject=] |result| with that exception and abort.
+     If that throws an exception, [=/reject=] |result| with that exception and abort.
   1. If |access| is not "{{PermissionState/granted}}",
      [=/reject=] |result| with a "{{NotAllowedError}}" {{DOMException}} and abort.
 
@@ -1065,24 +1087,29 @@ given a [=file entry=] |file| in a [=/Realm=] |realm|:
    1. [=Enqueue the following steps=] to the [=file system queue=]:
       1. Let |access| be the result of running |file|'s
          [=file system entry/query access=] given "`readwrite`".
-      1. If |access| is not "{{PermissionState/granted}}",
-         [=/reject=] |closeResult| with a "{{NotAllowedError}}" {{DOMException}}
-         and abort these steps.
+      1. If |access| is not "{{PermissionState/granted}}":
+         1. Set |requestAccessError| to |access| if |access| is an
+            [=exception/error name=]; otherwise, "{{NotAllowedError}}".
+         1. [=Queue a storage task=] with |file|'s [=relevant global object=] to
+            [=/reject=] |closeResult| with a
+            |requestAccessError| {{DOMException}} and abort these steps.
 
-      1. Run [=implementation-defined=] malware scans and safe browsing checks.
-         If these checks fail, [=/reject=] |closeResult| with an
-         "{{AbortError}}" {{DOMException}} and abort these steps.
-      1. Set |stream|'s [=FileSystemWritableFileStream/[[file]]=]'s
-         [=file entry/binary data=] to |stream|'s [=[[buffer]]=].
-         If that throws an exception, [=/reject=] |closeResult| with that
-         exception and abort these steps.
+      1. [=Queue a storage task=] with |file|'s [=relevant global object=]
+         to run these steps:
+        1. Run [=implementation-defined=] malware scans and safe browsing checks.
+           If these checks fail, [=/reject=] |closeResult| with an
+           "{{AbortError}}" {{DOMException}} and abort these steps.
+        1. Set |stream|'s [=FileSystemWritableFileStream/[[file]]=]'s
+           [=file entry/binary data=] to |stream|'s [=[[buffer]]=].
+           If that throws an exception, [=/reject=] |closeResult| with that
+           exception and abort these steps.
 
-         Note: It is expected that this atomically updates the contents of the
-         file on disk being written to.
+           Note: It is expected that this atomically updates the contents of the
+           file on disk being written to.
 
-      1. [=file entry/lock/release|Release the lock=] on
-         |stream|'s [=FileSystemWritableFileStream/[[file]]=].
-      1. [=/Resolve=] |closeResult| with `undefined`.
+        1. [=file entry/lock/release|Release the lock=] on
+           |stream|'s [=FileSystemWritableFileStream/[[file]]=].
+        1. [=/Resolve=] |closeResult| with `undefined`.
 
    1. Return |closeResult|.
 1. Let |abortAlgorithm| be these steps:
