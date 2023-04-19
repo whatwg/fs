@@ -138,7 +138,7 @@ We would still like to support directory moves. Please read the [”What is a Fi
 
 A site may overwrite an existing file only if it already explicitly has write access to the file being overwritten. Otherwise, the move will be rejected with a permission error.
 
-See  for more context.
+See [this doc](https://docs.google.com/document/d/1U6C6YvGtdwzw264xi7eXz26jha7vvT8d-WdwgnH7Ufw/edit?usp=sharing&resourcekey=0-OAo3LNSx9--4n8f_kNx6Vg) for more context.
 
 ### Security Checks
 
