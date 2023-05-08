@@ -232,7 +232,7 @@ A concern around multiple writers is error-prone usage, resulting in racy writes
 On the other hand, the main benefits and arguments for multiple writers are the following:
 
 * It’s very common for web apps to be run on multiple tabs
-* [Mitigate performance overhead from asynchronous open](#mitigate-performance-overhead-from-asynchronous-open)
+* Mitigate performance overhead from asynchronous open
 * [Emscripten intends to use both multiple readers and writers](https://github.com/whatwg/fs/issues/34#issuecomment-1212609690)
 
 ### Defining all operations as readonly or readwrite
