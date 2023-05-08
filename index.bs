@@ -135,7 +135,7 @@ A <dfn export id=directory>directory entry</dfn> additionally consists of a [=/s
 <dfn for="directory entry">children</dfn>, which are themselves [=/file system entries=].
 Each member is either a [=/file entry=] or a [=/directory entry=].
 
-A [=/file system entry=] |entry| should be [=list/contained=] in the [=children=] of at most one
+A [=/file system entry=] |entry| should be [=list/contained=] in the [=directory entry/children=] of at most one
 [=directory entry=], and that directory entry is also known as |entry|'s
 <dfn export for="file system entry" id=entry-parent>parent</dfn>.
 A [=/file system entry=]'s [=file system entry/parent=] is null if no such directory entry exists.
@@ -146,7 +146,7 @@ parent while the other entry does not have a parent.
 
 [=/File system entries=] can (but don't have to) be backed by files on the host operating system's local file system,
 so it is possible for the [=binary data=], [=modification timestamp=],
-and [=children=] of entries to be modified by applications outside of this specification.
+and [=directory entry/children=] of entries to be modified by applications outside of this specification.
 Exactly how external changes are reflected in the data structures defined by this specification,
 as well as how changes made to the data structures defined here are reflected externally
 is left up to individual user-agent implementations.
