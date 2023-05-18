@@ -15,7 +15,7 @@ Currently, only one instance of [FileSystemSyncAccessHandle](https://fs.spec.wha
 
 ```
 handle.createSyncAccessHandle({ mode: 'read-only' });
-handle.createWritable({ mode: ‘exclusive’ });
+handle.createWritable({ mode: 'exclusive' });
 ```
 
 ## Goals
