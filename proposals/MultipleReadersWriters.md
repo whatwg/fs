@@ -13,6 +13,11 @@
 
 Currently, only one instance of [FileSystemSyncAccessHandle](https://fs.spec.whatwg.org/#api-filesystemsyncaccesshandle) may be open at a time, given a [file system entry](https://fs.spec.whatwg.org/#entry). This explainer proposes a new locking scheme and API changes to support multiple readers and writers for `FileSystemSyncAccessHandle` and an exclusive writer for `FileSystemWritableFileStream`.
 
+```
+handle.createSyncAccessHandle({ mode: 'read-only' });
+handle.createWritable({ mode: 'exclusive' });
+```
+
 ## Goals
 
 * Support multiple readers and writers for `FileSystemSyncAccessHandle`
