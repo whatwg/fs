@@ -251,5 +251,5 @@ Without parent directory locking, a directory could be moved or removed while th
 
 ## Stakeholder Feedback / Opposition
 * Developers: [Positive](https://github.com/whatwg/fs/issues/34)
-* Gecko: [Positive with regards to allowing multiple read-only FileSystemSyncAccessHandles. Stance on the shape of this specific proposal is not yet known.](https://github.com/whatwg/fs/issues/34)
+* Gecko: [Positive with regards to allowing multiple FileSystemSyncAccessHandles. Stance on the shape of this specific proposal is not yet known.](https://github.com/whatwg/fs/issues/34)
 * Webkit: [Positive with regards to allowing multiple read-only FileSystemSyncAccessHandles. Stance on the shape of this specific proposal is not yet known.](https://github.com/whatwg/fs/issues/34)
