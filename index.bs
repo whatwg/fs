@@ -898,6 +898,11 @@ The <dfn method for=FileSystemDirectoryHandle>removeEntry(|name|, |options|)</df
      "{{NotFoundError}}" {{DOMException}} and abort.
   1. [=Assert=]: |entry| is a [=directory entry=].
 
+  1. Let |lockResult| be the result of [=file entry/lock/take|taking a lock=]
+     with "`exclusive`" on |entry|.
+  1. If |lockResult| is false, [=reject=] |result| with a
+     "{{NoModificationAllowedError}}" {{DOMException}} and abort.
+
   1. [=set/For each=] |child| of |entry|'s [=directory entry/children=]:
     1. If |child|'s [=file system entry/name=] equals |name|:
       1. If |child| is a [=directory entry=]:
