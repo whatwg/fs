@@ -95,9 +95,10 @@ It has the following [=struct/items=]:
 [=permission request algorithm=] may throw, [=/file system entry=]'s
 [=file system entry/query access=] and [=file system entry/request access=]
 algorithms must run [=in parallel=] on the [=file system queue=] and are
-therefore not allowed to throw. Instead, the caller is expected to [=/reject=]
-as appropriate should these algorithms return an
-[=file system access result/error name=] other than « the empty string ».
+therefore not allowed to throw. Instead, the caller is expected to
+[=queue a storage task=] to [=/reject=], as appropriate,
+should these algorithms return an [=file system access result/error name=]
+other than « the empty string ».
 
 Note: Implementations that only implement this specification and not dependent
 specifications do not need to bother implementing [=/file system entry=]'s
