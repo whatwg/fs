@@ -67,7 +67,7 @@ algorithm, which takes "`read`" or "`readwrite`" <var ignore>mode</var> and
 returns a [=/file system access result=].
 Unless specified otherwise it returns a [=/file system access result=] with a
 [=file system access result/permission state=] of "{{PermissionState/denied}}"
-and with a [=file system access result/error name=] of the empty string.
+and with an [=file system access result/error name=] of the empty string.
 
 Each [=/file system entry=] has an associated
 <dfn for="file system entry" id=entry-request-access>request access</dfn>
@@ -75,7 +75,7 @@ algorithm, which takes "`read`" or "`readwrite`" <var ignore>mode</var> and
 returns a [=/file system access result=].
 Unless specified otherwise it returns a [=/file system access result=] with a
 [=file system access result/permission state=] of "{{PermissionState/denied}}"
-and with a [=file system access result/error name=] of the empty string.
+and with an [=file system access result/error name=] of the empty string.
 
 A <dfn export>file system access result</dfn> is a [=struct=] encapsulating the
 result of [=file system entry/query access|querying=] or
@@ -85,13 +85,13 @@ It has the following [=struct/items=]:
 : <dfn for="file system access result">permission state</dfn>
 :: A {{PermissionState}}
 : <dfn for="file system access result">error name</dfn>
-:: A [=string=] which must be either the empty string or an
+:: A [=string=] which must be the empty string if
+   [=file system access result/permission state=] is
+   "{{PermissionState/granted}}"; otherwise an
    [=exception/error name=] listed in the [=error names table=].
-   Iff [=file system access result/permission state=] is
-   "{{PermissionState/granted}}" this will be the empty string.
    It is expected that in most cases when
    [=file system access result/permission state=] is not
-   "{{PermissionState/granted}}", this will be "{{NotAllowedError}}".
+   "{{PermissionState/granted}}", this should be "{{NotAllowedError}}".
 
 <p class=warning> Dependent specifications may consider this API a
 [=powerful feature=]. However, unlike other [=powerful features=] whose
