@@ -254,7 +254,7 @@ A <dfn export>file system root</dfn> is an opaque [=string=] whose value is
 <p class=example id=example-locator>For a [=/file system locator=] |locator|
 whichs [=locate an entry|locates to=] a [=file entry=] |entry| that conceptually
 exists at the path `data/drafts/example.txt` relative to the root directory of
-the [=origin private file system=],
+a [=/bucket file system=],
 |locator|'s [=file system locator/kind=] has to be {{FileSystemHandleKind/"file"}},
 |locator|'s [=file system locator/path=] has to be « "`data`", "`drafts`", "`example.txt`" », and
 |locator|'s [=file system locator/root=] might include relevant identifying
@@ -342,12 +342,12 @@ Note: Multiple {{FileSystemHandle}} objects can have
 [=the same locator as|the same=] [=/file system locator=].
 
 A {{FileSystemHandle}}
-<dfn for=FileSystemHandle export>is in an origin private file system</dfn>
+<dfn for=FileSystemHandle export>is in a bucket file system</dfn>
 if the first [=list/item=] of its [=FileSystemHandle/locator=]'s
 [=file system locator/path=] is the empty string.
 
-Note: This is a bit magical, but it works since only the root directory of an
-[=origin private file system=] can have a [=file system locator/path=] which
+Note: This is a bit magical, but it works since only the root directory of a
+[=/bucket file system=] can have a [=file system locator/path=] which
 [=list/contains=] an empty string. See {{StorageManager/getDirectory()}}.
 All other [=list/item=]s of a [=file system locator/path=] will be a
 [=valid file name=].
@@ -550,8 +550,8 @@ writer, for example to support in-place modification of large files or things
 like databases). This is not currently implemented in Chrome. Implementing this
 is currently blocked on figuring out how to combine the desire to run malware
 checks with the desire to let websites make fast in-place modifications to
-existing large files. In-place writes are available for files in the [=origin
-private file system=] via the {{FileSystemSyncAccessHandle}} interface.
+existing large files. In-place writes are available for files in a
+[=/bucket file system=] via the {{FileSystemSyncAccessHandle}} interface.
 
 <div algorithm>
 The <dfn method for=FileSystemFileHandle>createWritable(|options|)</dfn> method steps are:
@@ -612,7 +612,7 @@ The <dfn method for=FileSystemFileHandle>createWritable(|options|)</dfn> method 
      on contexts where asynchronous operations come with high overhead, e.g., WebAssembly.
 
      For the time being, this method will only succeed when the |fileHandle|
-     [=FileSystemHandle/is in an origin private file system=].
+     [=FileSystemHandle/is in a bucket file system=].
 </div>
 
 <div algorithm>
@@ -622,8 +622,8 @@ The <dfn method for=FileSystemFileHandle>createSyncAccessHandle()</dfn> method s
 1. Let |locator| be [=this=]'s [=FileSystemHandle/locator=].
 1. Let |realm| be [=this=]'s [=relevant Realm=].
 1. Let |global| be [=this=]'s [=relevant global object=].
-1. Let |isInAnOriginPrivateFileSystem| be true if
-   [=this=] [=FileSystemHandle/is in an origin private file system=];
+1. Let |isInAnBucketFileSystem| be true if
+   [=this=] [=FileSystemHandle/is in a bucket file system=];
    otherwise false.
 1. [=Enqueue the following steps=] to the [=file system queue=]:
   1. Let |entry| be the result of [=locating an entry=] given |locator|.
@@ -635,7 +635,7 @@ The <dfn method for=FileSystemFileHandle>createSyncAccessHandle()</dfn> method s
      |accessResult|'s [=file system access result/error name=] and
      abort these steps.
 
-  1. If |isInAnOriginPrivateFileSystem| is false,
+  1. If |isInAnBucketFileSystem| is false,
      [=queue a storage task=] with |global| to
      [=/reject=] |result| with an "{{InvalidStateError}}" {{DOMException}} and
      abort these steps.
@@ -1268,10 +1268,12 @@ runs these steps:
          [=/reject=] |p| with a "{{QuotaExceededError}}" {{DOMException}}
          and abort these steps, leaving |stream|'s [=[[buffer]]=] unmodified.
 
-         Note: [=Storage quota=] only applies to files stored in the [=origin private file system=].
-         However this operation could still fail for other files, for example if the disk being written
-         to runs out of disk space.
-      1. Set |stream|'s [=[[seekOffset]]=] to |writePosition| + |data|'s [=byte sequence/length=].
+         Note: [=Storage quota=] only applies to files stored in a
+         [=/bucket file system=].
+         However this operation could still fail for other files,
+         for example if the disk being written to runs out of disk space.
+      1. Set |stream|'s [=[[seekOffset]]=] to |writePosition| + |data|'s
+         [=byte sequence/length=].
       1. [=/Resolve=] |p|.
     1. Otherwise, if |command| is {{WriteCommandType/"seek"}}:
       1. [=Assert=]: |chunk| is a [=/dictionary=].
@@ -1294,9 +1296,10 @@ runs these steps:
             [=/reject=] |p| with a "{{QuotaExceededError}}" {{DOMException}} and
             abort these steps, leaving |stream|'s [=[[buffer]]=] unmodified.
 
-            Note: [=Storage quota=] only applies to files stored in the [=origin private file system=].
-            However this operation could still fail for other files, for example if the disk being written
-            to runs out of disk space.
+            Note: [=Storage quota=] only applies to files stored in a
+            [=/bucket file system=].
+            However this operation could still fail for other files,
+            for example if the disk being written to runs out of disk space.
       1. Otherwise, if |newSize| is smaller than |oldSize|:
          1. Set |stream|'s [=[[buffer]]=] to a [=byte sequence=] containing the
             first |newSize| bytes in |stream|'s [=[[buffer]]=].
@@ -1669,9 +1672,9 @@ guarantee.
 </div>
 
 
-# Accessing the Origin Private File System # {#sandboxed-filesystem}
+# Accessing the Bucket File System # {#sandboxed-filesystem}
 
-The <dfn export>origin private file system</dfn> is a [=storage endpoint=] whose
+The <dfn export>bucket file system</dfn> is a [=storage endpoint=] whose
 <a spec=storage for="storage endpoint">identifier</a> is `"fileSystem"`,
 <a spec=storage for="storage endpoint">types</a> are `« "local" »`,
 and <a spec=storage for="storage endpoint">quota</a> is null.
@@ -1679,10 +1682,10 @@ and <a spec=storage for="storage endpoint">quota</a> is null.
 Issue: Storage endpoints should be defined in [[storage]] itself, rather
 than being defined here. So merge this into the table there.
 
-Note: While user agents will typically implement this by persisting the contents of this
-[=origin private file system=] to disk, it is not intended that the contents are easily
+Note: While user agents will typically implement this by persisting the contents of a
+[=/bucket file system=] to disk, it is not intended that the contents are easily
 user accessible. Similarly there is no expectation that files or directories with names
-matching the names of children of the [=origin private file system=] exist.
+matching the names of children of a [=/bucket file system=] exist.
 
 <xmp class=idl>
 [SecureContext]
@@ -1693,7 +1696,7 @@ partial interface StorageManager {
 
 <div class="note domintro">
   : |directoryHandle| = await navigator . storage . {{StorageManager/getDirectory()}}
-  :: Returns the root directory of the [=origin private file system=].
+  :: Returns the root directory of the [=/bucket file system=].
 </div>
 
 <div algorithm>
