@@ -569,8 +569,10 @@ The <dfn method for=FileSystemFileHandle>createWritable(|options|)</dfn> method 
 
     1. Let |stream| be the result of <a>creating a new `FileSystemWritableFileStream`</a>
        for |entry| in |realm|.
-    1. If |options|'s {{FileSystemCreateWritableOptions/keepExistingData}} is true:
-       1. Set |stream|'s [=[[buffer]]=] to a copy of |entry|'s [=file entry/binary data=].
+    1. If |options|["{{FileSystemCreateWritableOptions/keepExistingData}}"]
+       is true:
+      1. Set |stream|'s [=[[buffer]]=] to a copy of |entry|'s
+         [=file entry/binary data=].
     1. [=/Resolve=] |result| with |stream|.
 
 1. Return |result|.
@@ -823,7 +825,7 @@ The <dfn method for=FileSystemDirectoryHandle>getFileHandle(|name|, |options|)</
      abort these steps.
 
   1. Let |entry| be the result of [=locating an entry=] given |locator|.
-  1. If |options|'s {{FileSystemGetFileOptions/create}} is true:
+  1. If |options|["{{FileSystemGetFileOptions/create}}"] is true:
     1. Let |accessResult| be the result of running |entry|'s
        [=file system entry/request access=] given "`readwrite`".
   1. Otherwise:
@@ -849,7 +851,7 @@ The <dfn method for=FileSystemDirectoryHandle>getFileHandle(|name|, |options|)</
            <a>creating a child `FileSystemFileHandle`</a> with |locator| and
            |child|'s [=file system entry/name=] in |realm| and
            abort these steps.
-    1. If |options|'s {{FileSystemGetFileOptions/create}} is false:
+    1. If |options|["{{FileSystemGetFileOptions/create}}"] is false:
       1. [=/Reject=] |result| with a "{{NotFoundError}}" {{DOMException}} and
          abort these steps.
     1. Let |child| be a new [=file entry=] whose [=query access=] and
@@ -905,7 +907,7 @@ The <dfn method for=FileSystemDirectoryHandle>getDirectoryHandle(|name|, |option
      abort these steps.
 
   1. Let |entry| be the result of [=locating an entry=] given |locator|.
-  1. If |options|'s {{FileSystemGetDirectoryOptions/create}} is true:
+  1. If |options|["{{FileSystemGetDirectoryOptions/create}}"] is true:
     1. Let |accessResult| be the result of running |entry|'s
        [=file system entry/request access=] given "`readwrite`".
   1. Otherwise:
@@ -931,7 +933,7 @@ The <dfn method for=FileSystemDirectoryHandle>getDirectoryHandle(|name|, |option
            <a>creating a child `FileSystemDirectoryHandle`</a> with
            |locator| and |child|'s [=file system entry/name=] in |realm| and
            abort these steps.
-    1. If |options|'s {{FileSystemGetFileOptions/create}} is false:
+    1. If |options|["{{FileSystemGetFileOptions/create}}"] is false:
       1. [=/Reject=] |result| with a "{{NotFoundError}}" {{DOMException}} and
          abort these steps.
     1. Let |child| be a new [=directory entry=] whose [=query access=] and
@@ -1000,7 +1002,7 @@ The <dfn method for=FileSystemDirectoryHandle>removeEntry(|name|, |options|)</df
         1. If |child| is a [=directory entry=]:
           1. If |child|'s [=directory entry/children=] is not
              [=set/is empty|empty=] and
-             |options|'s {{FileSystemRemoveOptions/recursive}} is false:
+             |options|["{{FileSystemRemoveOptions/recursive}}"] is false:
             1. [=/Reject=] |result| with an
                "{{InvalidModificationError}}" {{DOMException}} and
                abort these steps.
@@ -1203,17 +1205,18 @@ runs these steps:
        {{DOMException}} of |accessResult|'s
        [=file system access result/error name=] and abort these steps.
 
-    1. Let |command| be |input|'s {{WriteParams/type}} if
-       |input| is a {{WriteParams}}; otherwise {{WriteCommandType/"write"}}.
+    1. Let |command| be |input|["{{WriteParams/type}}"] if
+       |input| is a [=/dictionary=]; otherwise {{WriteCommandType/"write"}}.
     1. If |command| is {{WriteCommandType/"write"}}:
-      1. Let |data| be |input|'s {{WriteParams/data}} if
-         |input| is a {{WriteParams}}; otherwise |input|.
-      1. If |data| is `undefined`,
+      1. If |input| is `undefined` or |input| is a [=/dictionary=] and
+         |input|["{{WriteParams/data}}"] does not [=map/exists|exist=],
          [=/reject=] |p| with a {{TypeError}} and abort these steps.
+      1. Let |data| be |input|["{{WriteParams/data}}"] if
+         |input| is a [=/dictionary=]; otherwise |input|.
       1. Let |writePosition| be |stream|'s [=[[seekOffset]]=].
-      1. If |input| is a {{WriteParams}} and |input|'s {{WriteParams/position}}
-         is not `undefined`, set |writePosition| to
-         |input|'s {{WriteParams/position}}.
+      1. If |input| is a [=/dictionary=] and |input|["{{WriteParams/position}}"]
+         [=map/exists=], set |writePosition| to
+         |input|["{{WriteParams/position}}"].
       1. Let |oldSize| be |stream|'s [=[[buffer]]=]'s [=byte sequence/length=].
       1. If |data| is a {{BufferSource}},
          let |dataBytes| be [=get a copy of the buffer source|a copy of=] |data|.
@@ -1254,14 +1257,17 @@ runs these steps:
       1. Set |stream|'s [=[[seekOffset]]=] to |writePosition| + |data|'s [=byte sequence/length=].
       1. [=/Resolve=] |p|.
     1. Otherwise, if |command| is {{WriteCommandType/"seek"}}:
-      1. If |chunk|'s {{WriteParams/position}} is `undefined`,
+      1. [=Assert=]: |chunk| is a [=/dictionary=].
+      1. If |chunk|["{{WriteParams/position}}"] does not [=map/exists|exist=],
          [=/reject=] |p| with a {{TypeError}} and abort these steps.
-      1. Set |stream|'s [=[[seekOffset]]=] to |chunk|'s {{WriteParams/position}}.
+      1. Set |stream|'s [=[[seekOffset]]=] to
+         |chunk|["{{WriteParams/position}}"].
       1. [=/Resolve=] |p|.
     1. Otherwise, if |command| is {{WriteCommandType/"truncate"}}:
-      1. If |chunk|'s {{WriteParams/size}} is `undefined`,
+      1. [=Assert=]: |chunk| is a [=/dictionary=].
+      1. If |chunk|["{{WriteParams/size}}"] does not [=map/exists|exist=],
          [=/reject=] |p| with a {{TypeError}} and abort these steps.
-      1. Let |newSize| be |chunk|'s {{WriteParams/size}}.
+      1. Let |newSize| be |chunk|["{{WriteParams/size}}"].
       1. Let |oldSize| be |stream|'s [=[[buffer]]=]'s [=byte sequence/length=].
       1. If |newSize| is larger than |oldSize|:
          1. Set |stream|'s [=[[buffer]]=] to a [=byte sequence=] formed by
