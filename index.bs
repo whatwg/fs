@@ -619,8 +619,9 @@ The <dfn method for=FileSystemFileHandle>createSyncAccessHandle()</dfn> method s
 1. Let |locator| be [=this=]'s [=FileSystemHandle/locator=].
 1. Let |realm| be [=this=]'s [=relevant Realm=].
 1. Let |global| be [=this=]'s [=relevant global object=].
-1. Let |isInAnOriginPrivateFileSystem| be whether
-   [=this=] [=FileSystemHandle/is in an origin private file system=].
+1. Let |isInAnOriginPrivateFileSystem| be true if
+   [=this=] [=FileSystemHandle/is in an origin private file system=];
+   otherwise false.
 1. [=Enqueue the following steps=] to the [=file system queue=]:
   1. Let |entry| be the result of [=locating an entry=] given |locator|.
   1. Let |accessResult| be the result of running |entry|'s
@@ -631,7 +632,7 @@ The <dfn method for=FileSystemFileHandle>createSyncAccessHandle()</dfn> method s
      |accessResult|'s [=file system access result/error name=] and
      abort these steps.
 
-  1. If |isInAnOriginPrivateFileSystem| is true,
+  1. If |isInAnOriginPrivateFileSystem| is false,
      [=queue a storage task=] with |global| to
      [=/reject=] |result| with an "{{InvalidStateError}}" {{DOMException}} and
      abort these steps.
