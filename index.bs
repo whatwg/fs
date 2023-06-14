@@ -241,7 +241,7 @@ Each [=/file system locator=] has an associated <dfn export for="file system loc
 a <dfn export for="file system locator" id=locator-kind>kind</dfn> (a {{FileSystemHandleKind}}), and
 a <dfn export for="file system locator" id=locator-root>root</dfn> (a [=file system root=]).
 
-Issue(103): Consider giving each locator a Storage Bucket.
+Issue(109): Consider giving each locator a [=storage bucket=].
 
 A <dfn export>file locator</dfn> is a [=/file system locator=] whose
 [=file system locator/kind=] is {{FileSystemHandleKind/"file"}}.
@@ -340,6 +340,20 @@ A {{FileSystemHandle}} object is associated with a <dfn for=FileSystemHandle exp
 
 Note: Multiple {{FileSystemHandle}} objects can have
 [=the same locator as|the same=] [=/file system locator=].
+
+A {{FileSystemHandle}}
+<dfn for=FileSystemHandle export>is in an origin private file system</dfn>
+if the first [=list/item=] of its [=FileSystemHandle/locator=]'s
+[=file system locator/path=] is the empty string.
+
+Note: This is a bit magical, but it works since only the root directory of an
+[=origin private file system=] can have a [=file system locator/path=] which
+[=list/contains=] an empty string. See {{StorageManager/getDirectory()}}.
+All other [=list/item=]s of a [=file system locator/path=] will be a
+[=valid file name=].
+
+Issue(109): Consider improving this situation by giving each locator a
+[=storage bucket=].
 
 <div algorithm="serialization steps">
 {{FileSystemHandle}} objects are [=serializable objects=].
@@ -594,8 +608,8 @@ The <dfn method for=FileSystemFileHandle>createWritable(|options|)</dfn> method 
      The returned {{FileSystemSyncAccessHandle}} offers synchronous methods. This allows for higher performance
      on contexts where asynchronous operations come with high overhead, e.g., WebAssembly.
 
-     For the time being, this method will only succeed when the |fileHandle| belongs to the
-     [=origin private file system=].
+     For the time being, this method will only succeed when the |fileHandle|
+     [=FileSystemHandle/is in an origin private file system=].
 </div>
 
 <div algorithm>
@@ -605,6 +619,9 @@ The <dfn method for=FileSystemFileHandle>createSyncAccessHandle()</dfn> method s
 1. Let |locator| be [=this=]'s [=FileSystemHandle/locator=].
 1. Let |realm| be [=this=]'s [=relevant Realm=].
 1. Let |global| be [=this=]'s [=relevant global object=].
+1. Let |isInAnOriginPrivateFileSystem| be true if
+   [=this=] [=FileSystemHandle/is in an origin private file system=];
+   otherwise false.
 1. [=Enqueue the following steps=] to the [=file system queue=]:
   1. Let |entry| be the result of [=locating an entry=] given |locator|.
   1. Let |accessResult| be the result of running |entry|'s
@@ -615,14 +632,14 @@ The <dfn method for=FileSystemFileHandle>createSyncAccessHandle()</dfn> method s
      |accessResult|'s [=file system access result/error name=] and
      abort these steps.
 
+  1. If |isInAnOriginPrivateFileSystem| is false,
+     [=queue a storage task=] with |global| to
+     [=/reject=] |result| with an "{{InvalidStateError}}" {{DOMException}} and
+     abort these steps.
+
   1. If |entry| is `null`, [=queue a storage task=] with |global| to [=/reject=]
      |result| with a "{{NotFoundError}}" {{DOMException}} and abort these steps.
   1. [=Assert=]: |entry| is a [=file entry=].
-
-  1. If |entry| does not represent a [=/file system entry=] in an
-     [=origin private file system=], [=queue a storage task=] with |global| to
-     [=/reject=] |result| with an "{{InvalidStateError}}" {{DOMException}} and
-     abort these steps.
 
   1. Let |lockResult| be the result of [=file entry/lock/take|taking a lock=]
      with "`exclusive`" on |entry|.
@@ -1653,7 +1670,7 @@ partial interface StorageManager {
 
 <div class="note domintro">
   : |directoryHandle| = await navigator . storage . {{StorageManager/getDirectory()}}
-  :: Returns the root directory of the origin private file system.
+  :: Returns the root directory of the [=origin private file system=].
 </div>
 
 <div algorithm>
