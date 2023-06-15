@@ -505,9 +505,10 @@ The <dfn method for=FileSystemFileHandle>getFile()</dfn> method steps are:
     1. Let |f| be a new {{File}}.
     1. Set |f|'s <a spec=FileAPI>snapshot state</a> to the current state of |entry|.
     1. Set |f|'s underlying byte sequence to a copy of |entry|'s [=binary data=].
-    1. Set |f|.{{File/name}} to |entry|'s [=file system entry/name=].
-    1. Set |f|.{{File/lastModified}} to |entry|'s [=file entry/modification timestamp=].
-    1. Set |f|.{{Blob/type}} to an [=implementation-defined=] value, based on for example |entry|'s [=file system entry/name=] or its file extension.
+    1. Set |f|'s {{File/name}} to |entry|'s [=file system entry/name=].
+    1. Set |f|'s {{File/lastModified}} to |entry|'s [=file entry/modification timestamp=].
+    1. Set |f|'s {{Blob/type}} to an [=implementation-defined=] value, based on
+       for example |entry|'s [=file system entry/name=] or its file extension.
 
        Issue: The reading and snapshotting behavior needs to be better specified in the [[FILE-API]] spec,
        for now this is kind of hand-wavy.
@@ -582,8 +583,10 @@ The <dfn method for=FileSystemFileHandle>createWritable(|options|)</dfn> method 
 
     1. Let |stream| be the result of <a>creating a new `FileSystemWritableFileStream`</a>
        for |entry| in |realm|.
-    1. If |options|'s {{FileSystemCreateWritableOptions/keepExistingData}} is true:
-       1. Set |stream|'s [=[[buffer]]=] to a copy of |entry|'s [=file entry/binary data=].
+    1. If |options|["{{FileSystemCreateWritableOptions/keepExistingData}}"]
+       is true:
+      1. Set |stream|'s [=[[buffer]]=] to a copy of |entry|'s
+         [=file entry/binary data=].
     1. [=/Resolve=] |result| with |stream|.
 
 1. Return |result|.
@@ -839,7 +842,7 @@ The <dfn method for=FileSystemDirectoryHandle>getFileHandle(|name|, |options|)</
      abort these steps.
 
   1. Let |entry| be the result of [=locating an entry=] given |locator|.
-  1. If |options|.{{FileSystemGetFileOptions/create}} is true:
+  1. If |options|["{{FileSystemGetFileOptions/create}}"] is true:
     1. Let |accessResult| be the result of running |entry|'s
        [=file system entry/request access=] given "`readwrite`".
   1. Otherwise:
@@ -865,7 +868,7 @@ The <dfn method for=FileSystemDirectoryHandle>getFileHandle(|name|, |options|)</
            <a>creating a child `FileSystemFileHandle`</a> with |locator| and
            |child|'s [=file system entry/name=] in |realm| and
            abort these steps.
-    1. If |options|.{{FileSystemGetFileOptions/create}} is false:
+    1. If |options|["{{FileSystemGetFileOptions/create}}"] is false:
       1. [=/Reject=] |result| with a "{{NotFoundError}}" {{DOMException}} and
          abort these steps.
     1. Let |child| be a new [=file entry=] whose [=query access=] and
@@ -921,7 +924,7 @@ The <dfn method for=FileSystemDirectoryHandle>getDirectoryHandle(|name|, |option
      abort these steps.
 
   1. Let |entry| be the result of [=locating an entry=] given |locator|.
-  1. If |options|.{{FileSystemGetDirectoryOptions/create}} is true:
+  1. If |options|["{{FileSystemGetDirectoryOptions/create}}"] is true:
     1. Let |accessResult| be the result of running |entry|'s
        [=file system entry/request access=] given "`readwrite`".
   1. Otherwise:
@@ -947,7 +950,7 @@ The <dfn method for=FileSystemDirectoryHandle>getDirectoryHandle(|name|, |option
            <a>creating a child `FileSystemDirectoryHandle`</a> with
            |locator| and |child|'s [=file system entry/name=] in |realm| and
            abort these steps.
-    1. If |options|.{{FileSystemGetFileOptions/create}} is false:
+    1. If |options|["{{FileSystemGetFileOptions/create}}"] is false:
       1. [=/Reject=] |result| with a "{{NotFoundError}}" {{DOMException}} and
          abort these steps.
     1. Let |child| be a new [=directory entry=] whose [=query access=] and
@@ -1016,7 +1019,7 @@ The <dfn method for=FileSystemDirectoryHandle>removeEntry(|name|, |options|)</df
         1. If |child| is a [=directory entry=]:
           1. If |child|'s [=directory entry/children=] is not
              [=set/is empty|empty=] and
-             |options|.{{FileSystemRemoveOptions/recursive}} is false:
+             |options|["{{FileSystemRemoveOptions/recursive}}"] is false:
             1. [=/Reject=] |result| with an
                "{{InvalidModificationError}}" {{DOMException}} and
                abort these steps.
@@ -1219,17 +1222,19 @@ runs these steps:
        {{DOMException}} of |accessResult|'s
        [=file system access result/error name=] and abort these steps.
 
-    1. Let |command| be |input|.{{WriteParams/type}} if |input| is a {{WriteParams}},
-       and {{WriteCommandType/"write"}} otherwise.
+    1. Let |command| be |input|["{{WriteParams/type}}"] if
+       |input| is a [=/dictionary=]; otherwise {{WriteCommandType/"write"}}.
     1. If |command| is {{WriteCommandType/"write"}}:
-      1. Let |data| be |input|.{{WriteParams/data}} if |input| is a {{WriteParams}},
-         and |input| otherwise.
-      1. If |data| is `undefined`,
+      1. If |input| is `undefined` or |input| is a [=/dictionary=] and
+         |input|["{{WriteParams/data}}"] does not [=map/exists|exist=],
          [=/reject=] |p| with a {{TypeError}} and abort these steps.
-      1. Let |writePosition| be |stream|.[=[[seekOffset]]=].
-      1. If |input| is a {{WriteParams}} and |input|.{{WriteParams/position}} is not `undefined`,
-         set |writePosition| to |input|.{{WriteParams/position}}.
-      1. Let |oldSize| be |stream|.[=[[buffer]]=]'s [=byte sequence/length=].
+      1. Let |data| be |input|["{{WriteParams/data}}"] if
+         |input| is a [=/dictionary=]; otherwise |input|.
+      1. Let |writePosition| be |stream|'s [=[[seekOffset]]=].
+      1. If |input| is a [=/dictionary=] and |input|["{{WriteParams/position}}"]
+         [=map/exists=], set |writePosition| to
+         |input|["{{WriteParams/position}}"].
+      1. Let |oldSize| be |stream|'s [=[[buffer]]=]'s [=byte sequence/length=].
       1. If |data| is a {{BufferSource}},
          let |dataBytes| be [=get a copy of the buffer source|a copy of=] |data|.
       1. Otherwise, if |data| is a {{Blob}}:
@@ -1241,54 +1246,62 @@ runs these steps:
          1. [=Assert=]: |data| is a {{USVString}}.
          1. Let |dataBytes| be the result of [=UTF-8 encoding=] |data|.
       1. If |writePosition| is larger than |oldSize|,
-         append |writePosition| - |oldSize| 0x00 (NUL) bytes to the end of |stream|.[=[[buffer]]=].
+         append |writePosition| - |oldSize| 0x00 (NUL) bytes to the end of
+         |stream|'s [=[[buffer]]=].
 
          Note: Implementations are expected to behave as if the skipped over file contents
          are indeed filled with NUL bytes. That doesn't mean these bytes have to actually be
          written to disk and take up disk space. Instead most file systems support so called
          sparse files, where these NUL bytes don't take up actual disk space.
 
-      1. Let |head| be a [=byte sequence=] containing the first |writePosition| bytes of |stream|.[=[[buffer]]=].
+      1. Let |head| be a [=byte sequence=] containing the first |writePosition|
+         bytes of |stream|'s[=[[buffer]]=].
       1. Let |tail| be an empty [=byte sequence=].
-      1. If |writePosition| + |data|.[=byte sequence/length=] is smaller than |oldSize|:
+      1. If |writePosition| + |data|'s [=byte sequence/length=] is smaller than |oldSize|:
          1. Let |tail| be a [=byte sequence=] containing the last
-            |oldSize| - (|writePosition| + |data|.[=byte sequence/length=]) bytes of |stream|.[=[[buffer]]=].
-      1. Set |stream|.[=[[buffer]]=] to the concatenation of |head|, |data| and |tail|.
-      1. If the operations modifying |stream|.[=[[buffer]]=] in the previous steps failed
-         due to exceeding the [=storage quota=], [=/reject=] |p| with a
-         "{{QuotaExceededError}}" {{DOMException}} and abort these steps,
-         leaving |stream|.[=[[buffer]]=] unmodified.
+            |oldSize| - (|writePosition| + |data|'s [=byte sequence/length=])
+            bytes of |stream|'s [=[[buffer]]=].
+      1. Set |stream|'s [=[[buffer]]=] to the concatenation of
+         |head|, |data| and |tail|.
+      1. If the operations modifying |stream|'s [=[[buffer]]=] in the
+         previous steps failed due to exceeding the [=storage quota=],
+         [=/reject=] |p| with a "{{QuotaExceededError}}" {{DOMException}}
+         and abort these steps, leaving |stream|'s [=[[buffer]]=] unmodified.
 
          Note: [=Storage quota=] only applies to files stored in the [=origin private file system=].
          However this operation could still fail for other files, for example if the disk being written
          to runs out of disk space.
-      1. Set |stream|.[=[[seekOffset]]=] to |writePosition| + |data|.[=byte sequence/length=].
+      1. Set |stream|'s [=[[seekOffset]]=] to |writePosition| + |data|'s [=byte sequence/length=].
       1. [=/Resolve=] |p|.
     1. Otherwise, if |command| is {{WriteCommandType/"seek"}}:
-      1. If |chunk|.{{WriteParams/position}} is `undefined`,
+      1. [=Assert=]: |chunk| is a [=/dictionary=].
+      1. If |chunk|["{{WriteParams/position}}"] does not [=map/exists|exist=],
          [=/reject=] |p| with a {{TypeError}} and abort these steps.
-      1. Set |stream|.[=[[seekOffset]]=] to |chunk|.{{WriteParams/position}}.
+      1. Set |stream|'s [=[[seekOffset]]=] to
+         |chunk|["{{WriteParams/position}}"].
       1. [=/Resolve=] |p|.
     1. Otherwise, if |command| is {{WriteCommandType/"truncate"}}:
-      1. If |chunk|.{{WriteParams/size}} is `undefined`,
+      1. [=Assert=]: |chunk| is a [=/dictionary=].
+      1. If |chunk|["{{WriteParams/size}}"] does not [=map/exists|exist=],
          [=/reject=] |p| with a {{TypeError}} and abort these steps.
-      1. Let |newSize| be |chunk|.{{WriteParams/size}}.
-      1. Let |oldSize| be |stream|.[=[[buffer]]=]'s [=byte sequence/length=].
+      1. Let |newSize| be |chunk|["{{WriteParams/size}}"].
+      1. Let |oldSize| be |stream|'s [=[[buffer]]=]'s [=byte sequence/length=].
       1. If |newSize| is larger than |oldSize|:
-         1. Set |stream|.[=[[buffer]]=] to a [=byte sequence=] formed by concating
-            |stream|.[=[[buffer]]=] with a [=byte sequence=] containing |newSize|-|oldSize| `0x00` bytes.
+         1. Set |stream|'s [=[[buffer]]=] to a [=byte sequence=] formed by
+            concating |stream|'s [=[[buffer]]=] with a [=byte sequence=]
+            containing |newSize|-|oldSize| `0x00` bytes.
          1. If the operation in the previous step failed due to exceeding the [=storage quota=],
             [=/reject=] |p| with a "{{QuotaExceededError}}" {{DOMException}} and
-            abort these steps, leaving |stream|.[=[[buffer]]=] unmodified.
+            abort these steps, leaving |stream|'s [=[[buffer]]=] unmodified.
 
             Note: [=Storage quota=] only applies to files stored in the [=origin private file system=].
             However this operation could still fail for other files, for example if the disk being written
             to runs out of disk space.
       1. Otherwise, if |newSize| is smaller than |oldSize|:
-         1. Set |stream|.[=[[buffer]]=] to a [=byte sequence=] containing the first |newSize| bytes
-            in |stream|.[=[[buffer]]=].
-      1. If |stream|.[=[[seekOffset]]=] is bigger than |newSize|,
-         set |stream|.[=[[seekOffset]]=] to |newSize|.
+         1. Set |stream|'s [=[[buffer]]=] to a [=byte sequence=] containing the
+            first |newSize| bytes in |stream|'s [=[[buffer]]=].
+      1. If |stream|'s [=[[seekOffset]]=] is bigger than |newSize|,
+         set |stream|'s [=[[seekOffset]]=] to |newSize|.
       1. [=/Resolve=] |p|.
 1. Return |p|.
 
@@ -1437,8 +1450,8 @@ To
 given a [=file entry=] |file| in a [=/Realm=] |realm|:
 
 1. Let |handle| be a [=new=] {{FileSystemSyncAccessHandle}} in |realm|.
-1. Set |handle|.[=FileSystemSyncAccessHandle/[[file]]=] to |file|.
-1. Set |handle|.[=FileSystemSyncAccessHandle/[[state]]=] to "`open`".
+1. Set |handle|'s [=FileSystemSyncAccessHandle/[[file]]=] to |file|.
+1. Set |handle|'s [=FileSystemSyncAccessHandle/[[state]]=] to "`open`".
 1. Return |handle|.
 
 </div>
@@ -1457,10 +1470,10 @@ Issue(35): Specify how Access Handles should react when reading from a file that
 <div algorithm>
 The <dfn method for=FileSystemSyncAccessHandle>read(|buffer|, {{FileSystemReadWriteOptions}}: |options|)</dfn> method steps are:
 
-1. If [=this=].[=[[state]]=] is "`closed`", [=throw=] an "{{InvalidStateError}}"
-   {{DOMException}}.
+1. If [=this=]'s [=[[state]]=] is "`closed`",
+   [=throw=] an "{{InvalidStateError}}" {{DOMException}}.
 1. Let |bufferSize| be |buffer|'s [=byte length=].
-1. Let |fileContents| be [=this=].[=FileSystemSyncAccessHandle/[[file]]=]'s [=file entry/binary data=].
+1. Let |fileContents| be [=this=]'s [=FileSystemSyncAccessHandle/[[file]]=]'s [=file entry/binary data=].
 1. Let |fileSize| be |fileContents|'s [=byte sequence/length=].
 1. Let |readStart| be |options|["{{FileSystemReadWriteOptions/at}}"] if
    |options|["{{FileSystemReadWriteOptions/at}}"] [=map/exists=]; otherwise
@@ -1499,14 +1512,15 @@ The <dfn method for=FileSystemSyncAccessHandle>read(|buffer|, {{FileSystemReadWr
 <div algorithm>
 The <dfn method for=FileSystemSyncAccessHandle>write(|buffer|, {{FileSystemReadWriteOptions}}: |options|)</dfn> method steps are:
 
-1. If [=this=].[=[[state]]=] is "`closed`", [=throw=] an "{{InvalidStateError}}"
-   {{DOMException}}.
+1. If [=this=]'s [=[[state]]=] is "`closed`",
+   [=throw=] an "{{InvalidStateError}}" {{DOMException}}.
 1. Let |writePosition| be |options|["{{FileSystemReadWriteOptions/at}}"] if
    |options|["{{FileSystemReadWriteOptions/at}}"] [=map/exists=]; otherwise
    [=this=]'s [=FileSystemSyncAccessHandle/file position cursor=].
 1. If the underlying file system does not support writing to a file offset of
    |writePosition|, [=throw=] a {{TypeError}}.
-1. Let |fileContents| be a copy of [=this=].[=FileSystemSyncAccessHandle/[[file]]=]'s [=file entry/binary data=].
+1. Let |fileContents| be a copy of [=this=]'s
+   [=FileSystemSyncAccessHandle/[[file]]=]'s [=file entry/binary data=].
 1. Let |oldSize| be |fileContents|'s [=byte sequence/length=].
 1. Let |bufferSize| be |buffer|'s [=byte length=].
 1. If |writePosition| is larger than |oldSize|,
@@ -1525,15 +1539,17 @@ The <dfn method for=FileSystemSyncAccessHandle>write(|buffer|, {{FileSystemReadW
 1. Let |newSize| be |head|'s [=byte sequence/length=] + |bufferSize| + |tail|'s [=byte sequence/length=].
 1. If |newSize| &minus; |oldSize| exceeds the available [=storage quota=],
    [=throw=] a "{{QuotaExceededError}}" {{DOMException}}.
-1. Set [=this=].[=FileSystemSyncAccessHandle/[[file]]=]'s [=file entry/binary data=] to the concatenation of |head|, the contents of |buffer| and |tail|.
+1. Set [=this=]'s [=FileSystemSyncAccessHandle/[[file]]=]'s
+   [=file entry/binary data=] to the concatenation of
+   |head|, the contents of |buffer| and |tail|.
 
   Note: The mechanism used to access buffer's contents is left purposely vague.
   It is likely that implementations will choose to focus on performance by issuing
   direct write calls to the host operating system (instead of creating a copy of buffer),
   which prevents a detailed specification of the write order and the results of partial writes.
 
-1. If the operations modifying the [=this=].[=FileSystemSyncAccessHandle/[[file]]=]'s [=file entry/binary data=] in the previous steps
-   failed:
+1. If the operations modifying the [=this=]'s[=FileSystemSyncAccessHandle/[[file]]=]'s
+   [=file entry/binary data=] in the previous steps failed:
     1. If there were partial writes and the number of bytes that were written from |buffer| is known:
         1. Let |bytesWritten| be the number of bytes that were written from |buffer|.
         1. Set [=this=]'s [=FileSystemSyncAccessHandle/file position cursor=] to |writePosition| + |bytesWritten|.
@@ -1556,25 +1572,31 @@ The <dfn method for=FileSystemSyncAccessHandle>write(|buffer|, {{FileSystemReadW
 <div algorithm>
 The <dfn method for=FileSystemSyncAccessHandle>truncate(|newSize|)</dfn> method steps are:
 
-1. If [=this=].[=[[state]]=] is "`closed`", [=throw=] an "{{InvalidStateError}}"
-   {{DOMException}}.
-1. Let |fileContents| be a copy of [=this=].[=FileSystemSyncAccessHandle/[[file]]=]'s [=file entry/binary data=].
-1. 1. Let |oldSize| be the [=byte sequence/length=] of [=this=].[=FileSystemSyncAccessHandle/[[file]]=]'s [=file entry/binary data=].
+1. If [=this=]'s [=[[state]]=] is "`closed`",
+   [=throw=] an "{{InvalidStateError}}" {{DOMException}}.
+1. Let |fileContents| be a copy of [=this=]'s
+   [=FileSystemSyncAccessHandle/[[file]]=]'s [=file entry/binary data=].
+1. Let |oldSize| be the [=byte sequence/length=] of [=this=]'s
+   [=FileSystemSyncAccessHandle/[[file]]=]'s [=file entry/binary data=].
 1. If the underlying file system does not support setting a file's size to
    |newSize|, [=throw=] a {{TypeError}}.
 1. If |newSize| is larger than |oldSize|:
    1. If |newSize| &minus; |oldSize| exceeds the available [=storage quota=],
       [=throw=] a "{{QuotaExceededError}}" {{DOMException}}.
-   1. Set [=this=].[=FileSystemSyncAccessHandle/[[file]]=]'s to a [=byte sequence=] formed by concatenating
-      |fileContents| with a [=byte sequence=]
-      containing |newSize| &minus; |oldSize| 0x00 bytes.
-   1. If the operations modifying the [=this=].[=FileSystemSyncAccessHandle/[[file]]=]'s [=file entry/binary data=] in the previous steps
-      failed, [=throw=] an "{{InvalidStateError}}" {{DOMException}}.
+   1. Set [=this=]'s [=FileSystemSyncAccessHandle/[[file]]=]'s to a
+      [=byte sequence=] formed by concatenating |fileContents| with a
+      [=byte sequence=] containing |newSize| &minus; |oldSize| 0x00 bytes.
+   1. If the operations modifying the [=this=]'s
+      [=FileSystemSyncAccessHandle/[[file]]=]'s [=file entry/binary data=]
+      in the previous steps failed,
+      [=throw=] an "{{InvalidStateError}}" {{DOMException}}.
 1. Otherwise, if |newSize| is smaller than |oldSize|:
-   1. Set [=this=].[=FileSystemSyncAccessHandle/[[file]]=]'s to a [=byte sequence=] containing the first |newSize| bytes
-      in |fileContents|.
-   1. If the operations modifying the [=this=].[=FileSystemSyncAccessHandle/[[file]]=]'s [=file entry/binary data=] in the previous steps
-      failed, [=throw=] an "{{InvalidStateError}}" {{DOMException}}.
+   1. Set [=this=]'s [=FileSystemSyncAccessHandle/[[file]]=]'s to a
+      [=byte sequence=] containing the first |newSize| bytes in |fileContents|.
+   1. If the operations modifying the [=this=]'s
+      [=FileSystemSyncAccessHandle/[[file]]=]'s [=file entry/binary data=]
+      in the previous steps failed,
+      [=throw=] an "{{InvalidStateError}}" {{DOMException}}.
 1. If [=this=]'s [=FileSystemSyncAccessHandle/file position cursor=] is greater than |newSize|, then set [=FileSystemSyncAccessHandle/file position cursor=] to |newSize|.
 
 </div>
@@ -1589,9 +1611,10 @@ The <dfn method for=FileSystemSyncAccessHandle>truncate(|newSize|)</dfn> method 
 <div algorithm>
 The <dfn method for=FileSystemSyncAccessHandle>getSize()</dfn> method steps are:
 
-1. If [=this=].[=[[state]]=] is "`closed`", [=throw=] an "{{InvalidStateError}}"
-   {{DOMException}}.
-1. Return [=this=].[=FileSystemSyncAccessHandle/[[file]]=]'s [=file entry/binary data=]'s [=byte sequence/length=].
+1. If [=this=]'s [=[[state]]=] is "`closed`",
+   [=throw=] an "{{InvalidStateError}}" {{DOMException}}.
+1. Return [=this=]'s [=FileSystemSyncAccessHandle/[[file]]=]'s
+   [=file entry/binary data=]'s [=byte sequence/length=].
 
 </div>
 
@@ -1605,8 +1628,8 @@ The <dfn method for=FileSystemSyncAccessHandle>getSize()</dfn> method steps are:
 <div algorithm>
 The <dfn method for=FileSystemSyncAccessHandle>flush()</dfn> method steps are:
 
-1. If [=this=].[=[[state]]=] is "`closed`", [=throw=] an "{{InvalidStateError}}"
-   {{DOMException}}.
+1. If [=this=]'s [=[[state]]=] is "`closed`",
+   [=throw=] an "{{InvalidStateError}}" {{DOMException}}.
 1. Attempt to transfer all cached modifications of the file's content to the
    file system's underlying storage device.
 
