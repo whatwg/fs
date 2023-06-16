@@ -1674,7 +1674,8 @@ guarantee.
 
 # Accessing the Bucket File System # {#sandboxed-filesystem}
 
-The <dfn export>bucket file system</dfn> is a [=storage endpoint=] whose
+The <dfn export id=origin-private-file-system>bucket file system</dfn> is a
+[=storage endpoint=] whose
 <a spec=storage for="storage endpoint">identifier</a> is `"fileSystem"`,
 <a spec=storage for="storage endpoint">types</a> are `« "local" »`,
 and <a spec=storage for="storage endpoint">quota</a> is null.
