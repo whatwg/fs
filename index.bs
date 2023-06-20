@@ -244,9 +244,9 @@ a <dfn export for="file system locator" id=locator-root>root</dfn> (a [=file sys
 Issue(109): Consider giving each locator a [=storage bucket=].
 
 A <dfn export>file locator</dfn> is a [=/file system locator=] whose
-[=file system locator/kind=] is {{FileSystemHandleKind/"file"}}.
+[=file system locator/kind=] is "{{FileSystemHandleKind/file}}".
 A <dfn export>directory locator</dfn> is a [=/file system locator=] whose
-[=file system locator/kind=] is {{FileSystemHandleKind/"directory"}}.
+[=file system locator/kind=] is "{{FileSystemHandleKind/directory}}".
 
 A <dfn export>file system root</dfn> is an opaque [=string=] whose value is
 [=implementation-defined=].
@@ -255,7 +255,7 @@ A <dfn export>file system root</dfn> is an opaque [=string=] whose value is
 whichs [=locate an entry|locates to=] a [=file entry=] |entry| that conceptually
 exists at the path `data/drafts/example.txt` relative to the root directory of
 a [=/bucket file system=],
-|locator|'s [=file system locator/kind=] has to be {{FileSystemHandleKind/"file"}},
+|locator|'s [=file system locator/kind=] has to be "{{FileSystemHandleKind/file}}",
 |locator|'s [=file system locator/path=] has to be « "`data`", "`drafts`", "`example.txt`" », and
 |locator|'s [=file system locator/root=] might include relevant identifying
 information such as the [=storage bucket=] and the disk drive.
@@ -377,8 +377,8 @@ Their [=deserialization steps=], given |serialized| and |value| are:
 
 <div class="note domintro">
   : |handle| . {{FileSystemHandle/kind}}
-  :: Returns {{FileSystemHandleKind/"file"}} if |handle| is a {{FileSystemFileHandle}},
-     or {{FileSystemHandleKind/"directory"}} if |handle| is a {{FileSystemDirectoryHandle}}.
+  :: Returns "{{FileSystemHandleKind/file}}" if |handle| is a {{FileSystemFileHandle}},
+     or "{{FileSystemHandleKind/directory}}" if |handle| is a {{FileSystemDirectoryHandle}}.
 
      This can be used to distinguish files from directories when iterating over the contents
      of a directory.
@@ -433,7 +433,7 @@ interface FileSystemFileHandle : FileSystemHandle {
 </xmp>
 
 Note: A {{FileSystemFileHandle}}'s associated [=FileSystemHandle/locator=]'s
-[=file system locator/kind=] is {{FileSystemHandleKind/"file"}}.
+[=file system locator/kind=] is "{{FileSystemHandleKind/file}}".
 
 <div algorithm>
 To
@@ -441,7 +441,7 @@ To
 given a [=directory locator=] |parentLocator| and a string |name| in a [=/Realm=] |realm|:
 
 1. Let |handle| be a [=new=] {{FileSystemFileHandle}} in |realm|.
-1. Let |childType| be {{FileSystemHandleKind/"file"}}.
+1. Let |childType| be "{{FileSystemHandleKind/file}}".
 1. Let |childRoot| be a copy of |parentLocator|'s [=file system locator/root=].
 1. Let |childPath| be the result of [=list/clone|cloning=] |parentLocator|'s
    [=file system locator/path=] and [=list/append|appending=] |name|.
@@ -461,7 +461,7 @@ in a [=/Realm=] |realm|:
 
 1. Let |handle| be a [=new=] {{FileSystemFileHandle}} in |realm|.
 1. Set |handle|'s [=FileSystemHandle/locator=] to a [=/file system locator=] whose
-   [=file system locator/kind=] is {{FileSystemHandleKind/"file"}},
+   [=file system locator/kind=] is "{{FileSystemHandleKind/file}}",
    [=file system locator/root=] is |root|, and
    [=file system locator/path=] is |path|.
 1. Return |handle|.
@@ -688,7 +688,7 @@ interface FileSystemDirectoryHandle : FileSystemHandle {
 </xmp>
 
 Note: A {{FileSystemDirectoryHandle}}'s associated [=FileSystemHandle/locator=]'s
-[=file system locator/kind=] is {{FileSystemHandleKind/"directory"}}.
+[=file system locator/kind=] is "{{FileSystemHandleKind/directory}}".
 
 <div algorithm>
 To
@@ -696,7 +696,7 @@ To
 given a [=directory locator=] |parentLocator| and a string |name| in a [=/Realm=] |realm|:
 
 1. Let |handle| be a [=new=] {{FileSystemDirectoryHandle}} in |realm|.
-1. Let |childType| be {{FileSystemHandleKind/"directory"}}.
+1. Let |childType| be "{{FileSystemHandleKind/directory}}".
 1. Let |childRoot| be a copy of |parentLocator|'s [=file system locator/root=].
 1. Let |childPath| be the result of [=list/clone|cloning=] |parentLocator|'s
    [=file system locator/path=] and [=list/append|appending=] |name|.
@@ -716,7 +716,7 @@ in a [=/Realm=] |realm|:
 
 1. Let |handle| be a [=new=] {{FileSystemDirectoryHandle}} in |realm|.
 1. Set |handle|'s [=FileSystemHandle/locator=] to a [=/file system locator=] whose
-   [=file system locator/kind=] is {{FileSystemHandleKind/"directory"}},
+   [=file system locator/kind=] is "{{FileSystemHandleKind/directory}}",
    [=file system locator/root=] is |root|, and
    [=file system locator/path=] is |path|.
 1. Return |handle|.
@@ -1223,8 +1223,8 @@ runs these steps:
        [=file system access result/error name=] and abort these steps.
 
     1. Let |command| be |input|["{{WriteParams/type}}"] if
-       |input| is a [=/dictionary=]; otherwise {{WriteCommandType/"write"}}.
-    1. If |command| is {{WriteCommandType/"write"}}:
+       |input| is a [=/dictionary=]; otherwise "{{WriteCommandType/write}}".
+    1. If |command| is "{{WriteCommandType/write}}":
       1. If |input| is `undefined` or |input| is a [=/dictionary=] and
          |input|["{{WriteParams/data}}"] does not [=map/exists|exist=],
          [=/reject=] |p| with a {{TypeError}} and abort these steps.
@@ -1275,14 +1275,14 @@ runs these steps:
       1. Set |stream|'s [=[[seekOffset]]=] to |writePosition| + |data|'s
          [=byte sequence/length=].
       1. [=/Resolve=] |p|.
-    1. Otherwise, if |command| is {{WriteCommandType/"seek"}}:
+    1. Otherwise, if |command| is "{{WriteCommandType/seek}}":
       1. [=Assert=]: |chunk| is a [=/dictionary=].
       1. If |chunk|["{{WriteParams/position}}"] does not [=map/exists|exist=],
          [=/reject=] |p| with a {{TypeError}} and abort these steps.
       1. Set |stream|'s [=[[seekOffset]]=] to
          |chunk|["{{WriteParams/position}}"].
       1. [=/Resolve=] |p|.
-    1. Otherwise, if |command| is {{WriteCommandType/"truncate"}}:
+    1. Otherwise, if |command| is "{{WriteCommandType/truncate}}":
       1. [=Assert=]: |chunk| is a [=/dictionary=].
       1. If |chunk|["{{WriteParams/size}}"] does not [=map/exists|exist=],
          [=/reject=] |p| with a {{TypeError}} and abort these steps.
@@ -1315,7 +1315,7 @@ runs these steps:
 <div class="note domintro">
   : await |stream| . {{FileSystemWritableFileStream/write()|write}}(|data|)
   : await |stream| . {{FileSystemWritableFileStream/write()|write}}({
-      {{WriteParams/type}}: {{WriteCommandType/"write"}},
+      {{WriteParams/type}}: "{{WriteCommandType/write}}",
       {{WriteParams/data}}: |data| })
   :: Writes the content of |data| into the file associated with |stream| at the current file
      cursor offset.
@@ -1324,7 +1324,7 @@ runs these steps:
      Changes are typically written to a temporary file instead.
 
   : await |stream| . {{FileSystemWritableFileStream/write()|write}}({
-      {{WriteParams/type}}: {{WriteCommandType/"write"}},
+      {{WriteParams/type}}: "{{WriteCommandType/write}}",
       {{WriteParams/position}}: |position|,
       {{WriteParams/data}}: |data| })
   :: Writes the content of |data| into the file associated with |stream| at |position|
@@ -1335,12 +1335,12 @@ runs these steps:
      Changes are typically written to a temporary file instead.
 
   : await |stream| . {{FileSystemWritableFileStream/write()|write}}({
-      {{WriteParams/type}}: {{WriteCommandType/"seek"}},
+      {{WriteParams/type}}: "{{WriteCommandType/seek}}",
       {{WriteParams/position}}: |position| })
   :: Updates the current file cursor offset the |position| bytes from the top of the file.
 
   : await |stream| . {{FileSystemWritableFileStream/write()|write}}({
-      {{WriteParams/type}}: {{WriteCommandType/"truncate"}},
+      {{WriteParams/type}}: "{{WriteCommandType/truncate}}",
       {{WriteParams/size}}: |size| })
   :: Resizes the file associated with |stream| to be |size| bytes long. If |size| is larger than
      the current file size this pads the file with null bytes, otherwise it truncates the file.
@@ -1376,7 +1376,7 @@ The <dfn method for=FileSystemWritableFileStream>seek(|position|)</dfn> method s
 
 1. Let |writer| be the result of [=WritableStream/getting a writer=] for [=this=].
 1. Let |result| be the result of [=WritableStreamDefaultWriter/writing a chunk=] to |writer| given
-    «[ "{{WriteParams/type}}" → {{WriteCommandType/"seek"}}, "{{WriteParams/position}}" →
+    «[ "{{WriteParams/type}}" → "{{WriteCommandType/seek}}", "{{WriteParams/position}}" →
     |position| ]».
 1. [=WritableStreamDefaultWriter/Release=] |writer|.
 1. Return |result|.
@@ -1403,7 +1403,7 @@ The <dfn method for=FileSystemWritableFileStream>truncate(|size|)</dfn> method s
 
 1. Let |writer| be the result of [=WritableStream/getting a writer=] for [=this=].
 1. Let |result| be the result of [=WritableStreamDefaultWriter/writing a chunk=] to |writer| given
-    «[ "{{WriteParams/type}}" → {{WriteCommandType/"truncate"}}, "{{WriteParams/size}}" →
+    «[ "{{WriteParams/type}}" → "{{WriteCommandType/truncate}}", "{{WriteParams/size}}" →
     |size| ]».
 1. [=WritableStreamDefaultWriter/Release=] |writer|.
 1. Return |result|.
