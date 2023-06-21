@@ -88,7 +88,7 @@ It has the following [=struct/items=]:
 :: A [=string=] which must be the empty string if
    [=file system access result/permission state=] is
    "{{PermissionState/granted}}"; otherwise an
-   [=DOMException/name=] listed in the [=`DOMException` names table=].
+   [=DOMException/name=] listed in the <a>`DOMException` names table</a>.
    It is expected that in most cases when
    [=file system access result/permission state=] is not
    "{{PermissionState/granted}}", this should be "{{NotAllowedError}}".
