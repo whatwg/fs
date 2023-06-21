@@ -44,7 +44,7 @@ This explainer proposes a `FileSystemObserver` interface which will much more ea
 
 To implement a website that [binds a UI element](https://web.dev/indexeddb-uidatabinding/) to the contents of the file, the website must watch for changes to the file in order to trigger corresponding changes to the UI. Currently, the website has two options for watching file system changes:
 
-*   Set up a `[BroadcastChannel](https://developer.mozilla.org/en-US/docs/Web/API/BroadcastChannel)` and add hooks to broadcast a message on every file system operation. Note that while this approach is plausible for tracking changes to the Bucket File System, it is oblivious to changes made to the local file system external to your origin
+*   Set up a [`BroadcastChannel`](https://developer.mozilla.org/en-US/docs/Web/API/BroadcastChannel) and add hooks to broadcast a message on every file system operation. Note that while this approach is plausible for tracking changes to the Bucket File System, it is oblivious to changes made to the local file system external to your origin
 *   Poll the file system. This is the only way to track changes made external to your origin
 
 The example below shows a rudimentary implementation of file system polling. The website can read the last-modified timestamp of the file through the [`File`](https://developer.mozilla.org/en-US/docs/Web/API/File) interface. The value of `pollInterval` strongly dictates both the resource consumption (if it's too frequent) and responsiveness (if it's not frequent enough) of the website.
@@ -410,7 +410,7 @@ Attempting to observe a file or directory without [`“read”`](https://wicg.gi
 
 #### Resource Constraints
 
-Watching a large number of paths can consume scarce resources (e.g. memory usage, file descriptors). This is particularly true on Linux, which consumes file descriptors to watch local file paths and which has no native support for recursive watches.
+Watching a large number of paths can consume scarce resources (e.g. memory usage, file descriptors). This is particularly true on Linux, which consumes file descriptors and watch descriptors to watch local file paths and which has no native support for recursive watches.
 
 Accordingly, user agents may add restrictions to how many files or directories a website can watch.
 
