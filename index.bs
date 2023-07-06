@@ -110,7 +110,9 @@ specifications do not need to bother implementing [=/file system entry=]'s
 
 Issue(101): Make access check algorithms associated with a FileSystemHandle.
 
-Each [=/file system entry=] has an associated <dfn for="file system entry" id=entry-name>name</dfn> (a [=string=]).
+Each [=/file system entry=] has an associated <dfn for="file system entry" id=entry-name>name</dfn> (a [=string=]),
+a <dfn for="file system entry">lock</dfn> (a string that may exclusively be "`open`", "`taken-exclusive`" or "`taken-shared`")
+and a <dfn for="file system entry">lock count</dfn> (a number representing the number of locks that are taken at a given point in time).
 
 A <dfn>valid file name</dfn> is a [=string=] that is not an empty string, is not equal to "." or "..",
 and does not contain '/' or any other character used as path separator on the underlying platform.
@@ -124,22 +126,23 @@ Issue: We should consider having further normative restrictions on file names th
 never be allowed using this API, rather than leaving it entirely up to underlying file
 systems.
 
-A <dfn export id=file>file entry</dfn> additionally consists of
-<dfn for="file entry" export>binary data</dfn> (a [=byte sequence=]), a
-<dfn for="file entry">modification timestamp</dfn> (a number representing the number of milliseconds since the <a spec=FileAPI>Unix Epoch</a>),
-a <dfn for="file entry">lock</dfn> (a string that may exclusively be "`open`", "`taken-exclusive`" or "`taken-shared`")
-and a <dfn for="file entry">lock count</dfn> (a number representing the number of locks that are taken at a given point in time).
-
 A user agent has an associated <dfn>file system queue</dfn> which is the
 result of [=starting a new parallel queue=]. This queue is to be used for all
 file system operations.
 
 <div algorithm>
-To <dfn for="file entry" id=file-entry-lock-take>take a lock</dfn> with a |value| of
-"`exclusive`" or "`shared`" on a given [=file entry=] |file|:
+To <dfn for="file system entry" id=file-entry-lock-take>take a lock</dfn> with a |value| of
+"`exclusive`" or "`shared`" on a given [=/file system entry=] |entry|:
 
-1. Let |lock| be the |file|'s [=file entry/lock=].
-1. Let |count| be the |file|'s [=file entry/lock count=].
+1. Let |lock| be the |entry|'s [=file system entry/lock=].
+1. Let |count| be the |entry|'s [=file system entry/lock count=].
+1. Let |ancestorLockStatus| be the result of [=file system entry/checking for an ancestor lock=] on |entry|.
+1. If |ancestorLockStatus| is "`taken`":
+  1. Return "`failure`".
+1. If |entry| is a [=directory entry=]:
+   1. Let |descendantLockStatus| be the result of [=file system entry/checking for a descendant lock=] on |entry|.
+   1. If |descendantLockStatus| is "`taken`":
+     1. Return "`failure`".
 1. If |lock| is not "`open`":
    1. If |value| is "`exclusive`" or |lock| is "`taken-exclusive`":
      1. Return "`failure`".
@@ -157,12 +160,47 @@ Note: These steps have to be run on the [=file system queue=].
 </div>
 
 <div algorithm>
-To <dfn for="file entry/lock">release</dfn> a [=file entry/lock=] on a given
-[=/file entry=] |file|:
+To <dfn for="file system entry">check for an ancestor lock</dfn> on a given
+[=/file system entry=] |entry|:
 
-1. Let |lock| be the |file|'s associated [=file entry/lock=].
+1. Let |parent| be the |entry|'s [=file system entry/parent=].
+1. If |parent| is null:
+  1. Return "`open`".
+1. Let |lock| be the |parent|'s [=file system entry/lock=].
+1. If |lock| is not "`open`":
+  1. Return "`taken`".
+1. Let |ancestorLockStatus| be the result of  [=file system entry/checking for an ancestor lock=] on |parent|.
+1. Return |ancestorLockStatus|.
+
+Note: These steps have to be run on the [=file system queue=].
+
+</div>
+
+<div algorithm>
+To <dfn for="file system entry">check for a descendant lock</dfn> on a given
+[=directory entry=] |directory|:
+
+1. [=set/For each=] |child| of |directory|'s [=directory entry/children=]:
+  1. Let |lock| be the |child|'s [=file system entry/lock=].
+  1. If |lock| is not "`open`":
+    1. Return "`taken`".
+  1. If |child| is a [=directory entry=]:
+    1. Let |descendantLockStatus| be the result of [=file system entry/checking for a descendant lock=] on |child|.
+    1. If |descendantLockStatus| is "`taken`":
+      1. Return "`taken`".
+1. Return "`open`".
+
+Note: These steps have to be run on the [=file system queue=].
+
+</div>
+
+<div algorithm>
+To <dfn for="file system entry/lock">release</dfn> a [=file system entry/lock=] on a given
+[=/file system entry=] |entry|:
+
+1. Let |lock| be the |entry|'s associated [=file system entry/lock=].
 1. [=Assert=]: |lock| is not "`open`".
-1. Let |count| be the |file|'s [=file entry/lock count=].
+1. Let |count| be the |entry|'s [=file system entry/lock count=].
 1. [=Assert=]: |count| is greater than 0.
 1. Decrease |count| by 1.
 1. If |count| is 0, set |lock| to "`open`".
@@ -173,6 +211,10 @@ Note: These steps have to be run on the [=file system queue=].
 
 Note: Locks help prevent concurrent modifications to a file. A {{FileSystemWritableFileStream}}
 requires a shared lock, while a {{FileSystemSyncAccessHandle}} requires an exclusive one.
+
+A <dfn export id=file>file entry</dfn> additionally consists of
+<dfn for="file entry" export>binary data</dfn> (a [=byte sequence=]) and a
+<dfn for="file entry">modification timestamp</dfn> (a number representing the number of milliseconds since the <a spec=FileAPI>Unix Epoch</a>).
 
 A <dfn export id=directory>directory entry</dfn> additionally consists of a [=/set=] of
 <dfn for="directory entry">children</dfn>, which are themselves [=/file system entries=].
@@ -536,7 +578,7 @@ The <dfn method for=FileSystemFileHandle>getFile()</dfn> method steps are:
      the temporary file starts out empty,
      otherwise the existing file is first copied to this temporary file.
 
-     Creating a {{FileSystemWritableFileStream}} [=file entry/take a lock|takes a shared lock=] on the
+     Creating a {{FileSystemWritableFileStream}} [=file system entry/take a lock|takes a shared lock=] on the
      [=file entry=] [=locate an entry|locatable=] with |fileHandle|'s [=FileSystemHandle/locator=].
      This prevents the creation of {{FileSystemSyncAccessHandle|FileSystemSyncAccessHandles}}
      for the entry, until the stream is closed.
@@ -573,7 +615,7 @@ The <dfn method for=FileSystemFileHandle>createWritable(|options|)</dfn> method 
      |result| with a "{{NotFoundError}}" {{DOMException}} and abort these steps.
   1. [=Assert=]: |entry| is a [=file entry=].
 
-  1. Let |lockResult| be the result of [=file entry/take a lock|taking a lock=]
+  1. Let |lockResult| be the result of [=file system entry/take a lock|taking a lock=]
      with "`shared`" on |entry|.
 
   1. [=Queue a storage task=] with |global| to run these steps:
@@ -601,7 +643,7 @@ The <dfn method for=FileSystemFileHandle>createWritable(|options|)</dfn> method 
      [=file entry=] [=locate an entry|locatable=] by |fileHandle|'s [=FileSystemHandle/locator=].
      To ensure the changes are reflected in this file, the handle can be flushed.
 
-     Creating a {{FileSystemSyncAccessHandle}} [=file entry/take a lock|takes an exclusive lock=] on the
+     Creating a {{FileSystemSyncAccessHandle}} [=file system entry/take a lock|takes an exclusive lock=] on the
      [=file entry=] [=locate an entry|locatable=] with |fileHandle|'s [=FileSystemHandle/locator=].
      This prevents the creation of further {{FileSystemSyncAccessHandle|FileSystemSyncAccessHandles}}
      or {{FileSystemWritableFileStream|FileSystemWritableFileStreams}}
@@ -643,7 +685,7 @@ The <dfn method for=FileSystemFileHandle>createSyncAccessHandle()</dfn> method s
      |result| with a "{{NotFoundError}}" {{DOMException}} and abort these steps.
   1. [=Assert=]: |entry| is a [=file entry=].
 
-  1. Let |lockResult| be the result of [=file entry/take a lock|taking a lock=]
+  1. Let |lockResult| be the result of [=file system entry/take a lock|taking a lock=]
      with "`exclusive`" on |entry|.
 
   1. [=Queue a storage task=] with |global| to run these steps:
@@ -1179,7 +1221,7 @@ given a [=file entry=] |file| in a [=/Realm=] |realm|:
            file on disk being written to.
 
         1. [=Enqueue the following steps=] to the [=file system queue=]:
-          1. [=file entry/lock/release|Release the lock=] on
+          1. [=file system entry/lock/release|Release the lock=] on
              |stream|'s [=FileSystemWritableFileStream/[[file]]=].
           1. [=Queue a storage task=] with |file|'s [=relevant global object=]
              to [=/resolve=] |closeResult| with `undefined`.
@@ -1187,7 +1229,7 @@ given a [=file entry=] |file| in a [=/Realm=] |realm|:
    1. Return |closeResult|.
 1. Let |abortAlgorithm| be these steps:
    1. [=enqueue steps|Enqueue this step=] to the [=file system queue=]:
-     1. [=file entry/lock/release|Release the lock=] on
+     1. [=file system entry/lock/release|Release the lock=] on
         |stream|'s [=FileSystemWritableFileStream/[[file]]=].
 1. Let |highWaterMark| be 1.
 1. Let |sizeAlgorithm| be an algorithm that returns `1`.
@@ -1647,7 +1689,7 @@ The <dfn method for=FileSystemSyncAccessHandle>flush()</dfn> method steps are:
   : |handle| . {{FileSystemSyncAccessHandle/close()}}
   :: Closes the access handle or no-ops if the access handle is already closed.
      This disables any further operations on it and
-     [=file entry/lock/release|releases the lock=] on the
+     [=file system entry/lock/release|releases the lock=] on the
      [=FileSystemSyncAccessHandle/[[file]]=] associated with |handle|.
 </div>
 
@@ -1659,7 +1701,7 @@ The <dfn method for=FileSystemSyncAccessHandle>close()</dfn> method steps are:
 1. Set |lockReleased| to false.
 1. Let |file| be [=this=]'s [=FileSystemSyncAccessHandle/[[file]]=].
 1. [=Enqueue the following steps=] to the [=file system queue=]:
-  1. [=file entry/lock/release|Release the lock=] on |file|.
+  1. [=file system entry/lock/release|Release the lock=] on |file|.
   1. Set |lockReleased| to true.
 1. [=Pause=] until |lockReleased| is true.
 
