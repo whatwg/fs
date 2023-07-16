@@ -61,54 +61,6 @@ different storage mechanism with a different API for such files. The entry point
 
 A <dfn export id="entry">file system entry</dfn> is either a [=file entry=] or a [=directory entry=].
 
-Each [=/file system entry=] has an associated
-<dfn for="file system entry" id=entry-query-access>query access</dfn>
-algorithm, which takes "`read`" or "`readwrite`" <var ignore>mode</var> and
-returns a [=/file system access result=].
-Unless specified otherwise it returns a [=/file system access result=] with a
-[=file system access result/permission state=] of "{{PermissionState/denied}}"
-and with an [=file system access result/error name=] of the empty string.
-
-Each [=/file system entry=] has an associated
-<dfn for="file system entry" id=entry-request-access>request access</dfn>
-algorithm, which takes "`read`" or "`readwrite`" <var ignore>mode</var> and
-returns a [=/file system access result=].
-Unless specified otherwise it returns a [=/file system access result=] with a
-[=file system access result/permission state=] of "{{PermissionState/denied}}"
-and with an [=file system access result/error name=] of the empty string.
-
-A <dfn export>file system access result</dfn> is a [=struct=] encapsulating the
-result of [=file system entry/query access|querying=] or
-[=file system entry/request access|requesting=] access to the file system.
-It has the following [=struct/items=]:
-
-: <dfn for="file system access result">permission state</dfn>
-:: A {{PermissionState}}
-: <dfn for="file system access result">error name</dfn>
-:: A [=string=] which must be the empty string if
-   [=file system access result/permission state=] is
-   "{{PermissionState/granted}}"; otherwise an
-   [=DOMException/name=] listed in the <a>`DOMException` names table</a>.
-   It is expected that in most cases when
-   [=file system access result/permission state=] is not
-   "{{PermissionState/granted}}", this should be "{{NotAllowedError}}".
-
-<p class=warning> Dependent specifications may consider this API a
-[=powerful feature=]. However, unlike other [=powerful features=] whose
-[=permission request algorithm=] may throw, [=/file system entry=]'s
-[=file system entry/query access=] and [=file system entry/request access=]
-algorithms must run [=in parallel=] on the [=file system queue=] and are
-therefore not allowed to throw. Instead, the caller is expected to
-[=queue a storage task=] to [=/reject=], as appropriate,
-should these algorithms return an [=file system access result/error name=]
-other than the empty string.
-
-Note: Implementations that only implement this specification and not dependent
-specifications do not need to bother implementing [=/file system entry=]'s
-[=file system entry/query access=] and [=file system entry/request access=].
-
-Issue(101): Make access check algorithms associated with a FileSystemHandle.
-
 Each [=/file system entry=] has an associated <dfn for="file system entry" id=entry-name>name</dfn> (a [=string=]).
 
 A <dfn>valid file name</dfn> is a [=string=] that is not an empty string, is not equal to "." or "..",
@@ -266,6 +218,20 @@ a [=/file system locator=] |b| if
 |a|'s [=file system locator/root=] is |b|'s [=file system locator/root=], and
 |a|'s [=file system locator/path=] is [=the same path as=] |b|'s [=file system locator/path=].
 
+A [=/file system locator=]
+<dfn for="file system locator" export>is in a bucket file system</dfn>
+if the first [=list/item=] of its
+[=file system locator/path=] is the empty string.
+
+Note: This is a bit magical, but it works since only the root directory of a
+[=/bucket file system=] can have a [=file system locator/path=] which
+[=list/contains=] an empty string. See {{StorageManager/getDirectory()}}.
+All other [=list/item=]s of a [=file system locator/path=] will be a
+[=valid file name=].
+
+Issue(109): Consider improving this situation by giving each locator a
+[=storage bucket=].
+
 <div algorithm>
 The <dfn export data-lt="locating an entry">locate an entry</dfn> algorithm given a
 [=/file system locator=] |locator| runs an [=implementation-defined=] series of steps adhering to
@@ -318,6 +284,62 @@ with the website process. The [=/file system path=] might contain components
 which are not known to the website unless the [=/file system locator=] is later
 [=file system locator/resolved=] relative to a parent [=directory locator=].
 
+<div algorithm>
+The <dfn id=entry-query-access lt="querying access" export>file system query access algorithm</dfn>
+is used for querying access to a location in the file system. It takes
+a [=/file system locator=] |locator| and
+a "`read`" or "`readwrite`" <var ignore>mode</var>
+and returns a [=/file system access result=].
+Unless specified otherwise, it runs these steps:
+
+1. If |locator| [=file system locator/is in a bucket file system=]
+   return a [=/file system access result=] with
+   a [=file system access result/permission state=]
+   of "{{PermissionState/granted}}" and with
+   an [=file system access result/error name=] of the empty string.
+1. Otherwise return a [=/file system access result=] with
+   a [=file system access result/permission state=]
+   of "{{PermissionState/denied}}" and with
+   an [=file system access result/error name=] of the empty string.
+
+Note: These steps have to be run on the [=file system queue=].
+
+</div>
+
+The <dfn id=entry-request-access lt="requesting access" export>file system request access algorithm</dfn>
+is the same as the [=/file system query access algorithm=],
+unless specified otherwise.
+
+Note: Dependent specifications may override the
+[=/file system query access algorithm=] and
+[=/file system request access algorithm=].
+
+A <dfn export>file system access result</dfn> is a [=struct=] encapsulating the
+result of a [=/file system query access algorithm=] or a
+[=/file system request access algorithm=].
+It has the following [=struct/items=]:
+
+: <dfn for="file system access result">permission state</dfn>
+:: A {{PermissionState}}
+: <dfn for="file system access result">error name</dfn>
+:: A [=string=] which must be the empty string if
+   [=file system access result/permission state=] is
+   "{{PermissionState/granted}}"; otherwise an
+   [=DOMException/name=] listed in the <a>`DOMException` names table</a>.
+   It is expected that in most cases when
+   [=file system access result/permission state=] is not
+   "{{PermissionState/granted}}", this should be "{{NotAllowedError}}".
+
+<p class=warning> Dependent specifications may consider this API a
+[=powerful feature=]. However, unlike other [=powerful features=] whose
+[=permission request algorithm=] may throw, the
+[=/file system query access algorithm=] and [=/file system request access algorithm=]
+each must run [=in parallel=] on the [=file system queue=] and are
+therefore not allowed to throw. Instead, the caller is expected to
+[=queue a storage task=] to [=/reject=], as appropriate,
+should these algorithms return an [=file system access result/error name=]
+other than the empty string.
+
 ## The {{FileSystemHandle}} interface ## {#api-filesystemhandle}
 
 <xmp class=idl>
@@ -335,25 +357,19 @@ interface FileSystemHandle {
 };
 </xmp>
 
-A {{FileSystemHandle}} object is associated with a <dfn for=FileSystemHandle export>locator</dfn> (a
-[=/file system locator=]).
+A {{FileSystemHandle}} object is associated with
+a <dfn for=FileSystemHandle export>locator</dfn> (a [=/file system locator=])
+that describes the location in the file system this handle corresponds to and
+a <dfn for=FileSystemHandle export>permission root locator</dfn> (a [=/file system locator=])
+used for querying and requesting permission to use this handle.
 
 Note: Multiple {{FileSystemHandle}} objects can have
 [=the same locator as|the same=] [=/file system locator=].
 
 A {{FileSystemHandle}}
 <dfn for=FileSystemHandle export>is in a bucket file system</dfn>
-if the first [=list/item=] of its [=FileSystemHandle/locator=]'s
-[=file system locator/path=] is the empty string.
-
-Note: This is a bit magical, but it works since only the root directory of a
-[=/bucket file system=] can have a [=file system locator/path=] which
-[=list/contains=] an empty string. See {{StorageManager/getDirectory()}}.
-All other [=list/item=]s of a [=file system locator/path=] will be a
-[=valid file name=].
-
-Issue(109): Consider improving this situation by giving each locator a
-[=storage bucket=].
+if its [=FileSystemHandle/locator=]
+[=file system locator/is in a bucket file system=].
 
 <div algorithm="serialization steps">
 {{FileSystemHandle}} objects are [=serializable objects=].
@@ -362,6 +378,8 @@ Their [=serialization steps=], given |value|, |serialized| and <var ignore>forSt
 
 1. Set |serialized|.\[[Origin]] to |value|'s [=relevant settings object=]'s [=environment settings object/origin=].
 1. Set |serialized|.\[[Locator]] to |value|'s [=FileSystemHandle/locator=].
+1. Set |serialized|.\[[PermissionRootLocator]] to |value|'s
+   [=FileSystemHandle/permission root locator=].
 
 </div>
 
@@ -372,6 +390,7 @@ Their [=deserialization steps=], given |serialized| and |value| are:
    |value|'s [=relevant settings object=]'s [=environment settings object/origin=],
    then [=throw=] a "{{DataCloneError}}" {{DOMException}}.
 1. Set |value|'s [=FileSystemHandle/locator=] to |serialized|.\[[Locator]].
+1. Set |value|'s [=FileSystemHandle/permission root locator=] to |serialized|.\[[PermissionRootLocator]].
 
 </div>
 
@@ -438,7 +457,9 @@ Note: A {{FileSystemFileHandle}}'s associated [=FileSystemHandle/locator=]'s
 <div algorithm>
 To
 <dfn data-lt="creating a child FileSystemFileHandle">create a child `FileSystemFileHandle`</code></dfn>
-given a [=directory locator=] |parentLocator| and a string |name| in a [=/Realm=] |realm|:
+given a [=directory locator=] |parentLocator|, a string |name|, and
+a [=/file system locator=] |parentPermissionRootLocator|
+in a [=/Realm=] |realm|:
 
 1. Let |handle| be a [=new=] {{FileSystemFileHandle}} in |realm|.
 1. Let |childType| be "{{FileSystemHandleKind/file}}".
@@ -449,6 +470,14 @@ given a [=directory locator=] |parentLocator| and a string |name| in a [=/Realm=
    [=file system locator/kind=] is |childType|,
    [=file system locator/root=] is |childRoot|, and
    [=file system locator/path=] is |childPath|.
+1. Set |handle|'s [=FileSystemHandle/permission root locator=] to
+   |parentPermissionRootLocator|.
+
+   Note: This ensures that permissions are inherited from parent to child.
+   [=Querying access=] or [=requesting access=] to |handle| will
+   [=query access=] or [=request access=] to its parent - or its parent's
+   parent, and so forth - as appropriate.
+
 1. Return |handle|.
 
 </div>
@@ -460,10 +489,12 @@ given a [=/file system root=] |root| and a [=/file system path=] |path|
 in a [=/Realm=] |realm|:
 
 1. Let |handle| be a [=new=] {{FileSystemFileHandle}} in |realm|.
-1. Set |handle|'s [=FileSystemHandle/locator=] to a [=/file system locator=] whose
+1. Let |locator| be a [=/file system locator=] whose
    [=file system locator/kind=] is "{{FileSystemHandleKind/file}}",
    [=file system locator/root=] is |root|, and
    [=file system locator/path=] is |path|.
+1. Set |handle|'s [=FileSystemHandle/locator=] to |locator|.
+1. Set |handle|'s [=FileSystemHandle/permission root locator=] to |locator|.
 1. Return |handle|.
 
 </div>
@@ -486,11 +517,13 @@ The <dfn method for=FileSystemFileHandle>getFile()</dfn> method steps are:
 
 1. Let |result| be [=a new promise=].
 1. Let |locator| be [=this=]'s [=FileSystemHandle/locator=].
+1. Let |permissionRootLocator| be
+   [=this=]'s [=FileSystemHandle/permission root locator=].
 1. Let |global| be [=this=]'s [=relevant global object=].
 1. [=Enqueue the following steps=] to the [=file system queue=]:
+  1. Let |accessResult| be the result of [=querying access=] given
+     |permissionRootLocator| and "`read`".
   1. Let |entry| be the result of [=locating an entry=] given |locator|.
-  1. Let |accessResult| be the result of running |entry|'s
-     [=file system entry/query access=] given "`read`".
 
   1. [=Queue a storage task=] with |global| to run these steps:
     1. If |accessResult|'s [=file system access result/permission state=]
@@ -558,18 +591,20 @@ The <dfn method for=FileSystemFileHandle>createWritable(|options|)</dfn> method 
 
 1. Let |result| be [=a new promise=].
 1. Let |locator| be [=this=]'s [=FileSystemHandle/locator=].
+1. Let |permissionRootLocator| be
+   [=this=]'s [=FileSystemHandle/permission root locator=].
 1. Let |realm| be [=this=]'s [=relevant Realm=].
 1. Let |global| be [=this=]'s [=relevant global object=].
 1. [=Enqueue the following steps=] to the [=file system queue=]:
-  1. Let |entry| be the result of [=locating an entry=] given |locator|.
-  1. Let |accessResult| be the result of running |entry|'s
-     [=file system entry/request access=] given "`readwrite`".
+  1. Let |accessResult| be the result of [=requesting access=] given
+     |permissionRootLocator| and "`readwrite`".
   1. If |accessResult|'s [=file system access result/permission state=]
      is not "{{PermissionState/granted}}", [=queue a storage task=] with
      |global| to [=/reject=] |result| with a {{DOMException}} of
      |accessResult|'s [=file system access result/error name=] and
      abort these steps.
 
+  1. Let |entry| be the result of [=locating an entry=] given |locator|.
   1. If |entry| is `null`, [=queue a storage task=] with |global| to [=/reject=]
      |result| with a "{{NotFoundError}}" {{DOMException}} and abort these steps.
   1. [=Assert=]: |entry| is a [=file entry=].
@@ -582,7 +617,7 @@ The <dfn method for=FileSystemFileHandle>createWritable(|options|)</dfn> method 
        "{{NoModificationAllowedError}}" {{DOMException}} and abort these steps.
 
     1. Let |stream| be the result of <a>creating a new `FileSystemWritableFileStream`</a>
-       for |entry| in |realm|.
+       given |entry| and |permissionRootLocator| in |realm|.
     1. If |options|["{{FileSystemCreateWritableOptions/keepExistingData}}"]
        is true:
       1. Set |stream|'s [=[[buffer]]=] to a copy of |entry|'s
@@ -620,15 +655,16 @@ The <dfn method for=FileSystemFileHandle>createSyncAccessHandle()</dfn> method s
 
 1. Let |result| be [=a new promise=].
 1. Let |locator| be [=this=]'s [=FileSystemHandle/locator=].
+1. Let |permissionRootLocator| be
+   [=this=]'s [=FileSystemHandle/permission root locator=].
 1. Let |realm| be [=this=]'s [=relevant Realm=].
 1. Let |global| be [=this=]'s [=relevant global object=].
 1. Let |isInABucketFileSystem| be true if
    [=this=] [=FileSystemHandle/is in a bucket file system=];
    otherwise false.
 1. [=Enqueue the following steps=] to the [=file system queue=]:
-  1. Let |entry| be the result of [=locating an entry=] given |locator|.
-  1. Let |accessResult| be the result of running |entry|'s
-     [=file system entry/request access=] given "`readwrite`".
+  1. Let |accessResult| be the result of [=requesting access=] given
+     |permissionRootLocator| and "`readwrite`".
   1. If |accessResult|'s [=file system access result/permission state=]
      is not "{{PermissionState/granted}}", [=queue a storage task=] with
      |global| to [=/reject=] |result| with a {{DOMException}} of
@@ -640,6 +676,7 @@ The <dfn method for=FileSystemFileHandle>createSyncAccessHandle()</dfn> method s
      [=/reject=] |result| with an "{{InvalidStateError}}" {{DOMException}} and
      abort these steps.
 
+  1. Let |entry| be the result of [=locating an entry=] given |locator|.
   1. If |entry| is `null`, [=queue a storage task=] with |global| to [=/reject=]
      |result| with a "{{NotFoundError}}" {{DOMException}} and abort these steps.
   1. [=Assert=]: |entry| is a [=file entry=].
@@ -693,7 +730,9 @@ Note: A {{FileSystemDirectoryHandle}}'s associated [=FileSystemHandle/locator=]'
 <div algorithm>
 To
 <dfn data-lt="creating a child FileSystemDirectoryHandle">create a child `FileSystemDirectoryHandle`</dfn>
-given a [=directory locator=] |parentLocator| and a string |name| in a [=/Realm=] |realm|:
+given a [=directory locator=] |parentLocator|, a string |name|, and
+a [=/file system locator=] |parentPermissionRootLocator|
+in a [=/Realm=] |realm|:
 
 1. Let |handle| be a [=new=] {{FileSystemDirectoryHandle}} in |realm|.
 1. Let |childType| be "{{FileSystemHandleKind/directory}}".
@@ -704,6 +743,14 @@ given a [=directory locator=] |parentLocator| and a string |name| in a [=/Realm=
    [=file system locator/kind=] is |childType|,
    [=file system locator/root=] is |childRoot|, and
    [=file system locator/path=] is |childPath|.
+1. Set |handle|'s [=FileSystemHandle/permission root locator=] to
+   |parentPermissionRootLocator|.
+
+   Note: This ensures that permissions are inherited from parent to child.
+   [=Querying access=] or [=requesting access=] to |handle| will
+   [=query access=] or [=request access=] to its parent - or its parent's
+   parent, and so forth - as appropriate.
+
 1. Return |handle|.
 
 </div>
@@ -715,10 +762,12 @@ given a [=/file system root=] |root| and a [=/file system path=] |path|
 in a [=/Realm=] |realm|:
 
 1. Let |handle| be a [=new=] {{FileSystemDirectoryHandle}} in |realm|.
-1. Set |handle|'s [=FileSystemHandle/locator=] to a [=/file system locator=] whose
+1. Let |locator| be a [=/file system locator=] whose
    [=file system locator/kind=] is "{{FileSystemHandleKind/directory}}",
    [=file system locator/root=] is |root|, and
    [=file system locator/path=] is |path|.
+1. Set |handle|'s [=FileSystemHandle/locator=] to |locator|.
+1. Set |handle|'s [=FileSystemHandle/permission root locator=] to |locator|.
 1. Return |handle|.
 
 </div>
@@ -757,17 +806,17 @@ and its async iterator |iterator|:
 
 1. Let |promise| be [=a new promise=].
 1. [=Enqueue the following steps=] to the [=file system queue=]:
+  1. Let |accessResult| be the result of running the [=querying access=] given
+     |handle|'s [=FileSystemHandle/permission root locator=] and "`read`".
   1. Let |directory| be the result of [=locating an entry=]
      given |handle|'s [=FileSystemHandle/locator=].
-  1. Let |accessResult| be the result of running |directory|'s
-     [=file system entry/query access=] given "`read`".
 
   1. [=Queue a storage task=] with |handle|'s [=relevant global object=] to
      run these steps:
     1. If |accessResult|'s [=file system access result/permission state=]
        is not "{{PermissionState/granted}}", [=/reject=] |promise| with a
        {{DOMException}} of |accessResult|'s
-       [=file system access result/error name=] and abort these steps.:
+       [=file system access result/error name=] and abort these steps.
 
     1. If |directory| is `null`, [=/reject=] |result| with a
        "{{NotFoundError}}" {{DOMException}} and abort these steps.
@@ -792,13 +841,17 @@ and its async iterator |iterator|:
     1. If |child| is a [=file entry=]:
       1. Let |result| be the result of
          <a>creating a child `FileSystemFileHandle`</a> with
-         |handle|'s [=FileSystemHandle/locator=] and
-         |child|'s [=file system entry/name=] in |handle|'s [=relevant Realm=].
+         |handle|'s [=FileSystemHandle/locator=],
+         |child|'s [=file system entry/name=], and
+         |handle|'s [=FileSystemHandle/permission root locator=]
+         in |handle|'s [=relevant Realm=].
     1. Otherwise:
       1. Let |result| be the result of
          <a>creating a child `FileSystemDirectoryHandle`</a> with
-         |handle|'s [=FileSystemHandle/locator=] and
-         |child|'s [=file system entry/name=] in |handle|'s [=relevant Realm=].
+         |handle|'s [=FileSystemHandle/locator=],
+         |child|'s [=file system entry/name=], and
+         |handle|'s [=FileSystemHandle/permission root locator=]
+         in |handle|'s [=relevant Realm=].
     1. [=/Resolve=] |promise| with
        (|child|'s [=file system entry/name=], |result|).
 
@@ -835,19 +888,22 @@ The <dfn method for=FileSystemDirectoryHandle>getFileHandle(|name|, |options|)</
 1. Let |result| be [=a new promise=].
 1. Let |realm| be [=this=]'s [=relevant Realm=].
 1. Let |locator| be [=this=]'s [=FileSystemHandle/locator=].
+1. Let |permissionRootLocator| be
+   [=this=]'s [=FileSystemHandle/permission root locator=].
 1. Let |global| be [=this=]'s [=relevant global object=].
 1. [=Enqueue the following steps=] to the [=file system queue=]:
   1. If |name| is not a [=valid file name=], [=queue a storage task=] with
      |global| to [=/reject=] |result| with a {{TypeError}} and
      abort these steps.
 
-  1. Let |entry| be the result of [=locating an entry=] given |locator|.
   1. If |options|["{{FileSystemGetFileOptions/create}}"] is true:
-    1. Let |accessResult| be the result of running |entry|'s
-       [=file system entry/request access=] given "`readwrite`".
+    1. Let |accessResult| be the result of [=requesting access=] given
+       |permissionRootLocator| and "`readwrite`".
   1. Otherwise:
-    1. Let |accessResult| be the result of running |entry|'s
-       [=file system entry/query access=] given "`read`".
+    1. Let |accessResult| be the result of [=querying access=] given
+       |permissionRootLocator| and "`read`".
+
+  1. Let |entry| be the result of [=locating an entry=] given |locator|.
 
   1. [=Queue a storage task=] with |global| to run these steps:
     1. If |accessResult|'s [=file system access result/permission state=]
@@ -865,14 +921,14 @@ The <dfn method for=FileSystemDirectoryHandle>getFileHandle(|name|, |options|)</
           1. [=/Reject=] |result| with a
              "{{TypeMismatchError}}" {{DOMException}} and abort these steps.
         1. [=/Resolve=] |result| with the result of
-           <a>creating a child `FileSystemFileHandle`</a> with |locator| and
-           |child|'s [=file system entry/name=] in |realm| and
+           <a>creating a child `FileSystemFileHandle`</a> with |locator|,
+           |child|'s [=file system entry/name=], and
+           |permissionRootLocator| in |realm| and
            abort these steps.
     1. If |options|["{{FileSystemGetFileOptions/create}}"] is false:
       1. [=/Reject=] |result| with a "{{NotFoundError}}" {{DOMException}} and
          abort these steps.
-    1. Let |child| be a new [=file entry=] whose [=query access=] and
-       [=request access=] algorithms are those of |entry|.
+    1. Let |child| be a new [=file entry=].
     1. Set |child|'s [=file system entry/name=] to |name|.
     1. Set |child|'s [=binary data=] to an empty [=byte sequence=].
     1. Set |child|'s [=modification timestamp=] to the current time.
@@ -882,8 +938,9 @@ The <dfn method for=FileSystemDirectoryHandle>getFileHandle(|name|, |options|)</
 
        Issue(11): Better specify what possible exceptions this could throw.
     1. [=/Resolve=] |result| with the result of
-       <a>creating a child `FileSystemFileHandle`</a> with |locator| and
-       |child|'s [=file system entry/name=] in |realm|.
+       <a>creating a child `FileSystemFileHandle`</a> with |locator|,
+       |child|'s [=file system entry/name=], and
+       |permissionRootLocator| in |realm|.
 1. Return |result|.
 
 </div>
@@ -917,19 +974,22 @@ The <dfn method for=FileSystemDirectoryHandle>getDirectoryHandle(|name|, |option
 1. Let |result| be [=a new promise=].
 1. Let |realm| be [=this=]'s [=relevant Realm=].
 1. Let |locator| be [=this=]'s [=FileSystemHandle/locator=].
+1. Let |permissionRootLocator| be
+   [=this=]'s [=FileSystemHandle/permission root locator=].
 1. Let |global| be [=this=]'s [=relevant global object=].
 1. [=Enqueue the following steps=] to the [=file system queue=]:
   1. If |name| is not a [=valid file name=], [=queue a storage task=] with
      |global| to [=/reject=] |result| with a {{TypeError}} and
      abort these steps.
 
-  1. Let |entry| be the result of [=locating an entry=] given |locator|.
   1. If |options|["{{FileSystemGetDirectoryOptions/create}}"] is true:
-    1. Let |accessResult| be the result of running |entry|'s
-       [=file system entry/request access=] given "`readwrite`".
+    1. Let |accessResult| be the result of [=requesting access=] given
+       |permissionRootLocator| and "`readwrite`".
   1. Otherwise:
-    1. Let |accessResult| be the result of running |entry|'s
-       [=file system entry/query access=] given "`read`".
+    1. Let |accessResult| be the result of [=querying access=] given
+       |permissionRootLocator| and "`read`".
+
+  1. Let |entry| be the result of [=locating an entry=] given |locator|.
 
   1. [=Queue a storage task=] with |global| to run these steps:
     1. If |accessResult|'s [=file system access result/permission state=]
@@ -948,13 +1008,13 @@ The <dfn method for=FileSystemDirectoryHandle>getDirectoryHandle(|name|, |option
              "{{TypeMismatchError}}" {{DOMException}} and abort these steps.
         1. [=/Resolve=] |result| with the result of
            <a>creating a child `FileSystemDirectoryHandle`</a> with
-           |locator| and |child|'s [=file system entry/name=] in |realm| and
+           |locator|, |child|'s [=file system entry/name=], and
+           |permissionRootLocator| in |realm| and
            abort these steps.
     1. If |options|["{{FileSystemGetFileOptions/create}}"] is false:
       1. [=/Reject=] |result| with a "{{NotFoundError}}" {{DOMException}} and
          abort these steps.
-    1. Let |child| be a new [=directory entry=] whose [=query access=] and
-       [=request access=] algorithms are those of |entry|.
+    1. Let |child| be a new [=directory entry=].
     1. Set |child|'s [=file system entry/name=] to |name|.
     1. Set |child|'s [=directory entry/children=] to an empty [=/set=].
     1. [=set/Append=] |child| to |entry|'s [=directory entry/children=].
@@ -964,7 +1024,8 @@ The <dfn method for=FileSystemDirectoryHandle>getDirectoryHandle(|name|, |option
        Issue(11): Better specify what possible exceptions this could throw.
     1. [=/Resolve=] |result| with the result of
        <a>creating a child `FileSystemDirectoryHandle`</a> with
-       |locator| and |child|'s [=file system entry/name=] in |realm|.
+       |locator|, |child|'s [=file system entry/name=], and
+       |permissionRootLocator| in |realm|.
 1. Return |result|.
 
 </div>
@@ -994,15 +1055,17 @@ The <dfn method for=FileSystemDirectoryHandle>removeEntry(|name|, |options|)</df
 
 1. Let |result| be [=a new promise=].
 1. Let |locator| be [=this=]'s [=FileSystemHandle/locator=].
+1. Let |permissionRootLocator| be
+   [=this=]'s [=FileSystemHandle/permission root locator=].
 1. Let |global| be [=this=]'s [=relevant global object=].
 1. [=Enqueue the following steps=] to the [=file system queue=]:
   1. If |name| is not a [=valid file name=], [=queue a storage task=] with
      |global| to [=/reject=] |result| with a {{TypeError}} and
      abort these steps.
 
+  1. Let |accessResult| be the result of [=requesting access=] given
+     |permissionRootLocator| and "`readwrite`".
   1. Let |entry| be the result of [=locating an entry=] given |locator|.
-  1. Let |accessResult| be the result of running |entry|'s
-     [=file system entry/request access=] given "`readwrite`".
 
   1. [=Queue a storage task=] with |global| to run these steps:
     1. If |accessResult|'s [=file system access result/permission state=]
@@ -1150,17 +1213,20 @@ Similarly, when piping a {{ReadableStream}} into a {{FileSystemWritableFileStrea
 <div algorithm>
 To
 <dfn local-lt="creating a new FileSystemWritableFileStream">create a new `FileSystemWritableFileStream`</dfn>
-given a [=file entry=] |file| in a [=/Realm=] |realm|:
+given a [=file entry=] |file| and
+a [=/file system locator=] |permissionRootLocator|
+in a [=/Realm=] |realm|:
 
 1. Let |stream| be a [=new=] {{FileSystemWritableFileStream}} in |realm|.
 1. Set |stream|'s [=FileSystemWritableFileStream/[[file]]=] to |file|.
 1. Let |writeAlgorithm| be an algorithm which takes a |chunk| argument
-   and returns the result of running the [=write a chunk=] algorithm with |stream| and |chunk|.
+   and returns the result of running the [=write a chunk=] algorithm with
+   |permissionRootLocator|, |stream|, and |chunk|.
 1. Let |closeAlgorithm| be these steps:
    1. Let |closeResult| be [=a new promise=].
    1. [=Enqueue the following steps=] to the [=file system queue=]:
-      1. Let |accessResult| be the result of running |file|'s
-         [=file system entry/query access=] given "`readwrite`".
+      1. Let |accessResult| be the result of [=querying access=]| given
+         |permissionRootLocator| and "`readwrite`".
 
       1. [=Queue a storage task=] with |file|'s [=relevant global object=]
          to run these steps:
@@ -1203,17 +1269,18 @@ given a [=file entry=] |file| in a [=/Realm=] |realm|:
 </div>
 
 <div algorithm>
-The <dfn>write a chunk</dfn> algorithm,
-given a {{FileSystemWritableFileStream}} |stream| and |chunk|,
+The <dfn>write a chunk</dfn> algorithm, given
+a [=/file system locator=] |permissionRootLocator|,
+a {{FileSystemWritableFileStream}} |stream|,
+and a |chunk|,
 runs these steps:
 
 1. Let |input| be the result of [=converted to an IDL value|converting=] |chunk| to a {{FileSystemWriteChunkType}}.
    If this throws an exception, then return [=a promise rejected with=] that exception.
 1. Let |p| be [=a new promise=].
 1. [=Enqueue the following steps=] to the [=file system queue=]:
-  1. Let |accessResult| be the result of running
-     |stream|'s [=FileSystemWritableFileStream/[[file]]=]'s
-     [=file system entry/query access=] given "`readwrite`".
+  1. Let |accessResult| be the result of [=querying access=] given
+     |permissionRootLocator| and "`readwrite`".
 
   1. [=Queue a storage task=] with |stream|'s [=relevant global object=] to
      run these steps:
@@ -1710,12 +1777,7 @@ The <dfn method for=StorageManager>getDirectory()</dfn> method steps are:
    return [=a promise rejected with=] a "{{SecurityError}}" {{DOMException}}.
 
 1. If |map|["root"] does not [=map/exist=]:
-  1. Let |dir| be a new [=directory entry=] whose [=query access=] and
-     [=request access=] algorithms always return
-     a [=/file system access result=]
-     with a [=file system access result/permission state=]
-     of "{{PermissionState/granted}}" and
-     with an [=file system access result/error name=] of the empty string.
+  1. Let |dir| be a new [=directory entry=].
   1. Set |dir|'s [=file system entry/name=] to the empty string.
   1. Set |dir|'s [=directory entry/children=] to an empty [=/set=].
   1. Set |map|["root"] to |dir|.
