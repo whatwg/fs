@@ -496,13 +496,16 @@ The <dfn method for=FileSystemHandle>remove(|options|)</dfn> method steps are:
        If that throws an exception, [=/reject=] |result| with that exception
        and abort these steps.
 
-         Note: If |options|["{{FileSystemRemoveOptions/recursive}}"] is true,
-         the removal can fail non-atomically. Some files or directories might
-         have been removed while other files or directories still exist.
+       Note: If |options|["{{FileSystemRemoveOptions/recursive}}"] is true,
+       the removal can fail non-atomically. Some files or directories might
+       have been removed while other files or directories still exist.
 
-         Issue(11): Better specify what possible exceptions this could throw.
+       Issue(11): Better specify what possible exceptions this could throw.
 
-    1. [=/Resolve=] |result| with `undefined`.
+    1. [=Enqueue the following steps=] to the [=file system queue=]:
+      1. [=file entry/lock/release|Release the lock=] on |entry|.
+      1. [=Queue a storage task=] with |global| to
+         [=/resolve=] |result| with `undefined`.
 
 1. Return |result|.
 
