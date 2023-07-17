@@ -332,6 +332,9 @@ interface FileSystemHandle {
   readonly attribute USVString name;
 
   Promise<boolean> isSameEntry(FileSystemHandle other);
+  Promise<undefined> move(USVString newEntryName);
+  Promise<undefined> move(FileSystemDirectoryHandle destinationDirectory);
+  Promise<undefined> move(FileSystemDirectoryHandle destinationDirectory, USVString newEntryName);
 };
 </xmp>
 
@@ -413,6 +416,204 @@ The <dfn method for=FileSystemHandle>isSameEntry(|other|)</dfn> method steps are
      [=/resolve=] |p| with true.
   1. Otherwise [=/resolve=] |p| with false.
 1. Return |p|.
+
+</div>
+
+### The {{FileSystemHandle/move(destinationDirectory, newEntryName)|move()}} method ### {#api-filesystemhandle-move}
+
+<div class="note domintro">
+  : await |handle| . {{FileSystemHandle/move(newEntryName)|move}}({ {{USVString}}: |newEntryName|})
+  :: Renames the [=file system entry=] [=locate an entry|locatable=] by
+     |handle|'s [=FileSystemHandle/locator=] to |newEntryName|.
+
+  : await |handle| . {{FileSystemHandle/move(destinationDirectory)|move}}({ {{FileSystemDirectoryHandle}}: |destinationDirectory|})
+  :: Moves the [=file system entry=] [=locate an entry|locatable=] by
+     |handle|'s [=FileSystemHandle/locator=] to the [=directory entry=]
+     [=locate an entry|locatable=] by |destinationDirectory|'s
+     [=FileSystemHandle/locator=], while keeping its existing name.
+
+  : await |handle| . {{FileSystemHandle/move(destinationDirectory, newEntryName)|move}}({ {{FileSystemDirectoryHandle}}: |destinationDirectory|, {{USVString}}: |newEntryName|})
+  :: Moves the [=file system entry=] [=locate an entry|locatable=] by
+     |handle|'s [=FileSystemHandle/locator=] to the [=directory entry=]
+     [=locate an entry|locatable=] by |destinationDirectory|'s
+     [=FileSystemHandle/locator=], as well as renaming to |newEntryName|.
+
+     If the [=file system locator/root|roots=] of the respective
+     [=FileSystemHandle/locator|locators=] of |destinationDirectory| and
+     |handle| are not the same, this operation may abort or fail non-atomically.
+</div>
+
+<div algorithm>
+The <dfn method for=FileSystemHandle>move({{FileSystemDirectoryHandle}}: |destinationDirectory|)</dfn>
+method steps are to [=FileSystemHandle/move=] |handle|
+given |handle|'s {{FileSystemHandle/name}} and |destinationDirectory|.
+
+</div>
+
+<div algorithm>
+The <dfn method for=FileSystemHandle>move({{USVString}}: |newEntryName|)</dfn>
+method steps are to [=FileSystemHandle/move=] |handle|
+given |newEntryName|.
+
+</div>
+
+<div algorithm>
+The <dfn method for=FileSystemHandle>move({{FileSystemDirectoryHandle}}: |destinationDirectory|, {{USVString}}: |newEntryName|)</dfn>
+method steps are to [=FileSystemHandle/move=] |handle|
+given |newEntryName| and |destinationDirectory|.
+
+</div>
+
+<div algorithm>
+
+To <dfn for=FileSystemHandle>move</dfn> a {{FileSystemHandle}} |handle| given
+a {{USVString}} |newEntryName| and
+an optional {{FileSystemDirectoryHandle}} |destinationDirectory|:
+
+1. Let |result| be [=a new promise=].
+1. Let |locator| be |handle|'s [=FileSystemHandle/locator=].
+1. Let |global| be |handle|'s [=relevant global object=].
+1. Let |isInABucketFileSystem| be true if
+   |handle| [=FileSystemHandle/is in a bucket file system=];
+   otherwise false.
+1. [=Enqueue the following steps=] to the [=file system queue=]:
+  1. If |newEntryName| is not a [=valid file name=],
+     [=queue a storage task=] with |global| to [=/reject=] |result|
+     with a {{TypeError}} and abort these steps.
+
+  1. Let |entry| be the result of [=locating an entry=] given |locator|.
+  1. Let |accessResult| be the result of running |entry|'s
+     [=file system entry/request access=] given "`readwrite`".
+  1. If |accessResult|'s [=file system access result/permission state=]
+     is not "{{PermissionState/granted}}", [=queue a storage task=] with
+     |global| to [=/reject=] |result| with a {{DOMException}} of
+     |accessResult|'s [=file system access result/error name=] and
+     abort these steps.
+
+  1. If |destinationDirectory| was given:
+    1. Let |destinationDirectoryLocator| be
+       |destinationDirectory|'s [=FileSystemHandle/locator=].
+    1. Let |destinationDirectoryEntry| be the result of [=locating an entry=]
+       given |destinationDirectoryLocator|.
+
+    1. Let |destinationDirectoryAccessResult| be the result of running
+       |destinationDirectoryEntry|'s
+       [=file system entry/request access=] given "`readwrite`".
+    1. If |destinationDirectoryAccessResult|'s
+       [=file system access result/permission state=]
+       is not "{{PermissionState/granted}}", [=queue a storage task=] with
+       |global| to [=/reject=] |result| with a {{DOMException}} of
+       |accessResult|'s [=file system access result/error name=] and
+       abort these steps.
+
+    1. If |destinationDirectoryLocator|'s [=file system locator/root=] is not
+       |locator|'s [=file system locator/root=], [=queue a storage task=] with
+       |global| to [=/reject=] |result| with an
+       "{{NotSupportedError}}" {{DOMException}} and abort these steps.
+
+       Issue(114): Decide which moves across file systems, if any, should be
+       supported, or if this should be left up to individual user-agent
+       implementations.
+
+    1. Let |destinationPath| be the result of [=list/clone|cloning=]
+       |destinationDirectoryLocator|'s [=file system locator/path=] and
+       [=list/append|appending=] |newEntryName|.
+  1. Otherwise:
+    1. Let |destinationPath| be the result of [=list/clone|cloning=]
+       |locator|'s [=file system locator/path=], [=list/remove|removing=]
+       the last [=list/item=], and [=list/append|appending=] |newEntryName|.
+
+  1. Let |destinationLocator| be a [=/file system locator=] whose
+     [=file system locator/kind=] is |locator|'s [=file system locator/kind=],
+     [=file system locator/root=] is |locator|'s [=file system locator/root=], and
+     [=file system locator/path=] is |destinationPath|.
+  1. Let |destinationEntry| be the result of [=locating an entry=]
+     given |destinationLocator|.
+
+  1. If |destinationDirectory| was not given:
+    1. Let |destinationAccessResult| be the result of running
+       |destinationEntry|'s [=file system entry/request access=]
+       given "`readwrite`".
+
+       Issue(101): Make sure this still makes sense once access check algorithms
+       are no longer associated with an entry.
+  1. Otherwise:
+    1. Let |destinationAccessResult| be |destinationDirectoryAccessResult|.
+
+  1. Let |isTheRootOfABucketFileSystem| be true if
+     |isInABucketFileSystem| is true and
+     |entry|'s [=file system entry/parent=] is `null`;
+     otherwise false.
+  1. If |isTheRootOfABucketFileSystem| is true,
+     [=queue a storage task=] with |global| to [=/reject=] |result| with a
+     "{{InvalidModificationError}}" {{DOMException}} and abort these steps.
+
+  Issue: Do not allow |entry| to be moved if it is a
+  <a href=https://wicg.github.io/file-system-access/#wellknowndirectory-too-sensitive-or-dangerous>sensitive directory</a>
+
+  1. If |destinationAccessResult|'s
+     [=file system access result/permission state=] is not
+     "{{PermissionState/granted}}":
+    1. If |destinationEntry| is not `null`, [=queue a storage task=] with
+       |global| to [=/reject=] |result| with a {{DOMException}} of
+       |destinationAccessResult|'s [=file system access result/error name=] and
+       abort these steps
+
+       Note: This prevents overwriting an existing file or directory which the
+       site does not have access to.
+
+    1. Let |settingsGlobal| be |handle|'s [=relevant settings object=]'s
+       [=environment settings object/global object=].
+    1. If |settingsGlobal| does not have [=transient activation=],
+       [=queue a storage task=] with |global| to [=/reject=] |result|
+       with a "{{NotAllowedError}}" {{DOMException}}.
+
+  1. If |entry| is `null`, [=queue a storage task=] with |global| to [=/reject=]
+     |result| with a "{{NotFoundError}}" {{DOMException}} and abort these steps.
+  1. If |destinationDirectory| was given and |destinationDirectoryEntry|
+     is `null`, [=queue a storage task=] with |global| to [=/reject=] |result|
+     with a "{{NotFoundError}}" {{DOMException}} and abort these steps.
+
+  1. Let |lockResult| be the result of [=file entry/lock/take|taking a lock=]
+     with "`exclusive`" on |entry|.
+
+     Issue(137): Support locking directory entries.
+
+  1. If |destinationEntry| is not `null`:
+    1. Let |destinationLockResult| be the result of
+       [=file entry/lock/take|taking a lock=] with "`exclusive`"
+       on |destinationEntry|.
+  1. Otherwise:
+    1. Let |destinationLockResult| be "`not taken`".
+
+       Issue: Consider whether it should be possible to lock a
+       [=/file system entry=] which does not (yet) exist.
+
+  1. [=Queue a storage task=] with |global| to run these steps:
+    1. If |lockResult| is "`failure`", [=/reject=] |result| with a
+       "{{NoModificationAllowedError}}" {{DOMException}} and abort these steps.
+    1. If |destinationLockResult| is "`failure`", [=/reject=] |result| with a
+       "{{NoModificationAllowedError}}" {{DOMException}} and abort these steps.
+
+    1. If |destinationDirectory| was given:
+      1. If |entry|'s [=file system entry/parent=] is not `null`,
+         [=set/remove=] |entry| from |entry|'s [=file system entry/parent=]'s
+         [=directory entry/children=].
+      1. [=set/Append=] |entry| to |destinationDirectoryEntry|'s
+         [=directory entry/children=].
+
+    1. If |entry| is a [=file entry=] and |isInABucketFileSystem| is false,
+         run [=implementation-defined=] malware scans and safe browsing checks.
+         If these checks fail, [=/reject=] |result| with an
+         "{{AbortError}}" {{DOMException}} and abort these steps.
+
+    1. Attempt to move |entry| to |destinationEntry| in the underlying file
+       system. If that throws an exception, [=/reject=] |result| with that
+       exception and abort these steps.
+
+    1. [=/Resolve=] |result| with `undefined`.
+
+1. Return |result|.
 
 </div>
 
