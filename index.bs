@@ -549,7 +549,7 @@ an optional {{FileSystemDirectoryHandle}} |destinationDirectory|:
      "{{InvalidModificationError}}" {{DOMException}} and abort these steps.
 
   Issue: Do not allow |entry| to be moved if it is a
-  <a href=https://wicg.github.io/file-system-access/#wellknowndirectory-too-sensitive-or-dangerous>sensitive directory</a>
+  <a href=https://wicg.github.io/file-system-access/#enumdef-wellknowndirectory>well-known directory</a>.
 
   1. If |destinationAccessResult|'s
      [=file system access result/permission state=] is not
@@ -560,7 +560,12 @@ an optional {{FileSystemDirectoryHandle}} |destinationDirectory|:
        abort these steps
 
        Note: This prevents overwriting an existing file or directory which the
-       site does not have access to.
+       website does not have access to. To prevent overwriting a file which
+       the site can access, use of the
+       <a href=https://www.w3.org/TR/web-locks/>Web Locks API</a> is encouraged.
+
+       Issue(46): Make it easier to generate a uniquely-identifying string for
+       a {{FileSystemHandle}}.
 
     1. Let |settingsGlobal| be |handle|'s [=relevant settings object=]'s
        [=environment settings object/global object=].
@@ -595,23 +600,51 @@ an optional {{FileSystemDirectoryHandle}} |destinationDirectory|:
     1. If |destinationLockResult| is "`failure`", [=/reject=] |result| with a
        "{{NoModificationAllowedError}}" {{DOMException}} and abort these steps.
 
-    1. If |destinationDirectory| was given:
-      1. If |entry|'s [=file system entry/parent=] is not `null`,
-         [=set/remove=] |entry| from |entry|'s [=file system entry/parent=]'s
-         [=directory entry/children=].
-      1. [=set/Append=] |entry| to |destinationDirectoryEntry|'s
-         [=directory entry/children=].
-
     1. If |entry| is a [=file entry=] and |isInABucketFileSystem| is false,
          run [=implementation-defined=] malware scans and safe browsing checks.
          If these checks fail, [=/reject=] |result| with an
          "{{AbortError}}" {{DOMException}} and abort these steps.
+
+    1. Let |sourceQueryAccess| be |entry|'s [=file system entry/query access=].
+    1. Let |sourceRequestAccess| be |entry|'s [=file system entry/request access=].
+
+    1. If |destinationDirectory| was given:
+      1. [=set/Append=] |entry| to |destinationDirectoryEntry|'s
+         [=directory entry/children=].
 
     1. Attempt to move |entry| to |destinationEntry| in the underlying file
        system. If that throws an exception, [=/reject=] |result| with that
        exception and abort these steps.
 
        Note: In some cases, moving a file or directory can fail non-atomically.
+       A file move may result in a partially-written |destinationEntry|.
+       A directory move may result in only some files or sub-folders being
+       copied to |destinationEntry|, and some containing files may themselves
+       fail to be moved atomically.
+       In both cases, |entry| will only be removed from the underlying file
+       system if all contents were successfully moved to |destinationEntry|.
+
+    1. If |destinationDirectory| was given:
+      1. If |entry|'s [=file system entry/parent=] is not `null`,
+         [=set/remove=] |entry| from |entry|'s [=file system entry/parent=]'s
+         [=directory entry/children=].
+
+    1. Set |handle|'s [=FileSystemHandle/locator=] to |destinationLocator|.
+
+       Note: This does not update other {{FileSystemHandle}}s with the same
+       [=FileSystemHandle/locator=], nor does it update any {{FileSystemHandle}}
+       which [=locate an entry|located to=] any of |handle|'s
+       [=directory entry/children=] if |handle| is a [=directory entry=].
+       Each of these handles will presumably no longer [=locate an entry=],
+       unless a new entry is created at the respective location.
+
+    1. Set |destinationEntry|'s [=file system entry/query access=] to
+       |sourceQueryAccess|.
+    1. Set |destinationEntry|'s [=file system entry/request access=] to
+       |sourceRequestAccess|.
+
+       Issue(101): Make sure this still makes sense once access check
+       algorithms are no longer associated with an entry.
 
     1. [=Enqueue the following steps=] to the [=file system queue=]:
       1. [=file entry/lock/release|Release the lock=] on |entry|.
