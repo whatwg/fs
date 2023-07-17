@@ -527,10 +527,18 @@ an optional {{FileSystemDirectoryHandle}} |destinationDirectory|:
      [=file system locator/kind=] is |locator|'s [=file system locator/kind=],
      [=file system locator/root=] is |locator|'s [=file system locator/root=], and
      [=file system locator/path=] is |destinationPath|.
+  1. If the result of [=file system locator/resolving=] |destinationLocator|
+     relative to |locator| is not null and is not [=list/is empty|empty=],
+     [=queue a storage task=] with |global| to [=/reject=] |result| with a
+     "{{InvalidModificationError}}" {{DOMException}} and abort these steps.
+
+     Note: This prevents moving a directory within itself.
+
   1. Let |destinationEntry| be the result of [=locating an entry=]
      given |destinationLocator|.
 
-  1. If |destinationDirectory| was not given:
+  1. If |destinationDirectory| was not given and
+     |destinationLocator| is not [=the same entry as=] |locator|:
     1. Let |destinationAccessResult| be the result of running
        |destinationEntry|'s [=file system entry/request access=]
        given "`readwrite`".
@@ -599,6 +607,12 @@ an optional {{FileSystemDirectoryHandle}} |destinationDirectory|:
        "{{NoModificationAllowedError}}" {{DOMException}} and abort these steps.
     1. If |destinationLockResult| is "`failure`", [=/reject=] |result| with a
        "{{NoModificationAllowedError}}" {{DOMException}} and abort these steps.
+
+    1. If |destinationLocator| is [=the same entry as=] |locator|,
+       [=enqueue the following steps=] to the [=file system queue=]:
+      1. [=file entry/lock/release|Release the lock=] on |entry|.
+      1. [=Queue a storage task=] with |global| to
+         [=/resolve=] |result| with `undefined`.
 
     1. If |entry| is a [=file entry=] and |isInABucketFileSystem| is false,
          run [=implementation-defined=] malware scans and safe browsing checks.
