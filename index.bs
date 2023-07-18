@@ -445,21 +445,21 @@ The <dfn method for=FileSystemHandle>isSameEntry(|other|)</dfn> method steps are
 
 <div algorithm>
 The <dfn method for=FileSystemHandle>move({{FileSystemDirectoryHandle}}: |destinationDirectory|)</dfn>
-method steps are to [=FileSystemHandle/move=] |handle|
-given |handle|'s {{FileSystemHandle/name}} and |destinationDirectory|.
+method steps are to [=FileSystemHandle/move=] [=this=]
+given [=this=]'s {{FileSystemHandle/name}} and |destinationDirectory|.
 
 </div>
 
 <div algorithm>
 The <dfn method for=FileSystemHandle>move({{USVString}}: |newEntryName|)</dfn>
-method steps are to [=FileSystemHandle/move=] |handle|
+method steps are to [=FileSystemHandle/move=] [=this=]
 given |newEntryName|.
 
 </div>
 
 <div algorithm>
 The <dfn method for=FileSystemHandle>move({{FileSystemDirectoryHandle}}: |destinationDirectory|, {{USVString}}: |newEntryName|)</dfn>
-method steps are to [=FileSystemHandle/move=] |handle|
+method steps are to [=FileSystemHandle/move=] [=this=]
 given |newEntryName| and |destinationDirectory|.
 
 </div>
