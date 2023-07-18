@@ -285,13 +285,11 @@ which are not known to the website unless the [=/file system locator=] is later
 [=file system locator/resolved=] relative to a parent [=directory locator=].
 
 <div algorithm>
-The <dfn id=entry-query-access lt="querying access" export>file system query access algorithm</dfn>
-is used for querying access to a location in the file system. It takes
-a [=/file system locator=] |locator| and
-a "`read`" or "`readwrite`" <var ignore>mode</var>
-and returns a [=/file system access result=].
-Unless specified otherwise, it runs these steps:
+<dfn abstract-op id=entry-query-access lt=QueryFileSystemAccess>QueryFileSystemAccess(|locator|, |mode|)</dfn>
+runs these steps, unless specified otherwise:
 
+1. Assert: |locator| is a [=/file system locator=].
+1. Assert: |mode| is "`read`" or "`readwrite`".
 1. If |locator| [=file system locator/is in a bucket file system=]
    return a [=/file system access result=] with
    a [=file system access result/permission state=]
@@ -306,17 +304,15 @@ Note: These steps have to be run on the [=file system queue=].
 
 </div>
 
-The <dfn id=entry-request-access lt="requesting access" export>file system request access algorithm</dfn>
-is the same as the [=/file system query access algorithm=],
+<dfn abstract-op id=entry-request-access lt=RequestFileSystemAccess>RequestFileSystemAccess(|locator|, |mode|)</dfn>
+returns [$QueryFileSystemAccess$](|locator|, |mode|),
 unless specified otherwise.
 
-Note: Dependent specifications may override the
-[=/file system query access algorithm=] and
-[=/file system request access algorithm=].
+Note: Dependent specifications may override
+[$QueryFileSystemAccess$] and [$RequestFileSystemAccess$].
 
 A <dfn export>file system access result</dfn> is a [=struct=] encapsulating the
-result of a [=/file system query access algorithm=] or a
-[=/file system request access algorithm=].
+result of running [$QueryFileSystemAccess$] or [$RequestFileSystemAccess$].
 It has the following [=struct/items=]:
 
 : <dfn for="file system access result">permission state</dfn>
@@ -332,13 +328,17 @@ It has the following [=struct/items=]:
 
 <p class=warning> Dependent specifications may consider this API a
 [=powerful feature=]. However, unlike other [=powerful features=] whose
-[=permission request algorithm=] may throw, the
-[=/file system query access algorithm=] and [=/file system request access algorithm=]
+[=permission request algorithm=] may throw,
+[$QueryFileSystemAccess$] and [$RequestFileSystemAccess$]
 each must run [=in parallel=] on the [=file system queue=] and are
 therefore not allowed to throw. Instead, the caller is expected to
 [=queue a storage task=] to [=/reject=], as appropriate,
 should these algorithms return an [=file system access result/error name=]
 other than the empty string.
+
+<p class=example id=example-query-access>To check whether a website can access a
+{{FileSystemHandle}} |handle| with |mode|, run
+[$QueryFileSystemAccess$](|handle|'s [=FileSystemHandle/permission root locator=], |mode|).
 
 ## The {{FileSystemHandle}} interface ## {#api-filesystemhandle}
 
@@ -474,9 +474,9 @@ in a [=/Realm=] |realm|:
    |parentPermissionRootLocator|.
 
    Note: This ensures that permissions are inherited from parent to child.
-   [=Querying access=] or [=requesting access=] to |handle| will
-   [=query access=] or [=request access=] to its parent - or its parent's
-   parent, and so forth - as appropriate.
+   Querying access or requesting access to |handle| will
+   query access or request access to its parent - or its parent's parent,
+   and so forth - as appropriate.
 
 1. Return |handle|.
 
@@ -521,8 +521,8 @@ The <dfn method for=FileSystemFileHandle>getFile()</dfn> method steps are:
    [=this=]'s [=FileSystemHandle/permission root locator=].
 1. Let |global| be [=this=]'s [=relevant global object=].
 1. [=Enqueue the following steps=] to the [=file system queue=]:
-  1. Let |accessResult| be the result of [=querying access=] given
-     |permissionRootLocator| and "`read`".
+  1. Let |accessResult| be the result of running
+     [$QueryFileSystemAccess$](|permissionRootLocator|, "`read`").
   1. Let |entry| be the result of [=locating an entry=] given |locator|.
 
   1. [=Queue a storage task=] with |global| to run these steps:
@@ -596,8 +596,8 @@ The <dfn method for=FileSystemFileHandle>createWritable(|options|)</dfn> method 
 1. Let |realm| be [=this=]'s [=relevant Realm=].
 1. Let |global| be [=this=]'s [=relevant global object=].
 1. [=Enqueue the following steps=] to the [=file system queue=]:
-  1. Let |accessResult| be the result of [=requesting access=] given
-     |permissionRootLocator| and "`readwrite`".
+  1. Let |accessResult| be the result of running
+     [$RequestFileSystemAccess$](|permissionRootLocator|, "`readwrite`").
   1. If |accessResult|'s [=file system access result/permission state=]
      is not "{{PermissionState/granted}}", [=queue a storage task=] with
      |global| to [=/reject=] |result| with a {{DOMException}} of
@@ -663,8 +663,8 @@ The <dfn method for=FileSystemFileHandle>createSyncAccessHandle()</dfn> method s
    [=this=] [=FileSystemHandle/is in a bucket file system=];
    otherwise false.
 1. [=Enqueue the following steps=] to the [=file system queue=]:
-  1. Let |accessResult| be the result of [=requesting access=] given
-     |permissionRootLocator| and "`readwrite`".
+  1. Let |accessResult| be the result of running
+     [$RequestFileSystemAccess$](|permissionRootLocator|, "`readwrite`").
   1. If |accessResult|'s [=file system access result/permission state=]
      is not "{{PermissionState/granted}}", [=queue a storage task=] with
      |global| to [=/reject=] |result| with a {{DOMException}} of
@@ -747,9 +747,9 @@ in a [=/Realm=] |realm|:
    |parentPermissionRootLocator|.
 
    Note: This ensures that permissions are inherited from parent to child.
-   [=Querying access=] or [=requesting access=] to |handle| will
-   [=query access=] or [=request access=] to its parent - or its parent's
-   parent, and so forth - as appropriate.
+   Querying access or requesting access to |handle| will
+   query access or request access to its parent - or its parent's parent,
+   and so forth - as appropriate.
 
 1. Return |handle|.
 
@@ -805,9 +805,11 @@ To [=get the next iteration result=] for a {{FileSystemDirectoryHandle}} |handle
 and its async iterator |iterator|:
 
 1. Let |promise| be [=a new promise=].
+1. Let |permissionRootLocator| be |handle|'s
+   [=FileSystemHandle/permission root locator=].
 1. [=Enqueue the following steps=] to the [=file system queue=]:
-  1. Let |accessResult| be the result of running the [=querying access=] given
-     |handle|'s [=FileSystemHandle/permission root locator=] and "`read`".
+  1. Let |accessResult| be the result of running
+     [$QueryFileSystemAccess$](|permissionRootLocator|, "`read`").
   1. Let |directory| be the result of [=locating an entry=]
      given |handle|'s [=FileSystemHandle/locator=].
 
@@ -843,14 +845,14 @@ and its async iterator |iterator|:
          <a>creating a child `FileSystemFileHandle`</a> with
          |handle|'s [=FileSystemHandle/locator=],
          |child|'s [=file system entry/name=], and
-         |handle|'s [=FileSystemHandle/permission root locator=]
+         |permissionRootLocator|
          in |handle|'s [=relevant Realm=].
     1. Otherwise:
       1. Let |result| be the result of
          <a>creating a child `FileSystemDirectoryHandle`</a> with
          |handle|'s [=FileSystemHandle/locator=],
          |child|'s [=file system entry/name=], and
-         |handle|'s [=FileSystemHandle/permission root locator=]
+         |permissionRootLocator|
          in |handle|'s [=relevant Realm=].
     1. [=/Resolve=] |promise| with
        (|child|'s [=file system entry/name=], |result|).
@@ -897,11 +899,11 @@ The <dfn method for=FileSystemDirectoryHandle>getFileHandle(|name|, |options|)</
      abort these steps.
 
   1. If |options|["{{FileSystemGetFileOptions/create}}"] is true:
-    1. Let |accessResult| be the result of [=requesting access=] given
-       |permissionRootLocator| and "`readwrite`".
+    1. Let |accessResult| be the result of running
+       [$RequestFileSystemAccess$](|permissionRootLocator|, "`readwrite`").
   1. Otherwise:
-    1. Let |accessResult| be the result of [=querying access=] given
-       |permissionRootLocator| and "`read`".
+    1. Let |accessResult| be the result of running
+       [$QueryFileSystemAccess$](|permissionRootLocator|, "`read`").
 
   1. Let |entry| be the result of [=locating an entry=] given |locator|.
 
@@ -983,11 +985,11 @@ The <dfn method for=FileSystemDirectoryHandle>getDirectoryHandle(|name|, |option
      abort these steps.
 
   1. If |options|["{{FileSystemGetDirectoryOptions/create}}"] is true:
-    1. Let |accessResult| be the result of [=requesting access=] given
-       |permissionRootLocator| and "`readwrite`".
+    1. Let |accessResult| be the result of running
+       [$RequestFileSystemAccess$](|permissionRootLocator|, "`readwrite`").
   1. Otherwise:
-    1. Let |accessResult| be the result of [=querying access=] given
-       |permissionRootLocator| and "`read`".
+    1. Let |accessResult| be the result of running
+       [$QueryFileSystemAccess$](|permissionRootLocator|, "`read`").
 
   1. Let |entry| be the result of [=locating an entry=] given |locator|.
 
@@ -1063,8 +1065,8 @@ The <dfn method for=FileSystemDirectoryHandle>removeEntry(|name|, |options|)</df
      |global| to [=/reject=] |result| with a {{TypeError}} and
      abort these steps.
 
-  1. Let |accessResult| be the result of [=requesting access=] given
-     |permissionRootLocator| and "`readwrite`".
+  1. Let |accessResult| be the result of running
+     [$RequestFileSystemAccess$](|permissionRootLocator|, "`readwrite`").
   1. Let |entry| be the result of [=locating an entry=] given |locator|.
 
   1. [=Queue a storage task=] with |global| to run these steps:
@@ -1225,8 +1227,8 @@ in a [=/Realm=] |realm|:
 1. Let |closeAlgorithm| be these steps:
    1. Let |closeResult| be [=a new promise=].
    1. [=Enqueue the following steps=] to the [=file system queue=]:
-      1. Let |accessResult| be the result of [=querying access=]| given
-         |permissionRootLocator| and "`readwrite`".
+      1. Let |accessResult| be the result of running
+         [$QueryFileSystemAccess$](|permissionRootLocator|, "`readwrite`").
 
       1. [=Queue a storage task=] with |file|'s [=relevant global object=]
          to run these steps:
@@ -1279,8 +1281,8 @@ runs these steps:
    If this throws an exception, then return [=a promise rejected with=] that exception.
 1. Let |p| be [=a new promise=].
 1. [=Enqueue the following steps=] to the [=file system queue=]:
-  1. Let |accessResult| be the result of [=querying access=] given
-     |permissionRootLocator| and "`readwrite`".
+  1. Let |accessResult| be the result of running
+     [$QueryFileSystemAccess$](|permissionRootLocator|, "`readwrite`").
 
   1. [=Queue a storage task=] with |stream|'s [=relevant global object=] to
      run these steps:
