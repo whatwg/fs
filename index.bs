@@ -131,7 +131,7 @@ and a <dfn for="file entry">shared lock count</dfn> (a number representing the n
 
 A user agent has an associated <dfn>file system queue</dfn> which is the
 result of [=starting a new parallel queue=]. This queue is to be used for all
-file sytem operations.
+file system operations.
 
 <div algorithm>
 To <dfn for="file entry/lock">take</dfn> a [=file entry/lock=] with a |value| of
