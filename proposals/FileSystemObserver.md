@@ -68,7 +68,7 @@ A `FileSystemObserver` allows changes to the file to be observed with much more 
 ```javascript
 // Same as above, but using the proposed FileSystemObserver
 
-const callback = (records, observer) => {
+const callback = async (records, observer) => {
   // Will be run when the observed file changes.
 
   // The change record includes a handle detailing which file has
