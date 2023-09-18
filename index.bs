@@ -5,6 +5,7 @@ Shortname: fs
 Text Macro: TWITTER whatfilesystem
 Text Macro: LATESTRD 2023-09
 Abstract: File System defines infrastructure for file systems as well as their API.
+Translation: ja https://triple-underscore.github.io/fs-ja.html
 Indent: 2
 Markup Shorthands: css no, markdown yes
 </pre>
