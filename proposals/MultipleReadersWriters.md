@@ -225,6 +225,11 @@ childAccessHandle.close();
 await parentHandle.remove(); // successful
 ```
 
+### Interactions with BFCache
+A page may still hold a file system lock when it enters the BFCache. A fully active page could then be made aware of a BFCached page if there is contention between locks they hold.
+
+To keep BFCache enabled when a site uses the File System Access API, a BFCached page must be evicted on locking contention with a fully active page (whether or not it is of the same origin). Otherwise, a file system lock held by a page will not affect the page's eligibility for BFCache. This allows the site to have the performance gains of BFCache up until it would be made aware of the BFCache.
+
 ## Alternatives Considered
 
 ### Not Locking File Entry
