@@ -128,7 +128,7 @@ A <dfn export id=file>file entry</dfn> additionally consists of
 <dfn for="file entry" export>binary data</dfn> (a [=byte sequence=]), a
 <dfn for="file entry">modification timestamp</dfn> (a number representing the number of milliseconds since the <a spec=FileAPI>Unix Epoch</a>),
 a <dfn for="file entry">lock</dfn> (a string that may exclusively be "`open`", "`taken-exclusive`" or "`taken-shared`")
-and a <dfn for="file entry">shared lock count</dfn> (a number representing the number of shared locks that are taken at a given point in time).
+and a <dfn for="file entry">lock count</dfn> (a number representing the number of locks that are taken at a given point in time).
 
 A user agent has an associated <dfn>file system queue</dfn> which is the
 result of [=starting a new parallel queue=]. This queue is to be used for all
@@ -139,20 +139,18 @@ To <dfn for="file entry" id=file-entry-lock-take>take a lock</dfn> with a |value
 "`exclusive`" or "`shared`" on a given [=file entry=] |file|:
 
 1. Let |lock| be the |file|'s [=file entry/lock=].
-1. Let |count| be the |file|'s [=file entry/shared lock count=].
+1. Let |count| be the |file|'s [=file entry/lock count=].
+1. If |lock| is not "`open`":
+   1. If |value| is "`exclusive`" or |lock| is "`taken-exclusive`":
+     1. Return "`failure`".
 1. If |value| is "`exclusive`":
-   1. If |lock| is "`open`":
-     1. Set lock to "`taken-exclusive`".
-     1. Return "`success`".
-1. If |value| is "`shared`":
-   1. If |lock| is "`open`":
-     1. Set |lock| to "`taken-shared`".
-     1. Set |count| to 1.
-     1. Return "`success`".
-   1. Otherwise, if |lock| is "`taken-shared`":
-     1. Increase |count| by 1.
-     1. Return "`success`".
-1. Return "`failure`".
+   1. [=Assert=]: |lock| is "`open`".
+   1. [=Assert=]: |count| is 0.
+   1. Set |lock| to "`taken-exclusive`".
+1. Otherwise:
+   1. Set |lock| to "`taken-shared`".
+1. Increase |count| by 1.
+1. Return "`success`".
 
 Note: These steps have to be run on the [=file system queue=].
 
@@ -160,14 +158,14 @@ Note: These steps have to be run on the [=file system queue=].
 
 <div algorithm>
 To <dfn for="file entry/lock">release</dfn> a [=file entry/lock=] on a given
-[=file entry=] |file|:
+[=/file entry=] |file|:
 
 1. Let |lock| be the |file|'s associated [=file entry/lock=].
-1. Let |count| be the |file|'s [=file entry/shared lock count=].
-1. If |lock| is "`taken-shared`":
-  1. Decrease |count| by 1.
-  1. If |count| is 0, set |lock| to "`open`".
-1. Otherwise, set |lock| to "`open`".
+1. [=Assert=]: |lock| is not "`open`".
+1. Let |count| be the |file|'s [=file entry/lock count=].
+1. [=Assert=]: |count| is greater than 0.
+1. Decrease |count| by 1.
+1. If |count| is 0, set |lock| to "`open`".
 
 Note: These steps have to be run on the [=file system queue=].
 
