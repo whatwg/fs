@@ -124,10 +124,13 @@ Issue: We should consider having further normative restrictions on file names th
 never be allowed using this API, rather than leaving it entirely up to underlying file
 systems.
 
+A <dfn>lock type</dfn> is a [=string=] that may exclusively be "`open`",
+"`exclusive`", or "`shared`".
+
 A <dfn export id=file>file entry</dfn> additionally consists of
 <dfn for="file entry" export>binary data</dfn> (a [=byte sequence=]), a
 <dfn for="file entry">modification timestamp</dfn> (a number representing the number of milliseconds since the <a spec=FileAPI>Unix Epoch</a>),
-a <dfn for="file entry">lock</dfn> (a string that may exclusively be "`open`", "`taken-exclusive`" or "`taken-shared`")
+a <dfn for="file entry">lock</dfn> (a [=lock type=]),
 and a <dfn for="file entry">lock count</dfn> (a number representing the number of locks that are taken at a given point in time).
 
 A user agent has an associated <dfn>file system queue</dfn> which is the
@@ -135,20 +138,16 @@ result of [=starting a new parallel queue=]. This queue is to be used for all
 file system operations.
 
 <div algorithm>
-To <dfn for="file entry" id=file-entry-lock-take>take a lock</dfn> with a |value| of
-"`exclusive`" or "`shared`" on a given [=file entry=] |file|:
+To <dfn for="file entry" id=file-entry-lock-take>take a lock</dfn> with a |lockType| (a [=lock type=])
+on a given [=file entry=] |file|:
 
+1. [=Assert=]: |lockType| is not "`open`".
 1. Let |lock| be the |file|'s [=file entry/lock=].
 1. Let |count| be the |file|'s [=file entry/lock count=].
 1. If |lock| is not "`open`":
-   1. If |value| is "`exclusive`" or |lock| is "`taken-exclusive`":
+   1. If |lockType| is "`exclusive`" or |lock| is not equal to |lockType|:
      1. Return "`failure`".
-1. If |value| is "`exclusive`":
-   1. [=Assert=]: |lock| is "`open`".
-   1. [=Assert=]: |count| is 0.
-   1. Set |lock| to "`taken-exclusive`".
-1. Otherwise:
-   1. Set |lock| to "`taken-shared`".
+1. Set |lock| to |lockType|.
 1. Increase |count| by 1.
 1. Return "`success`".
 
