@@ -659,7 +659,7 @@ enum FileSystemChangeType {
   "disappeared",
   "modified",
   "moved",
-  "unknown",      // Change types are not known.
+  "unknown",      // Change types are not known
   "errored"       // This observation is no longer valid
 };
 
