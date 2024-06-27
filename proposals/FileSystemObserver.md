@@ -374,7 +374,7 @@ await observer.observe(directoryHandle, { recursive: true });
 // corresponding to `directoryHandle`, then `touch file.txt`)
 ```
 
-User agents may also use the `"unknown"` `FileSystemChangeType` to indicate that a change has occurred, but the type of change is unknown or does not belong to any other values defined in `FileSystemChangeType` due to cross-platform differences.
+User agents may also use the `"unknown"` `FileSystemChangeType` to indicate that a change has occurred but the type of change is unknown or is not to be specified to the site. This could mean that the change type does not belong to any other values defined in `FileSystemChangeType` due to cross-platform differences, or a change has occurred while the site was not fully active (i.e. site in back/forward cache becomes fully active again).
 
 #### When to Signal Local File System Writes
 
