@@ -304,6 +304,10 @@ Likewise, changes which occur before an observer is created should not be report
 
 A `FileSystemObserver` is not [serializable](https://html.spec.whatwg.org/multipage/structured-data.html#serializable) and therefore cannot be persisted across browsing sessions. Websites which wish to watch the same files on each session may store serializable `FileSystemHandle` and `FileSystemObserverObserveOptions` objects in IndexedDB, then create a `FileSystemObserver` and configure it from these objects on page reload.
 
+### Interactions with Back/forward Cache
+
+If changes occurred while the page was not fully active, and the page becomes active again (i.e. back/forward cache), then user agents may use the `"unknown"` `FileSystemChangeType` to indicate that _changes_ have occurred. Specific types and ordering of changes should not be exposed but indicating that some changes have occurred could be useful to the website to perform any special handling.
+
 ### Signaling Changes Made via a `FileSystemSyncAccessHandle`
 
 It is assumed that a user agent’s implementation of the `FileSystemObserver` interface will involve coordinating with a centralized browser process. However, unlike most web storage APIs, reading and writing files with a `FileSystemSyncAccessHandle` is commonly implemented largely without coordinating with a centralized browser process. This is critical to the exceptional performance characteristics of this interface. `write()` or `truncate()` operations on a `FileSystemSyncAccessHandle` should trigger a file system change record, but requiring round-trip IPC to complete before synchronously returning would be detrimental to performance.
@@ -373,8 +377,6 @@ await observer.observe(directoryHandle, { recursive: true });
 // (e.g. open a terminal locally, navigate to the directory
 // corresponding to `directoryHandle`, then `touch file.txt`)
 ```
-
-User agents may also use the `"unknown"` `FileSystemChangeType` to indicate that a change has occurred but the type of change is unknown or is not to be specified to the site. This could mean that the change type does not belong to any other values defined in `FileSystemChangeType` due to cross-platform differences, or a change has occurred while the site was not fully active (i.e. site in back/forward cache becomes fully active again).
 
 #### When to Signal Local File System Writes
 
