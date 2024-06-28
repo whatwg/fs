@@ -62,8 +62,12 @@ different storage mechanism with a different API for such files. The entry point
 
 ### File System ### {#concept-file-system}
 
-A <dfn export>file system root</dfn> is an opaque [=string=] whose value is
-[=implementation-defined=].
+A <dfn export>file system</dfn> is an [=implementation-defined=]
+[=storage endpoint=] that maintains a mapping of [=file system path=]s to
+[=file system entry|file system entries=].
+
+Each [=/file system=] has an associated <dfn for="file system" export>root</dfn>,
+an opaque [=string=] whose value is [=implementation-defined=].
 
 A <dfn export>file system path</dfn> is a [=/list=] of one or more [=strings=].
 This may be a virtual path that is mapped to real location on disk or in memory,
@@ -81,9 +85,38 @@ a [=/file system path=] |b| if
 [=list/for each=] |index| of |a|'s [=list/indices=]
 |a|.\[[|index|]] is |b|.\[[|index|]].
 
+<div algorithm>
+Each [=/file system=] has an associated
+<dfn for="file system">locate an entry</dfn>
+algorithm, which takes [=/file system path=] |path| and runs an
+[=implementation-defined=] series of steps returning a [=file system entry=] or null.
+A non-null return value |entry| must adhere to these constraints:
+
+- [=file system/Getting the path=] with |entry| returns |path|,
+  provided no intermediate file system operations were run.
+- |entry|'s [=file system entry/name=] is the last [=list/item=] of |path|.
+
+</div>
+
+<div algorithm>
+Each [=/file system=] has an associated
+<dfn for="file system">get the path</dfn>
+algorithm, which takes [=/file system entry=] |entry| and runs an
+[=implementation-defined=] series of steps returning a [=file system path=]. The
+return value |path| must adhere to these constraints:
+
+- [=file system/Locating an entry=] with |path| returns |entry|,
+  provided no intermediate file system operations were run.
+- |entry|'s [=file system entry/name=] is the last [=list/item=] of |path|.
+
+</div>
+
 ### File System Entry ### {#concept-file-system-entry}
 
 A <dfn export id="entry">file system entry</dfn> is either a [=file entry=] or a [=directory entry=].
+
+Each [=/file system entry=] has an associated
+<dfn for="file system entry">file system</dfn> (a [=/file system=]).
 
 Each [=/file system entry=] has an associated
 <dfn for="file system entry" id=entry-query-access>query access</dfn>
@@ -231,7 +264,7 @@ or a [=directory locator=].
 
 Each [=/file system locator=] has an associated <dfn export for="file system locator" id=locator-path>path</dfn> (a [=/file system path=]),
 a <dfn export for="file system locator" id=locator-kind>kind</dfn> (a {{FileSystemHandleKind}}), and
-a <dfn export for="file system locator" id=locator-root>root</dfn> (a [=file system root=]).
+a <dfn export for="file system locator" id=locator-root>file system</dfn> (a [=/file system=]).
 
 Issue(109): Consider giving each locator a [=storage bucket=].
 
@@ -246,13 +279,12 @@ exists at the path `data/drafts/example.txt` relative to the root directory of
 a [=/bucket file system=],
 |locator|'s [=file system locator/kind=] has to be "{{FileSystemHandleKind/file}}",
 |locator|'s [=file system locator/path=] has to be « "`data`", "`drafts`", "`example.txt`" », and
-|locator|'s [=file system locator/root=] might include relevant identifying
-information such as the [=storage bucket=] and the disk drive.
+|locator|'s [=file system locator/file system=] has to be [=/bucket file system=].
 
 A [=/file system locator=] |a| is <dfn for="file system locator">the same locator as</dfn>
 a [=/file system locator=] |b| if
 |a|'s [=file system locator/kind=] is |b|'s [=file system locator/kind=],
-|a|'s [=file system locator/root=] is |b|'s [=file system locator/root=], and
+|a|'s [=file system locator/file system=] is |b|'s [=file system locator/file system=], and
 |a|'s [=file system locator/path=] is [=the same path as=] |b|'s [=file system locator/path=].
 
 <div algorithm>
@@ -262,8 +294,8 @@ To <dfn for="file system locator" id=locator-resolve>resolve</dfn> a
 
 1. Let |result| be [=a new promise=].
 1. [=Enqueue the following steps=] to the [=file system queue=]:
-  1. If |child|'s [=FileSystemHandle/locator=]'s [=file system locator/root=]
-     is not |root|'s [=FileSystemHandle/locator=]'s [=file system locator/root=],
+  1. If |child|'s [=FileSystemHandle/locator=]'s [=file system locator/file system=]
+     is not |root|'s [=FileSystemHandle/locator=]'s [=file system locator/file system=],
      [=/resolve=] |result| with null, and abort these steps.
 
   1. Let |childPath| be |child|'s [=FileSystemHandle/locator=]'s [=file system locator/path=].
@@ -291,31 +323,31 @@ To <dfn for="file system locator" id=locator-resolve>resolve</dfn> a
 
 <div algorithm>
 The <dfn export data-lt="locating an entry">locate an entry</dfn> algorithm given a
-[=/file system locator=] |locator| runs an [=implementation-defined=] series of steps adhering to
-these constraints:
+[=/file system locator=] |locator| runs the following steps:
 
-- If |locator| is a [=file locator=], they return a [=file entry=] or null.
-- If |locator| is a [=directory locator=], they return a [=directory entry=] or null.
-- If these steps return a non-null |entry|, then:
-  - [=Getting the locator=] with |entry| returns |locator|,
-    provided no intermediate file system operations were run.
-  - |entry|'s [=file system entry/name=] is the last [=list/item=] of |locator|'s
-    [=file system locator/path=].
+1. Let |file system| be |locator|'s [=file system locator/file system=].
+1. Let |path| be |locator|'s [=file system locator/path=].
+1. Let |entry| be the result of running |file system|'s
+   [=file system/locate an entry=] given |path|.
+1. If |entry| is null, return null.
+1. If |locator| is a [=file locator=], [=Assert=]: |entry| is a [=file entry=].
+1. If |locator| is a [=directory locator=], [=Assert=]: |entry| is a [=directory entry=].
+1. Return |entry|.
 
 </div>
 
 <div algorithm>
-The <dfn export data-lt="getting the locator">get the locator</dfn> algorithm given
-[=/file system entry=] |entry| runs an [=implementation-defined=] series of steps adhering to these
-constraints:
+The <dfn export data-lt="getting the locator">get the locator</dfn> algorithm given a
+[=/file system entry=] |entry| runs the following steps:
 
-- If |entry| is a [=file entry=], they return a [=file locator=].
-- If |entry| is a [=directory entry=], they return a [=directory locator=].
-- If these steps return |locator|, then:
-  - [=Locating an entry=] with |locator| returns |entry|,
-    provided no intermediate file system operations were run.
-  - |entry|'s [=file system entry/name=] is the last [=list/item=] of |locator|'s
-    [=file system locator/path=].
+1. Let |file system| be |entry|'s [=file system entry/file system=].
+1. Let |path| be the result of running |file system|'s
+   [=file system/get the path=] given |entry|.
+1. Let |locator| be a [=file system locator=] whose [=file system locator/path=]
+   is |path| and whose [=file system locator/file system=] is |file system|.
+1. If |entry| is a [=file entry=], set |locator|'s [=file system locator/kind=] to "file".
+1. If |entry| is a [=directory entry=], set |locator|'s [=file system locator/kind=] to "directory".
+1. Return |entry|.
 
 </div>
 
@@ -449,12 +481,12 @@ given a [=directory locator=] |parentLocator| and a string |name| in a [=/Realm=
 
 1. Let |handle| be a [=new=] {{FileSystemFileHandle}} in |realm|.
 1. Let |childType| be "{{FileSystemHandleKind/file}}".
-1. Let |childRoot| be a copy of |parentLocator|'s [=file system locator/root=].
+1. Let |childFileSystem| be the |parentLocator|'s [=file system locator/file system=]
 1. Let |childPath| be the result of [=list/clone|cloning=] |parentLocator|'s
    [=file system locator/path=] and [=list/append|appending=] |name|.
 1. Set |handle|'s [=FileSystemHandle/locator=] to a [=/file system locator=] whose
    [=file system locator/kind=] is |childType|,
-   [=file system locator/root=] is |childRoot|, and
+   [=file system locator/file system=] is |childFileSystem|, and
    [=file system locator/path=] is |childPath|.
 1. Return |handle|.
 
@@ -463,13 +495,13 @@ given a [=directory locator=] |parentLocator| and a string |name| in a [=/Realm=
 <div algorithm>
 To
 <dfn export data-lt="creating a new FileSystemFileHandle">create a new `FileSystemFileHandle`</dfn>
-given a [=/file system root=] |root| and a [=/file system path=] |path|
+given a [=/file system=] |file system| and a [=/file system path=] |path|
 in a [=/Realm=] |realm|:
 
 1. Let |handle| be a [=new=] {{FileSystemFileHandle}} in |realm|.
 1. Set |handle|'s [=FileSystemHandle/locator=] to a [=/file system locator=] whose
    [=file system locator/kind=] is "{{FileSystemHandleKind/file}}",
-   [=file system locator/root=] is |root|, and
+   [=file system locator/file system=] is |file system|, and
    [=file system locator/path=] is |path|.
 1. Return |handle|.
 
@@ -704,12 +736,12 @@ given a [=directory locator=] |parentLocator| and a string |name| in a [=/Realm=
 
 1. Let |handle| be a [=new=] {{FileSystemDirectoryHandle}} in |realm|.
 1. Let |childType| be "{{FileSystemHandleKind/directory}}".
-1. Let |childRoot| be a copy of |parentLocator|'s [=file system locator/root=].
+1. Let |childFileSystem| be the |parentLocator|'s [=file system locator/file system=].
 1. Let |childPath| be the result of [=list/clone|cloning=] |parentLocator|'s
    [=file system locator/path=] and [=list/append|appending=] |name|.
 1. Set |handle|'s [=FileSystemHandle/locator=] to a [=/file system locator=] whose
    [=file system locator/kind=] is |childType|,
-   [=file system locator/root=] is |childRoot|, and
+   [=file system locator/file system=] is |childFileSystem|, and
    [=file system locator/path=] is |childPath|.
 1. Return |handle|.
 
@@ -718,13 +750,13 @@ given a [=directory locator=] |parentLocator| and a string |name| in a [=/Realm=
 <div algorithm>
 To
 <dfn export data-lt="creating a new FileSystemDirectoryHandle">create a new `FileSystemDirectoryHandle`</dfn>
-given a [=/file system root=] |root| and a [=/file system path=] |path|
+given a [=/file system=] |file system| and a [=/file system path=] |path|
 in a [=/Realm=] |realm|:
 
 1. Let |handle| be a [=new=] {{FileSystemDirectoryHandle}} in |realm|.
 1. Set |handle|'s [=FileSystemHandle/locator=] to a [=/file system locator=] whose
    [=file system locator/kind=] is "{{FileSystemHandleKind/directory}}",
-   [=file system locator/root=] is |root|, and
+   [=file system locator/file system=] is |file system|, and
    [=file system locator/path=] is |path|.
 1. Return |handle|.
 
@@ -1681,11 +1713,16 @@ guarantee.
 
 # Accessing the Bucket File System # {#sandboxed-filesystem}
 
-The <dfn export id=origin-private-file-system>bucket file system</dfn> is a
-[=storage endpoint=] whose
-<a spec=storage for="storage endpoint">identifier</a> is `"fileSystem"`,
+The <dfn export id=origin-private-file-system>bucket file system</dfn>
+is a [=/file system=] implementation
+whose [=file system/root=] is an [=implementation-defined=] opaque [=string=]
+and whose [=storage endpoint=]'s
+<a spec=storage for="storage endpoint">identifier</a> of `"fileSystem"`,
 <a spec=storage for="storage endpoint">types</a> are `« "local" »`,
 and <a spec=storage for="storage endpoint">quota</a> is null.
+
+Note: [=/bucket file system=]'s [=file system/root=] might include relevant
+identifying information such as the [=storage bucket=].
 
 Issue: Storage endpoints should be defined in [[storage]] itself, rather
 than being defined here. So merge this into the table there.
@@ -1727,13 +1764,10 @@ The <dfn method for=StorageManager>getDirectory()</dfn> method steps are:
   1. Set |dir|'s [=directory entry/children=] to an empty [=/set=].
   1. Set |map|["root"] to |dir|.
 
-1. Let |root| be an [=implementation-defined=] opaque [=string=].
+1. Let |file system| be [=/bucket file system=]'s [=file system/root=].
 1. Let |path| be « the empty string ».
 1. Let |handle| be the result of <a>creating a new `FileSystemDirectoryHandle`</a>.
-   given |root| and |path| in the [=current realm=].
-
-  Note: |root| might include relevant identifying information such as the
-  [=storage bucket=].
+   given |file system| and |path| in the [=current realm=].
 
 1. Assert: [=locating an entry=] given |handle|'s [=FileSystemHandle/locator=]
    returns a [=directory entry=] that is [=the same entry as=] |map|["root"].
