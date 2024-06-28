@@ -325,9 +325,9 @@ To <dfn for="file system locator" id=locator-resolve>resolve</dfn> a
 The <dfn export data-lt="locating an entry">locate an entry</dfn> algorithm given a
 [=/file system locator=] |locator| runs the following steps:
 
-1. Let |file system| be |locator|'s [=file system locator/file system=].
+1. Let |fileSystem| be |locator|'s [=file system locator/file system=].
 1. Let |path| be |locator|'s [=file system locator/path=].
-1. Let |entry| be the result of running |file system|'s
+1. Let |entry| be the result of running |fileSystem|'s
    [=file system/locate an entry=] given |path|.
 1. If |entry| is null, return null.
 1. If |locator| is a [=file locator=], [=Assert=]: |entry| is a [=file entry=].
@@ -340,11 +340,11 @@ The <dfn export data-lt="locating an entry">locate an entry</dfn> algorithm give
 The <dfn export data-lt="getting the locator">get the locator</dfn> algorithm given a
 [=/file system entry=] |entry| runs the following steps:
 
-1. Let |file system| be |entry|'s [=file system entry/file system=].
-1. Let |path| be the result of running |file system|'s
+1. Let |fileSystem| be |entry|'s [=file system entry/file system=].
+1. Let |path| be the result of running |fileSystem|'s
    [=file system/get the path=] given |entry|.
 1. Let |locator| be a [=file system locator=] whose [=file system locator/path=]
-   is |path| and whose [=file system locator/file system=] is |file system|.
+   is |path| and whose [=file system locator/file system=] is |fileSystem|.
 1. If |entry| is a [=file entry=], set |locator|'s [=file system locator/kind=] to "file".
 1. If |entry| is a [=directory entry=], set |locator|'s [=file system locator/kind=] to "directory".
 1. Return |entry|.
@@ -495,13 +495,13 @@ given a [=directory locator=] |parentLocator| and a string |name| in a [=/Realm=
 <div algorithm>
 To
 <dfn export data-lt="creating a new FileSystemFileHandle">create a new `FileSystemFileHandle`</dfn>
-given a [=/file system=] |file system| and a [=/file system path=] |path|
+given a [=/file system=] |fileSystem| and a [=/file system path=] |path|
 in a [=/Realm=] |realm|:
 
 1. Let |handle| be a [=new=] {{FileSystemFileHandle}} in |realm|.
 1. Set |handle|'s [=FileSystemHandle/locator=] to a [=/file system locator=] whose
    [=file system locator/kind=] is "{{FileSystemHandleKind/file}}",
-   [=file system locator/file system=] is |file system|, and
+   [=file system locator/file system=] is |fileSystem|, and
    [=file system locator/path=] is |path|.
 1. Return |handle|.
 
@@ -750,13 +750,13 @@ given a [=directory locator=] |parentLocator| and a string |name| in a [=/Realm=
 <div algorithm>
 To
 <dfn export data-lt="creating a new FileSystemDirectoryHandle">create a new `FileSystemDirectoryHandle`</dfn>
-given a [=/file system=] |file system| and a [=/file system path=] |path|
+given a [=/file system=] |fileSystem| and a [=/file system path=] |path|
 in a [=/Realm=] |realm|:
 
 1. Let |handle| be a [=new=] {{FileSystemDirectoryHandle}} in |realm|.
 1. Set |handle|'s [=FileSystemHandle/locator=] to a [=/file system locator=] whose
    [=file system locator/kind=] is "{{FileSystemHandleKind/directory}}",
-   [=file system locator/file system=] is |file system|, and
+   [=file system locator/file system=] is |fileSystem|, and
    [=file system locator/path=] is |path|.
 1. Return |handle|.
 
@@ -1764,10 +1764,10 @@ The <dfn method for=StorageManager>getDirectory()</dfn> method steps are:
   1. Set |dir|'s [=directory entry/children=] to an empty [=/set=].
   1. Set |map|["root"] to |dir|.
 
-1. Let |file system| be [=/bucket file system=]'s [=file system/root=].
+1. Let |fileSystem| be [=/bucket file system=]'s [=file system/root=].
 1. Let |path| be « the empty string ».
 1. Let |handle| be the result of <a>creating a new `FileSystemDirectoryHandle`</a>.
-   given |file system| and |path| in the [=current realm=].
+   given |fileSystem| and |path| in the [=current realm=].
 
 1. Assert: [=locating an entry=] given |handle|'s [=FileSystemHandle/locator=]
    returns a [=directory entry=] that is [=the same entry as=] |map|["root"].
