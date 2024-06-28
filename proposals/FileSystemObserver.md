@@ -220,7 +220,7 @@ async function markDirty(record) {
                 record.relativePathComponents);
       break;
     case 'unknown':
-      // Change type is not known.
+      // Unknown change event(s) may have been missed.
       if (await checkIfChanged(record.changedHandle)) {
         markChanged(record.root, record.relativePathComponents);
       }
