@@ -189,17 +189,17 @@ async function markDirty(record) {
   // Decide how to mark the file dirty according to the
   // `FileSystemChangeType` included in each file system change record.
   switch (record.type) {
-    case 'created':
+    case 'appeared':
       // `record.root` is the handle passed to `observe()`. Note that
       // the File System specification does not expose the concept of an
       // absolute path, so understanding a file system change is
       // inherently relative to some directory.
-      markCreated(record.root, record.relativePathComponents);
+      markAppeared(record.root, record.relativePathComponents);
       break;
-    case 'deleted':
+    case 'disappeared':
       // The relative path of the changed handle may be more useful than
       // the handle itself, since the file no longer exists.
-      markDeleted(record.root, record.relativePathComponents);
+      markDisappeared(record.root, record.relativePathComponents);
       break;
     case 'modified':
       // A handle to the changed path may be more useful than its
@@ -219,8 +219,8 @@ async function markDirty(record) {
       markMoved(record.root, record.relativePathMovedFrom,
                 record.relativePathComponents);
       break;
-    case 'unsupported':
-      // Change types may not be supported on all platforms.
+    case 'unknown':
+      // Unknown change event(s) may have been missed.
       if (await checkIfChanged(record.changedHandle)) {
         markChanged(record.root, record.relativePathComponents);
       }
@@ -264,7 +264,7 @@ async function handleChanges(records) {
     const changedHandle = record.changedHandle;
 
     // Take advantage of file-level notifications, if available.
-    if (changedHandle.kind === 'file' && record.type === 'created') {
+    if (changedHandle.kind === 'file' && record.type === 'appeared') {
       sawFileCreatedRecord = true;
       readNewFile(changedHandle);
     }
@@ -303,6 +303,10 @@ A `FileSystemObserver` should only report changes which occur while the observer
 Likewise, changes which occur before an observer is created should not be reported, though this behavior is not strictly guaranteed since file system changes may race with `FileSystemObserver` setup.
 
 A `FileSystemObserver` is not [serializable](https://html.spec.whatwg.org/multipage/structured-data.html#serializable) and therefore cannot be persisted across browsing sessions. Websites which wish to watch the same files on each session may store serializable `FileSystemHandle` and `FileSystemObserverObserveOptions` objects in IndexedDB, then create a `FileSystemObserver` and configure it from these objects on page reload.
+
+### Interactions with Back/forward Cache
+
+If changes occurred while the page was not fully active, and the page becomes active again (i.e. back/forward cache), then user agents may use the `"unknown"` `FileSystemChangeType` to indicate that _changes_ have occurred. Specific types and ordering of changes should not be exposed but indicating that some changes have occurred could be useful to the website to perform any special handling.
 
 ### Signaling Changes Made via a `FileSystemSyncAccessHandle`
 
@@ -343,8 +347,8 @@ However, given the cross-platform differences, this proposal does not attempt to
 ```javascript
 const callback = (records, observer) => {
   // What change record will be triggered when the file is created?
-  // -> 1: { type: "create", relativePathComponents: ["file.txt"], ... }
-  //    2: { type: "create", relativePathComponents: [], ... }
+  // -> 1: { type: "appeared", relativePathComponents: ["file.txt"], ... }
+  //    2: { type: "appeared", relativePathComponents: [], ... }
   //    3: { type: "modified", relativePathComponents: [], ... }
 }
 
@@ -355,15 +359,15 @@ await directoryHandle.getFileHandle('file.txt', { create: true });
 
 User agents should attempt to include the most precise information as it can reasonably obtain in the file system change record. In this example, the change record is most useful if it details that a specific file has been added (i.e. option 1) as opposed to mentioning just that the parent directory’s contents were modified - which would require the website to iterate through the directory to figure out which file has changed, and how.
 
-All changes to a Bucket File System should deterministically map to a precise file system change record. In this example, the `getFileHandle()` call should result in a change record with a `”create”` change type and describe the change as occurring on the created file.
+All changes to a Bucket File System should deterministically map to a precise file system change record. In this example, the `getFileHandle()` call should result in a change record with a `”appeared”` change type and describe the change as occurring on the created file.
 
-However, this level of detail is not realistic on all platforms for local file system changes. For example, Linux has no native support for recursive watches. As such, the details of a file system change record for a given change to the local file system should be regarded as best-effort. In the example below, the user agent may report either a `”create”` change type describing the created file, a `”create”` change type describing a creation within the observed directory, or a `”modified”` change type describing that the directory contents were modified.
+However, this level of detail is not realistic on all platforms for local file system changes. For example, Linux has no native support for recursive watches. As such, the details of a file system change record for a given change to the local file system should be regarded as best-effort. In the example below, the user agent may report either a `”appeared”` change type describing the created file, a `”appeared”` change type describing a creation within the observed directory, or a `”modified”` change type describing that the directory contents were modified.
 
 ```javascript
 const callback = (records, observer) => {
   // What change record will be triggered when the file is created?
-  // ?? 1: { type: "create", relativePathComponents: ["file.txt"], ... }
-  // ?? 2: { type: "create", relativePathComponents: [], ... }
+  // ?? 1: { type: "appeared", relativePathComponents: ["file.txt"], ... }
+  // ?? 2: { type: "appeared", relativePathComponents: [], ... }
   // ?? 3: { type: "modified", relativePathComponents: [], ... }
 }
 
@@ -373,8 +377,6 @@ await observer.observe(directoryHandle, { recursive: true });
 // (e.g. open a terminal locally, navigate to the directory
 // corresponding to `directoryHandle`, then `touch file.txt`)
 ```
-
-User agents may also use the `"unsupported"` `FileSystemChangeType` to explicitly indicate that change types are not supported.
 
 #### When to Signal Local File System Writes
 
@@ -632,7 +634,8 @@ This method could be useful to see which files and directories are being watched
     *   https://github.com/WICG/file-system-access/issues/72
     *   https://github.com/whatwg/fs/issues/123
     *   https://github.com/w3c/IndexedDB/issues/51
-*   Gecko: No signals
+*   Gecko: Positive
+    *   https://github.com/mozilla/standards-positions/issues/942#issuecomment-2113526096
 *   WebKit: No signals
 
 ## Appendix
@@ -654,11 +657,11 @@ callback FileSystemObserverCallback = void (
 );
 
 enum FileSystemChangeType {
-  "created",
-  "deleted",
+  "appeared",
+  "disappeared",
   "modified",
   "moved",
-  "unsupported",  // Change types are not supported on this platform
+  "unknown",      // Change types are not known
   "errored"       // This observation is no longer valid
 };
 
@@ -676,6 +679,6 @@ interface FileSystemChangeRecord {
   // The type of change
   readonly attribute FileSystemChangeType type;
   // Former location of a moved handle. Used only when type === "moved"
-  readonly attribute FileSystemHandle? relativePathMovedFrom;
+  readonly attribute FrozenArray<USVString>? relativePathMovedFrom;
 };
 ```
