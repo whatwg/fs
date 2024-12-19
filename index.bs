@@ -55,12 +55,333 @@ before a user has picked a location to save to, without forcing the website to u
 different storage mechanism with a different API for such files. The entry point for this is the
 {{StorageManager/getDirectory()|navigator.storage.getDirectory()}} method.
 
+It also defines an API to listen to file system change events. Without it, sites
+can recursively poll the file system to find changes in the files or folder
+structure. This can be time consuming especially for large directories. The
+{{FileSystemObserver}} provides an API to listen for change events so that
+polling for them isn't required.
+
 
 # Files and Directories # {#files-and-directories}
 
 ## Concepts ## {#concepts}
 
+### File System ### {#concept-file-system}
+
+A <dfn export>file system</dfn> maintains an [=implementation-defined=] mapping
+ of [=file system path=]s to [=file system entries=].
+
+Each [=/file system=] has an associated <dfn for="file system" export>root</dfn>,
+an opaque [=string=] whose value is [=implementation-defined=].
+
+A <dfn export>file system path</dfn> is a [=/list=] of one or more [=strings=].
+This may be a virtual path that is mapped to real location on disk or in memory,
+may correspond directly to a path on the local file system, or may not
+correspond to any file on disk at all. The actual physical location of the
+corresponding [=/file system entry=] is [=implementation-defined=].
+
+<p class=example id=example-path>Let |path| be the [=/list=]
+« "`data`", "`drafts`", "`example.txt`" ».
+There is no expectation that a file named `example.txt` exists anywhere on disk.
+
+A [=/file system path=] |a| is <dfn for="file system path">the same path as</dfn>
+a [=/file system path=] |b| if
+|a|'s [=list/size=] is the same as |b|'s [=list/size=] and
+[=list/for each=] |index| of |a|'s [=list/indices=]
+|a|.\[[|index|]] [=string/is=] |b|.\[[|index|]].
+
+<div algorithm>
+Each [=/file system=] has an associated
+<dfn for="file system">locate an entry</dfn>
+algorithm, which takes [=/file system path=] |path| and runs an
+[=implementation-defined=] series of steps returning a [=file system entry=] or null.
+A non-null return value |entry| must adhere to these constraints:
+
+- [=file system/Getting the path=] with |entry| returns |path|,
+  provided no intermediate file system operations were run.
+- |entry|'s [=file system entry/name=] is the last [=list/item=] of |path|.
+
+</div>
+
+<div algorithm>
+Each [=/file system=] has an associated
+<dfn for="file system">get the path</dfn>
+algorithm, which takes [=/file system entry=] |entry| and runs an
+[=implementation-defined=] series of steps returning a [=file system path=]. The
+return value |path| must adhere to these constraints:
+
+- [=file system/Locating an entry=] with |path| returns |entry|,
+  provided no intermediate file system operations were run.
+- |entry|'s [=file system entry/name=] is the last [=list/item=] of |path|.
+
+</div>
+
+A <dfn for="file system">file system event</dfn> is a [=struct=] consisting of a
+<dfn for="file system/file system event">type</dfn> (a
+{{FileSystemChangeType}}), an
+<dfn for="file system/file system event">entry type</dfn> (a
+{{FileSystemHandleKind}} or null), a
+<dfn for="file system/file system event">modified path</dfn> (a
+[=/file system path=]), and a
+<dfn for="file system/file system event">from path</dfn> (a
+[=/file system path=] or null).
+
+Note: A [=/file system=] fires these events in response to file operations.
+
+The [=file system/file system event/from path=] must be set when
+[=file system/file system event/type=] is "{{FileSystemChangeType/moved}}" and
+must be null otherwise.
+
+Note: The [=file system/file system event/entry type=] is null when the
+[=/file system=] cannot determine the {{FileSystemHandleKind}} of the
+[=file system/file system event/modified path=] due to the underlying
+[=file system entry=] no longer being there.
+
+A [=/file system=] has an associated [=/set=] of
+[=file system observer registrations=]
+<dfn for="file system">observer registrations</dfn> which is initialized to the
+empty set.
+
+When a user agent receives a [=/list=] of [=file system/file system events=]
+|events| for a [=/file system=] |fileSystem|, the user agent MUST
+[=file system/notify observer registrations=] of the |fileSystem| of |events|.
+
+Note: The [=file system/file system events=] fired by a [=/file system=] might be
+unreliable and can be inaccurate, out of order, or missing.
+
+<div algorithm>
+To <dfn for="file system">notify observer registrations</dfn> of a [=/file system=]
+|fileSystem| of a [=/list=] of [=file system/file system events=] |events|:
+
+1. [=Enqueue the following steps=] to the [=file system queue=]:
+  1. [=list/For each=] |observerRegistration| of the |fileSystem|'s
+    [=file system/observer registrations=].
+    1. [=file system observer registration/Notify=] |observerRegistration| of |events|
+      from |fileSystem|.
+
+</div>
+
+When a user agent receives an error event for a [=/file system=] |fileSystem|
+and |observerRegistrations| (a [=subset=] of the |fileSystem|'s
+[=file system/observer registrations=]), the user agent MUST
+[=file system/send an error|send the error=] to |observerRegistrations| of |fileSystem|.
+
+<div algorithm>
+To <dfn for="file system">send an error</dfn> to a [=/set=] of
+[=file system observer registrations=] |observerRegistrations| of a
+[=/file system=] |fileSystem|:
+
+1. [=Enqueue the following steps=] to the [=file system queue=]:
+  1. [=Assert=] |observerRegistrations| is a [=subset=] of |fileSystem|'s
+    [=file system/observer registrations=].
+  1. [=list/For each=] |observerRegistration| of |observerRegistrations|:
+    1. [=file system observer registration/Destroy=] |observerRegistration|.
+    1. Let |observer| be |observerRegistration|'s
+      [=file system observer registration/observer=].
+    1. Let |global| be |observer|'s [=relevant global object=].
+    1. [=Queue a storage task=] with |global| to run these steps:
+      1. Let |changedHandle| be the |observerRegistration|'s
+        [=file system observer registration/root handle=].
+      1. Let |record| be the result of
+        <a>creating a new `FileSystemChangeRecord`</a> for
+        |observerRegistration| given |changedHandle|,
+        "{{FileSystemChangeType/errored}}", and null.
+
+      1. Invoke |observer|'s [=FileSystemObserver/callback=] with «|record|» as
+        the first argument and |observer| as the second argument.
+
+</div>
+
+
+
+A <dfn>file system observer registration</dfn> consists of a
+{{FileSystemObserver}}
+<dfn for="file system observer registration">observer</dfn>, a
+{{FileSystemHandle}}
+<dfn for="file system observer registration">root handle</dfn>, and a
+[=/boolean=] <dfn for="file system observer registration">recursive</dfn>.
+
+<div algorithm>
+To <dfn for="file system observer registration">create an observer registration</dfn>
+for {{FileSystemObserver}} |observer| on {{FileSystemHandle}} |rootHandle| with
+[=/boolean=] |recursive|:
+
+
+1. Let |observerRegistration| be a [=file system observer registration=] whose
+    [=file system observer registration/observer=] is |observer|,
+    [=file system observer registration/root handle=] is |rootHandle|, and
+    [=file system observer registration/recursive=] is |recursive|.
+
+1. Let |observerRegistrationLocator| be |rootHandle|'s [=FileSystemHandle/locator=].
+1. Let |observerRegistrationMap| be |observer|'s [=FileSystemObserver/observerRegistrations=].
+1. Let |fileSystem| be the |observerRegistrationLocator|'s
+   [=file system locator/file system=].
+
+1. [=list/Append=] |observerRegistration| to the |fileSystem|'s
+    [=file system/observer registrations=].
+1. [=map/set=] |observerRegistrationMap|[|observerRegistrationLocator|] to |observerRegistration|.
+
+Note: These steps have to be run on the [=file system queue=].
+
+</div>
+
+<div algorithm>
+To <dfn for="file system observer registration">destroy</dfn>
+[=file system observer registration=] |observerRegistration|:
+
+1. Let |observer| be |observerRegistration|'s [=file system observer registration/observer=].
+1. Let |rootHandle| be |observerRegistration|'s [=file system observer registration/root handle=].
+1. Let |observerRegistrationLocator| be |rootHandle|'s [=FileSystemHandle/locator=].
+1. Let |fileSystem| be |observerRegistrationLocator|'s
+   [=file system locator/file system=].
+1. [=list/Remove=] |observerRegistration| from the |fileSystem|'s
+   [=file system/observer registrations=].
+1. [=map/Remove=] |observerRegistrationLocator| from |observer|'s
+   [=FileSystemObserver/observerRegistrations=].
+
+Note: These steps have to be run on the [=file system queue=].
+
+</div>
+
+<div algorithm>
+To <dfn for="file system observer registration">notify</dfn> a
+[=file system observer registration=] |observerRegistration| of a [=/list=] of
+[=file system/file system events=] |events| from a [=/file system=]
+|fileSystem|:
+
+1. Let |rootHandle| be |observerRegistration|'s [=file system observer registration/root handle=].
+1. Let |observerRegistrationLocator| be |rootHandle|'s [=FileSystemHandle/locator=].
+
+1. [=Assert=]: |observerRegistrationLocator|'s [=file system locator/file system=] is equal to
+  |fileSystem|.
+
+1. Let |observer| be |observerRegistration|'s [=file system observer registration/observer=].
+1. Let |global| be |observer|'s [=relevant global object=].
+1. [=Queue a storage task=] with |global| to run these steps:
+  1. Let |records| be a [=/list=] of {{FileSystemChangeRecord}}.
+  1. [=list/For each=] |event| of |events|:
+
+    1. Let |eventType| be |event|'s [=file system/file system event/type=].
+
+    1. [=Assert=] |eventType| is not equal to
+       "{{FileSystemChangeType/errored}}".
+
+      Note: "{{FileSystemChangeType/errored}}" events are sent in the
+      [=file system/send an error=] steps.
+
+    1. Let |eventEntryType| be |event|'s [=file system/file system event/entry type=].
+
+    1. If |eventType| is "{{FileSystemChangeType/modified}}" and
+       |eventEntryType| is
+      "{{FileSystemHandleKind/directory}}" or null, [=continue=].
+
+      Note: We can safely ignore "{{FileSystemChangeType/modified}}" events for
+      "{{FileSystemHandleKind/directory}}". These might be sent when one of its
+      children receives an event which the page will be made aware of through
+      that child event. Or they might be sent when some OS specific property
+      changes which the web page cannot observe through web APIs. Similarly when
+      we don't know the {{FileSystemHandleKind}}, we can ignore it since the
+      [=/file system entry=] at the
+      [=file system/file system event/modified path=] no longer exists.
+
+    1. If |eventEntryType| is null:
+      1. Set |eventEntryType| to |observerRegistrationLocator|'s
+        [=file system locator/kind=].
+
+      Note: When we don't know the {{FileSystemHandleKind}} of the
+      [=file system/file system event/modified path=], we have to arbitrarily
+      choose one to construct the {{FileSystemChangeRecord/changedHandle}}.
+      Setting it to |observerRegistrationLocator|'s [=file system locator/kind=]
+      at least means it'll be right for events on the root handle.
+
+    1. Let |modifiedPath| be |event|'s [=file system/file system event/modified path=].
+    1. Let |fromPath| be |event|'s [=file system/file system event/from path=].
+
+    1. Let |changedLocator| be a [=/file system locator=] whose
+      [=file system locator/kind=] is |eventEntryType|,
+      [=file system locator/file system=] is |fileSystem|, and
+      [=file system locator/path=] is |modifiedPath|.
+    1. Let |movedFromLocator| be null.
+
+    1. Let |modifiedPathInScope| be equal to |changedLocator|
+      [=file system observer registration/is in scope=] of |observerRegistration|.
+    1. Let |fromPathInScope| be false.
+
+    1. If |eventType| is "{{FileSystemChangeType/moved}}":
+      1. [=Assert=]: |fromPath| is not null.
+      1. Set |movedFromLocator| be a [=/file system locator=] whose
+        [=file system locator/kind=] is |eventEntryType|,
+        [=file system locator/file system=] is |fileSystem|, and
+        [=file system locator/path=] is |fromPath|.
+      1. Set |fromPathInScope| equal to |movedFromLocator|
+        [=file system observer registration/is in scope=] of |observerRegistration|.
+
+    1. If both |modifiedPathInScope| and |fromPathInScope| are false, [=continue=].
+
+    1. If |eventType| is "{{FileSystemChangeType/moved}}":
+      1. If |modifiedPathInScope| is false:
+        1. Set |eventType| to "{{FileSystemChangeType/disappeared}}".
+        1. Set |changedLocator| to |movedFromLocator|.
+        1. Set |fromPath| to null.
+      1. If |fromPathInScope| is false:
+        1. Set |eventType| to "{{FileSystemChangeType/appeared}}".
+        1. Set |fromPath| to null.
+
+      Note: Some [=/file systems=] convert "{{FileSystemChangeType/moved}}" events
+      in and out of scope to "{{FileSystemChangeType/appeared}}" and
+      "{{FileSystemChangeType/disappeared}}" respectively before we can. So to
+      maintain consistency, we do it here.
+
+    1. Let |record| be the result of <a>creating a new `FileSystemChangeRecord`</a> for
+      |observerRegistration| given |changedLocator|, |eventType|, and |fromPath|.
+    1. [=list/Append=] |record| to |records|.
+
+    1. If |eventType| is equal to "{{FileSystemChangeType/disappeared}}" and
+      |changedHandle|'s [=FileSystemHandle/locator=] is equal to
+      |observerRegistrationLocator|:
+        1. Set |errorRecord| to the result of
+          <a>creating a new `FileSystemChangeRecord`</a> for |observerRegistration| given
+          |changedHandle|, "{{FileSystemChangeType/errored}}", and null.
+        1. [=list/Append=] |errorRecord| to |records|.
+        1. [=file system observer registration/Destroy=] |observerRegistration|.
+        1. [=break=].
+
+  1. If |records| is not [=set/is empty|empty=]:
+    1. Invoke |observer|'s [=FileSystemObserver/callback=] with |records| as the
+       first argument and |observer| as the second argument.
+
+Note: These steps have to be run on the [=file system queue=].
+
+</div>
+
+<div algorithm>
+To determine if a [=/file system locator=] |handleLocator|
+<dfn for="file system observer registration">is in scope</dfn> of a
+[=file system observer registration=] |observerRegistration|:
+
+
+1. Let |observerRegistrationLocator| be |observerRegistration|'s [=file system observer registration/root handle=]'s
+   [=FileSystemHandle/locator=].
+1. Let |observerRegistrationRecursive| be |observerRegistration|'s [=file system observer registration/recursive=].
+
+1. Let |pathRelation| be the result of [=file system locator/getting the relationship=]
+   between |observerRegistrationLocator| and |handleLocator|.
+
+1. If |pathRelation| is "`other`" or "`ancestor`", return false.
+1. If |pathRelation| is "`descendant`" and |observerRegistrationRecursive| is false,
+   return false.
+1. Return true.
+
+Note: These steps have to be run on the [=file system queue=].
+
+</div>
+
+### File System Entry ### {#concept-file-system-entry}
+
 A <dfn export id="entry">file system entry</dfn> is either a [=file entry=] or a [=directory entry=].
+
+Each [=/file system entry=] has an associated [=/file system=]
+<dfn for="file system entry">file system</dfn>.
 
 Each [=/file system entry=] has an associated
 <dfn for="file system entry" id=entry-query-access>query access</dfn>
@@ -200,39 +521,7 @@ A [=/file system entry=] |a| is <dfn for="file system entry">the same entry as</
 a [=/file system entry=] |b| if |a| is equal to |b|, or
 if |a| and |b| are backed by the same file or directory on the local file system.
 
-<div algorithm>
-
-To <dfn for="file system locator" id=locator-resolve>resolve</dfn> a
-[=/file system locator=] |child| relative to a [=directory locator=] |root|:
-
-1. Let |result| be [=a new promise=].
-1. [=Enqueue the following steps=] to the [=file system queue=]:
-  1. If |child|'s [=FileSystemHandle/locator=]'s [=file system locator/root=]
-     is not |root|'s [=FileSystemHandle/locator=]'s [=file system locator/root=],
-     [=/resolve=] |result| with null, and abort these steps.
-
-  1. Let |childPath| be |child|'s [=FileSystemHandle/locator=]'s [=file system locator/path=].
-  1. Let |rootPath| be |root|'s [=FileSystemHandle/locator=]'s [=file system locator/path=].
-  1. If |childPath| is [=the same path as=] |rootPath|,
-     [=/resolve=] |result| with « », and abort these steps.
-
-  1. If |rootPath|'s [=list/size=] is greater than |childPath|'s [=list/size=],
-     [=/resolve=] |result| with null, and abort these steps.
-
-  1. [=list/For each=] |index| of |rootPath|'s [=list/indices=]:
-    1. If |rootPath|.\[[|index|]] is not |childPath|.\[[|index|]], then
-       [=/resolve=] |result| with null, and abort these steps.
-
-  1. Let |relativePath| be « ».
-  1. [=list/For each=] |index| of [=the range=] from |rootPath|'s [=list/size=]
-     to |rootPath|'s [=list/size=], exclusive,
-     [=list/append=] |childPath|.\[[|index|]] to |relativePath|.
-
-  1. [=/Resolve=] |result| with |relativePath|.
-
-1. Return |result|.
-
-</div>
+### File System Locator ### {#concept-file-system-locator}
 
 A <dfn export>file system locator</dfn> represents a potential location of a
 [=/file system entry=]. A [=/file system locator=] is either a [=file locator=]
@@ -240,7 +529,7 @@ or a [=directory locator=].
 
 Each [=/file system locator=] has an associated <dfn export for="file system locator" id=locator-path>path</dfn> (a [=/file system path=]),
 a <dfn export for="file system locator" id=locator-kind>kind</dfn> (a {{FileSystemHandleKind}}), and
-a <dfn export for="file system locator" id=locator-root>root</dfn> (a [=file system root=]).
+a <dfn export for="file system locator" id=locator-root>file system</dfn> (a [=/file system=]).
 
 Issue(109): Consider giving each locator a [=storage bucket=].
 
@@ -249,69 +538,96 @@ A <dfn export>file locator</dfn> is a [=/file system locator=] whose
 A <dfn export>directory locator</dfn> is a [=/file system locator=] whose
 [=file system locator/kind=] is "{{FileSystemHandleKind/directory}}".
 
-A <dfn export>file system root</dfn> is an opaque [=string=] whose value is
-[=implementation-defined=].
-
 <p class=example id=example-locator>For a [=/file system locator=] |locator|
 whichs [=locate an entry|locates to=] a [=file entry=] |entry| that conceptually
 exists at the path `data/drafts/example.txt` relative to the root directory of
 a [=/bucket file system=],
 |locator|'s [=file system locator/kind=] has to be "{{FileSystemHandleKind/file}}",
 |locator|'s [=file system locator/path=] has to be « "`data`", "`drafts`", "`example.txt`" », and
-|locator|'s [=file system locator/root=] might include relevant identifying
-information such as the [=storage bucket=] and the disk drive.
+|locator|'s [=file system locator/file system=] has to be a [=/bucket file system=].
 
 A [=/file system locator=] |a| is <dfn for="file system locator">the same locator as</dfn>
 a [=/file system locator=] |b| if
 |a|'s [=file system locator/kind=] is |b|'s [=file system locator/kind=],
-|a|'s [=file system locator/root=] is |b|'s [=file system locator/root=], and
+|a|'s [=file system locator/file system=] is |b|'s [=file system locator/file system=], and
 |a|'s [=file system locator/path=] is [=the same path as=] |b|'s [=file system locator/path=].
 
 <div algorithm>
-The <dfn export data-lt="locating an entry">locate an entry</dfn> algorithm given a
-[=/file system locator=] |locator| runs an [=implementation-defined=] series of steps adhering to
-these constraints:
 
-- If |locator| is a [=file locator=], they return a [=file entry=] or null.
-- If |locator| is a [=directory locator=], they return a [=directory entry=] or null.
-- If these steps return a non-null |entry|, then:
-  - [=Getting the locator=] with |entry| returns |locator|,
-    provided no intermediate file system operations were run.
-  - |entry|'s [=file system entry/name=] is the last [=list/item=] of |locator|'s
-    [=file system locator/path=].
+To <dfn for="file system locator" id=locator-resolve>resolve</dfn> a
+[=/file system locator=] |child| relative to a [=file system locator=] |root|:
+
+1. Let |relationship| be the result of [=file system locator/getting the relationship=]
+   between |root| and |child|.
+1. If |relationship| is equal to "`other`" or "`ancestor`", return null.
+1. If |relationship| is equal to "`self`", return « ».
+
+1. Let |childPath| be |child|'s [=file system locator/path=].
+1. Let |rootPath| be |root|'s [=file system locator/path=].
+
+1. Let |relativePath| be « ».
+1. [=list/For each=] |index| of [=the range=] from |rootPath|'s [=list/size=]
+    to |childPath|'s [=list/size=], exclusive,
+    [=list/append=] |childPath|[|index|] to |relativePath|.
+
+1. Return |relativePath|.
+
+Note: These steps have to be run on the [=file system queue=].
 
 </div>
 
 <div algorithm>
-The <dfn export data-lt="getting the locator">get the locator</dfn> algorithm given
-[=/file system entry=] |entry| runs an [=implementation-defined=] series of steps adhering to these
-constraints:
+To <dfn for="file system locator">get the relationship</dfn> from a
+[=/file system locator=] |self| to a [=file system locator=] |related|:
 
-- If |entry| is a [=file entry=], they return a [=file locator=].
-- If |entry| is a [=directory entry=], they return a [=directory locator=].
-- If these steps return |locator|, then:
-  - [=Locating an entry=] with |locator| returns |entry|,
-    provided no intermediate file system operations were run.
-  - |entry|'s [=file system entry/name=] is the last [=list/item=] of |locator|'s
-    [=file system locator/path=].
+1. If |self|'s [=file system locator/file system=]  is not |related|'s
+   [=file system locator/file system=], return "`other`".
+
+1. Let |selfPath| be |self|'s [=file system locator/path=].
+1. Let |relatedPath| be |related|'s [=file system locator/path=].
+
+1. Let |selfPathSize| be |selfPath|'s [=list/size=].
+1. Let |relatedPathSize| be |relatedPath|'s [=list/size=].
+
+1. [=list/For each=] |index| of |selfPath|'s [=list/indices=]:
+  1. If |index| is greater than or equal to |relatedPathSize|, return "`ancestor`".
+  1. If |selfPath|[|index|] is not |relatedPath|[|index|], return "`other`".
+
+1. If |selfPathSize| equals |relatedPathSize|, return "`self`".
+1. If |selfPathSize| + 1 equals |relatedPathSize|, return "`direct child`".
+1. Return "`descendant`".
+
+Note: These steps have to be run on the [=file system queue=].
 
 </div>
 
-A <dfn export>file system path</dfn> is a [=/list=] of one or more [=strings=].
-This may be a virtual path that is mapped to real location on disk or in memory,
-may correspond directly to a path on the local file system, or may not
-correspond to any file on disk at all. The actual physical location of the
-corresponding [=/file system entry=] is [=implementation-defined=].
+<div algorithm>
+The <dfn export data-lt="locating an entry">locate an entry</dfn> algorithm given a
+[=/file system locator=] |locator| runs the following steps:
 
-<p class=example id=example-path>Let |path| be the [=/list=]
-« "`data`", "`drafts`", "`example.txt`" ».
-There is no expectation that a file named `example.txt` exists anywhere on disk.
+1. Let |fileSystem| be |locator|'s [=file system locator/file system=].
+1. Let |path| be |locator|'s [=file system locator/path=].
+1. Let |entry| be the result of running |fileSystem|'s
+   [=file system/locate an entry=] given |path|.
+1. If |entry| is null, return null.
+1. Return |entry|.
 
-A [=/file system path=] |a| is <dfn for="file system path">the same path as</dfn>
-a [=/file system path=] |b| if
-|a|'s [=list/size=] is the same as |b|'s [=list/size=] and
-[=list/for each=] |index| of |a|'s [=list/indices=]
-|a|.\[[|index|]] is |b|.\[[|index|]].
+</div>
+
+<div algorithm>
+The <dfn export data-lt="getting the locator">get the locator</dfn> algorithm given a
+[=/file system entry=] |entry| runs the following steps:
+
+1. Let |fileSystem| be |entry|'s [=file system entry/file system=].
+1. Let |path| be the result of running |fileSystem|'s
+   [=file system/get the path=] given |entry|.
+1. Let |locator| be a [=file system locator=] whose [=file system locator/path=]
+   is |path| and whose [=file system locator/file system=] is |fileSystem|.
+1. If |entry| is a [=file entry=], set |locator|'s [=file system locator/kind=] to "file".
+1. If |entry| is a [=directory entry=], set |locator|'s [=file system locator/kind=] to "directory".
+1. Return |entry|.
+
+</div>
 
 <p class=warning> The contents of a [=/file system locator=], including its
 [=file system locator/path=], are not expected to be shared in their entirety
@@ -341,6 +657,22 @@ A {{FileSystemHandle}} object is associated with a <dfn for=FileSystemHandle exp
 
 Note: Multiple {{FileSystemHandle}} objects can have
 [=the same locator as|the same=] [=/file system locator=].
+
+<div algorithm>
+To <dfn data-lt="creating a new FileSystemHandle">create a new `FileSystemHandle`</dfn> given a
+[=/file system locator=] |locator| in a [=/Realm=] |realm|:
+
+1. Let |kind| be |locator|'s [=file system locator/kind=].
+1. Let |fileSystem| be |locator|'s [=file system locator/file system=].
+1. Let |path| be |locator|'s [=file system locator/path=].
+1. If |kind| is "`file`":
+  1. Return the result of <a>creating a new `FileSystemFileHandle`</a> given
+     |fileSystem| and |path| in |realm|.
+1. Otherwise:
+  1. Return the result of <a>creating a new `FileSystemDirectoryHandle`</a>
+     given |fileSystem| and |path| in |realm|.
+
+</div>
 
 A {{FileSystemHandle}}
 <dfn for=FileSystemHandle export>is in a bucket file system</dfn>
@@ -443,12 +775,12 @@ given a [=directory locator=] |parentLocator| and a string |name| in a [=/Realm=
 
 1. Let |handle| be a [=new=] {{FileSystemFileHandle}} in |realm|.
 1. Let |childType| be "{{FileSystemHandleKind/file}}".
-1. Let |childRoot| be a copy of |parentLocator|'s [=file system locator/root=].
+1. Let |childFileSystem| be the |parentLocator|'s [=file system locator/file system=].
 1. Let |childPath| be the result of [=list/clone|cloning=] |parentLocator|'s
    [=file system locator/path=] and [=list/append|appending=] |name|.
 1. Set |handle|'s [=FileSystemHandle/locator=] to a [=/file system locator=] whose
    [=file system locator/kind=] is |childType|,
-   [=file system locator/root=] is |childRoot|, and
+   [=file system locator/file system=] is |childFileSystem|, and
    [=file system locator/path=] is |childPath|.
 1. Return |handle|.
 
@@ -457,13 +789,13 @@ given a [=directory locator=] |parentLocator| and a string |name| in a [=/Realm=
 <div algorithm>
 To
 <dfn export data-lt="creating a new FileSystemFileHandle">create a new `FileSystemFileHandle`</dfn>
-given a [=/file system root=] |root| and a [=/file system path=] |path|
+given a [=/file system=] |fileSystem| and a [=/file system path=] |path|
 in a [=/Realm=] |realm|:
 
 1. Let |handle| be a [=new=] {{FileSystemFileHandle}} in |realm|.
 1. Set |handle|'s [=FileSystemHandle/locator=] to a [=/file system locator=] whose
    [=file system locator/kind=] is "{{FileSystemHandleKind/file}}",
-   [=file system locator/root=] is |root|, and
+   [=file system locator/file system=] is |fileSystem|, and
    [=file system locator/path=] is |path|.
 1. Return |handle|.
 
@@ -698,12 +1030,12 @@ given a [=directory locator=] |parentLocator| and a string |name| in a [=/Realm=
 
 1. Let |handle| be a [=new=] {{FileSystemDirectoryHandle}} in |realm|.
 1. Let |childType| be "{{FileSystemHandleKind/directory}}".
-1. Let |childRoot| be a copy of |parentLocator|'s [=file system locator/root=].
+1. Let |childFileSystem| be the |parentLocator|'s [=file system locator/file system=].
 1. Let |childPath| be the result of [=list/clone|cloning=] |parentLocator|'s
    [=file system locator/path=] and [=list/append|appending=] |name|.
 1. Set |handle|'s [=FileSystemHandle/locator=] to a [=/file system locator=] whose
    [=file system locator/kind=] is |childType|,
-   [=file system locator/root=] is |childRoot|, and
+   [=file system locator/file system=] is |childFileSystem|, and
    [=file system locator/path=] is |childPath|.
 1. Return |handle|.
 
@@ -712,13 +1044,13 @@ given a [=directory locator=] |parentLocator| and a string |name| in a [=/Realm=
 <div algorithm>
 To
 <dfn export data-lt="creating a new FileSystemDirectoryHandle">create a new `FileSystemDirectoryHandle`</dfn>
-given a [=/file system root=] |root| and a [=/file system path=] |path|
+given a [=/file system=] |fileSystem| and a [=/file system path=] |path|
 in a [=/Realm=] |realm|:
 
 1. Let |handle| be a [=new=] {{FileSystemDirectoryHandle}} in |realm|.
 1. Set |handle|'s [=FileSystemHandle/locator=] to a [=/file system locator=] whose
    [=file system locator/kind=] is "{{FileSystemHandleKind/directory}}",
-   [=file system locator/root=] is |root|, and
+   [=file system locator/file system=] is |fileSystem|, and
    [=file system locator/path=] is |path|.
 1. Return |handle|.
 
@@ -1085,10 +1417,18 @@ if (relative_path === null) {
 </div>
 
 <div algorithm>
-The <dfn method for=FileSystemDirectoryHandle>resolve(|possibleDescendant|)</dfn> method steps are
-to return the result of [=file system locator/resolving=]
-|possibleDescendant|'s [=FileSystemHandle/locator=]
-relative to [=this=]'s [=FileSystemHandle/locator=].
+The <dfn method for=FileSystemDirectoryHandle>resolve(|possibleDescendant|)</dfn>
+method steps are:
+
+1. Let |result| be [=a new promise=].
+1. Let |global| be [=this=]'s [=relevant global object=].
+1. [=Enqueue the following steps=] to the [=file system queue=]:
+  1. Let |relativePath| be the result of [=file system locator/resolving=]
+     |possibleDescendant|'s [=FileSystemHandle/locator=]
+     relative to [=this=]'s [=FileSystemHandle/locator=].
+  1. [=Queue a storage task=] with |global| to run these steps:
+    1. [=/resolve=] |result| with |relativePath|.
+1. Return |result|.
 
 </div>
 
@@ -1346,7 +1686,7 @@ runs these steps:
   :: Resizes the file associated with |stream| to be |size| bytes long. If |size| is larger than
      the current file size this pads the file with null bytes, otherwise it truncates the file.
 
-     The file cursor is updated when {{truncate}} is called. If the cursor is smaller than |size|,
+     The file cursor is updated when {{FileSystemWritableFileStream/truncate()|truncate}} is called. If the cursor is smaller than |size|,
      it remains unchanged. If the cursor is larger than |size|, it is set to |size| to
      ensure that subsequent writes do not error.
 
@@ -1391,7 +1731,7 @@ The <dfn method for=FileSystemWritableFileStream>seek(|position|)</dfn> method s
   :: Resizes the file associated with |stream| to be |size| bytes long. If |size| is larger than
      the current file size this pads the file with null bytes, otherwise it truncates the file.
 
-     The file cursor is updated when {{truncate}} is called. If the cursor is smaller than |size|,
+     The file cursor is updated when {{FileSystemWritableFileStream/truncate()|truncate}} is called. If the cursor is smaller than |size|,
      it remains unchanged. If the cursor is larger than |size|, it is set to |size| to
      ensure that subsequent writes do not error.
 
@@ -1509,7 +1849,7 @@ The <dfn method for=FileSystemSyncAccessHandle>read(|buffer|, {{FileSystemReadWr
   : |handle| . {{FileSystemSyncAccessHandle/write()|write}}(|buffer|, { {{FileSystemReadWriteOptions/at}} })
   :: Writes the content of |buffer| into the file associated with |handle|, optionally at a given offset, and returns the number of written bytes.
      Checking the returned number of written bytes allows callers to detect and handle errors and partial writes.
-  :: The file cursor is updated when {{write}} is called to point to the byte after the last byte written.
+  :: The file cursor is updated when {{FileSystemSyncAccessHandle/write()|write}} is called to point to the byte after the last byte written.
 </div>
 
 <!-- TODO(fivedots): Figure out how to properly check the available storage quota (in this method and others) by passing the right storage shelf. -->
@@ -1570,7 +1910,7 @@ The <dfn method for=FileSystemSyncAccessHandle>write(|buffer|, {{FileSystemReadW
   : |handle| . {{FileSystemSyncAccessHandle/truncate()|truncate}}(|newSize|)
   :: Resizes the file associated with |handle| to be |newSize| bytes long. If |newSize| is larger than the current file size this pads the file with null bytes; otherwise it truncates the file.
 
-  :: The file cursor is updated when {{truncate}} is called. If the cursor is smaller than |newSize|, it remains unchanged. If the cursor is larger than |newSize|, it is set to |newSize|.
+  :: The file cursor is updated when {{FileSystemWritableFileStream/truncate()|truncate}} is called. If the cursor is smaller than |newSize|, it remains unchanged. If the cursor is larger than |newSize|, it is set to |newSize|.
 </div>
 
 <div algorithm>
@@ -1637,7 +1977,7 @@ The <dfn method for=FileSystemSyncAccessHandle>flush()</dfn> method steps are:
 1. Attempt to transfer all cached modifications of the file's content to the
    file system's underlying storage device.
 
-   Note: This is also known as flushing. This may be a no-op on some file
+   Note: This is also known as flushing. This might be a no-op on some file
    systems, such as in-memory file systems, which do not have a "disk" to flush
    to.
 
@@ -1681,6 +2021,12 @@ The <dfn export id=origin-private-file-system>bucket file system</dfn> is a
 <a spec=storage for="storage endpoint">types</a> are `« "local" »`,
 and <a spec=storage for="storage endpoint">quota</a> is null.
 
+The [=/bucket file system=] implements [=/file system=] with
+[=file system/root=] as an [=implementation-defined=] opaque [=string=].
+
+Note: [=/bucket file system=]'s [=file system/root=] might include relevant
+identifying information such as the [=storage bucket=].
+
 Issue: Storage endpoints should be defined in [[storage]] itself, rather
 than being defined here. So merge this into the table there.
 
@@ -1721,18 +2067,244 @@ The <dfn method for=StorageManager>getDirectory()</dfn> method steps are:
   1. Set |dir|'s [=directory entry/children=] to an empty [=/set=].
   1. Set |map|["root"] to |dir|.
 
-1. Let |root| be an [=implementation-defined=] opaque [=string=].
+1. Let |fileSystem| be the relevant [=/bucket file system=]'s
+   [=file system/root=].
 1. Let |path| be « the empty string ».
 1. Let |handle| be the result of <a>creating a new `FileSystemDirectoryHandle`</a>.
-   given |root| and |path| in the [=current realm=].
-
-  Note: |root| might include relevant identifying information such as the
-  [=storage bucket=].
+   given |fileSystem| and |path| in the [=current realm=].
 
 1. Assert: [=locating an entry=] given |handle|'s [=FileSystemHandle/locator=]
    returns a [=directory entry=] that is [=the same entry as=] |map|["root"].
 
 1. Return [=a promise resolved with=] |handle|.
+
+</div>
+
+# Observing file system change events # {#observing-the-file-system}
+
+## The {{FileSystemObserver}} interface ## {#api-filesystemobserver}
+
+<xmp class=idl>
+dictionary FileSystemObserverObserveOptions {
+  boolean recursive = false;
+};
+
+callback FileSystemObserverCallback = undefined (
+  sequence<FileSystemChangeRecord> records,
+  FileSystemObserver observer
+);
+
+[
+    Exposed=(DedicatedWorker,SharedWorker,Window),
+    SecureContext
+] interface FileSystemObserver {
+  constructor(FileSystemObserverCallback callback);
+
+  Promise<undefined> observe(FileSystemHandle handle,
+                          optional FileSystemObserverObserveOptions options = {});
+  undefined unobserve(FileSystemHandle handle);
+  undefined disconnect();
+};
+</xmp>
+
+<div class="note domintro">
+  The {{FileSystemObserver}} interface can be used to observe
+  [=file system/file system events=].
+</div>
+
+The {{FileSystemObserver}} has an asociated {{FileSystemObserverCallback}}
+<dfn for=FileSystemObserver>callback</dfn>.
+
+The {{FileSystemObserver}} has an associated
+<dfn for=FileSystemObserver>observerRegistrations</dfn> (a [=map=] of
+[=/file system locators=] to [=file system observer registrations=]).
+
+### The {{FileSystemObserver}} constructor ### {#api-filesystemobsever-constructor}
+
+<div algorithm>
+The <dfn constructor for=FileSystemObserver lt="FileSystemObserver(callback)">new FileSystemObserver(FileSystemObserverCallback |callback|)</dfn>
+steps are:
+
+1. Let [=this=] be a new {{FileSystemObserver}}.
+1. Set [=this=]'s [=FileSystemObserver/callback=] to |callback|.
+1. Set [=this=]'s [=FileSystemObserver/observerRegistrations=] be the empty map.
+
+</div>
+
+### The {{FileSystemObserver/observe()}} method ### {#api-filesystemobserver-observe}
+
+<div algorithm>
+
+The <dfn method for=FileSystemObserver>observe(FileSystemHandle |handle|,
+FileSystemObserverObserveOptions |options|)</dfn> steps are:
+
+1. Let |result| be [=a new promise=].
+
+1. Let |recursive| be |options|["{{FileSystemObserverObserveOptions/recursive}}"].
+1. Let |observerRegistrationMap| be [=this=]'s [=FileSystemObserver/observerRegistrations=].
+1. Let |locator| be |handle|'s [=FileSystemHandle/locator=].
+1. Let |global| be [=this=]'s [=relevant global object=].
+
+1. [=Enqueue the following steps=] to the [=file system queue=]:
+  1. If |observerRegistrationMap|[|locator|] [=map/exists=], abort these steps.
+
+  1. Let |entry| be the result of [=locating an entry=] given |locator|.
+  1. Let |accessResult| be the result of running |entry|'s
+     [=file system entry/query access=] given "`read`".
+
+  1. [=Queue a storage task=] with |global| to run these steps:
+    1. If |accessResult|'s [=file system access result/permission state=]
+       is not "{{PermissionState/granted}}", [=/reject=] |result| with a
+       {{DOMException}} of |accessResult|'s
+       [=file system access result/error name=] and abort these steps.
+
+    1. If |entry| is null, [=/reject=] |result| with a
+       "{{NotFoundError}}" {{DOMException}} and abort these steps.
+
+    1. [=Enqueue the following steps=] to the [=file system queue=]:
+      1. [=file system observer registration/Create an observer registration=]
+        for [=this=] on |handle| with |recursive|.
+
+    1.  [=/Resolve=] |result| with null.
+
+</div>
+
+
+### The {{FileSystemObserver/unobserve()}} method ### {#api-filesystemobserver-unobserve}
+
+<div algorithm>
+The <dfn method for=FileSystemObserver>unobserve(FileSystemHandle |handle|)</dfn>
+steps are:
+
+1. Let |locator| be |handle|'s [=FileSystemHandle/locator=].
+1. Let |observerRegistrationMap| be [=this=]'s [=FileSystemObserver/observerRegistrations=].
+
+1. [=Enqueue the following steps=] to the [=file system queue=]:
+  1. If |observerRegistrationMap|[|locator|] does not [=map/exist=], abort these steps.
+  1. [=file system observer registration/Destroy=] |observerRegistrationMap|[|locator|].
+
+</div>
+
+### The {{FileSystemObserver/disconnect()}} method ### {#api-filesystemobserver-disconnect}
+
+<div algorithm>
+The <dfn method for=FileSystemObserver>disconnect()</dfn> steps are:
+
+1. Let |observerRegistrationMap| be [=this=]'s [=FileSystemObserver/observerRegistrations=].
+
+1. [=Enqueue the following steps=] to the [=file system queue=]:
+  1. Let |observerRegistrations| be the result of [=map/getting the values=] of
+     |observerRegistrationMap|.
+  1. [=list/For each=] |observerRegistration| in |observerRegistrations|:
+    1. [=file system observer registration/Destroy=] |observerRegistration|.
+
+</div>
+
+## The {{FileSystemChangeRecord}} interface ## {#api-filesystemchangerecord}
+
+<xmp class=idl>
+enum FileSystemChangeType {
+  "appeared",
+  "disappeared",
+  "errored",
+  "modified",
+  "moved",
+  "unknown",
+};
+
+dictionary FileSystemChangeRecord {
+  required FileSystemHandle root;
+
+  FileSystemHandle? changedHandle;
+
+  required sequence<DOMString> relativePathComponents;
+
+  required FileSystemChangeType type;
+
+  sequence<DOMString>? relativePathMovedFrom;
+};
+</xmp>
+
+<div class="note domintro">
+  : root
+  :: The handle that was passed to FileSystemObserver.observe().
+  : changedHandle
+  :: The handle that the change occurred on. This is not set for "disappeared",
+     "errored", and "unknown" events. It's not given for "disappeared" since the
+     handle would point to a non-existent folder or file. It's not given for
+     "errored" and "unknown" since it is meaningless in these contexts as these
+     events are sent for the observation as a whole and not any one particular
+     file or folder.
+  : relativePathComponents
+  :: The path of {{FileSystemChangeRecord/changedHandle}} relative to
+     {{FileSystemChangeRecord/root}}.
+  : type
+  :: The type of change.
+  : relativePathMovedFrom
+  :: If {{FileSystemChangeRecord/type}} is "{{FileSystemChangeType/moved}}",
+     this corresponds to the former path of {{FileSystemChangeRecord/changedHandle}}
+     relative to {{FileSystemChangeRecord/root}}, if the former path is known;
+     otherwise null.
+
+</div>
+
+<div class="note domintro">
+The values of the `FileSystemChangeType` indicate the following:
+  : "appeared"
+  :: The {{FileSystemChangeRecord/changedHandle}} was created or moved into the
+     scope of the {{FileSystemChangeRecord/root}}.
+  : "disappeared"
+  :: The {{FileSystemChangeRecord/changedHandle}} was deleted or moved out of
+     the scope of the {{FileSystemChangeRecord/root}}.
+  : "errored"
+  :: An error has occurred for this file system observer registration and it
+     will no longer receive change events. For example, this might be sent for a
+     Linux implementation using the inotify API when it runs out of watches.
+  : "modified"
+  :: The {{FileSystemChangeRecord/changedHandle}} has been modified.
+  : "moved"
+  :: The {{FileSystemChangeRecord/changedHandle}} has been moved within the
+     watch scope from {{FileSystemChangeRecord/relativePathMovedFrom}} to
+     {{FileSystemChangeRecord/relativePathComponents}}.
+  : "unknown"
+  :: Zero or more events might have been missed. For example, this might be sent for
+     a Windows implementation using the ReadDirectoryChangesW API when it has a
+     buffer overflow. A developer might want to poll the watched directory or file
+     for changes they missed.
+
+</div>
+
+<div algorithm>
+To
+<dfn local-lt="creating a new FileSystemChangeRecord">create a new `FileSystemChangeRecord`</dfn>
+for a [=file system observer registration=] |observerRegistration| given a [=/file system locator=]
+|changedLocator|, a {{FileSystemChangeType}} |type|, and an optional
+[=/file system locator=] |movedFromLocator|:
+
+1. Let |root| be |observerRegistration|'s
+  [=file system observer registration/root handle=].
+1. Let |rootLocator| be |root|'s [=FileSystemHandle/locator=].
+1. Let |relativePathComponents| be the result of [=file system locator/resolving=]
+   |changedLocator| relative to |rootLocator|.
+1. Let |relativePathMovedFrom| be null.
+1. If |movedFromLocator| was given, set |relativePathMovedFrom| to the result of
+   [=file system locator/resolving=] |movedFromLocator| relative to |rootLocator|.
+
+
+1. Let |realm| be |root|'s [=relevant realm=].
+1. Let |record| be a [=new=] {{FileSystemChangeRecord}} in |realm|.
+
+1. Set |record|'s {{FileSystemChangeRecord/root}} to |root|.
+1. Set |record|'s {{FileSystemChangeRecord/changedHandle}} to null.
+1. Set |record|'s {{FileSystemChangeRecord/relativePathComponents}} to |relativePathComponents|.
+1. Set |record|'s {{FileSystemChangeRecord/type}} to |type|.
+1. Set |record|'s {{FileSystemChangeRecord/relativePathMovedFrom}} to |relativePathMovedFrom|.
+
+1. If |type| is not equal to "disappeared", "errored", or "unknown":
+  1. Set |record|'s {{FileSystemChangeRecord/changedHandle}} to the result of
+     <a>creating a new `FileSystemHandle`</a> given |changedLocator| in |realm|.
+
+1. Return |record|.
 
 </div>
 
