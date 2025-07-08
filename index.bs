@@ -1266,8 +1266,8 @@ runs these steps:
          |head|, |data| and |tail|.
       1. If the operations modifying |stream|'s [=[[buffer]]=] in the
          previous steps failed due to exceeding the [=storage quota=],
-         [=/reject=] |p| with a "{{QuotaExceededError}}" {{DOMException}}
-         and abort these steps, leaving |stream|'s [=[[buffer]]=] unmodified.
+         [=/reject=] |p| with a {{QuotaExceededError}} and abort these steps,
+         leaving |stream|'s [=[[buffer]]=] unmodified.
 
          Note: [=Storage quota=] only applies to files stored in a
          [=/bucket file system=].
@@ -1294,8 +1294,8 @@ runs these steps:
             concating |stream|'s [=[[buffer]]=] with a [=byte sequence=]
             containing |newSize|-|oldSize| `0x00` bytes.
          1. If the operation in the previous step failed due to exceeding the [=storage quota=],
-            [=/reject=] |p| with a "{{QuotaExceededError}}" {{DOMException}} and
-            abort these steps, leaving |stream|'s [=[[buffer]]=] unmodified.
+            [=/reject=] |p| with a {{QuotaExceededError}} and abort these steps,
+            leaving |stream|'s [=[[buffer]]=] unmodified.
 
             Note: [=Storage quota=] only applies to files stored in a
             [=/bucket file system=].
@@ -1542,7 +1542,7 @@ The <dfn method for=FileSystemSyncAccessHandle>write(|buffer|, {{FileSystemReadW
       |oldSize| &minus; (|writePosition| + |bufferSize|) bytes of |fileContents|.
 1. Let |newSize| be |head|'s [=byte sequence/length=] + |bufferSize| + |tail|'s [=byte sequence/length=].
 1. If |newSize| &minus; |oldSize| exceeds the available [=storage quota=],
-   [=throw=] a "{{QuotaExceededError}}" {{DOMException}}.
+   [=throw=] a {{QuotaExceededError}}.
 1. Set [=this=]'s [=FileSystemSyncAccessHandle/[[file]]=]'s
    [=file entry/binary data=] to the concatenation of
    |head|, the contents of |buffer| and |tail|.
@@ -1586,7 +1586,7 @@ The <dfn method for=FileSystemSyncAccessHandle>truncate(|newSize|)</dfn> method 
    |newSize|, [=throw=] a {{TypeError}}.
 1. If |newSize| is larger than |oldSize|:
    1. If |newSize| &minus; |oldSize| exceeds the available [=storage quota=],
-      [=throw=] a "{{QuotaExceededError}}" {{DOMException}}.
+      [=throw=] a {{QuotaExceededError}}.
    1. Set [=this=]'s [=FileSystemSyncAccessHandle/[[file]]=]'s to a
       [=byte sequence=] formed by concatenating |fileContents| with a
       [=byte sequence=] containing |newSize| &minus; |oldSize| 0x00 bytes.
