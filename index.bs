@@ -440,7 +440,7 @@ Note: A {{FileSystemFileHandle}}'s associated [=FileSystemHandle/locator=]'s
 
 <div algorithm>
 To
-<dfn data-lt="creating a child FileSystemFileHandle">create a child `FileSystemFileHandle`</code></dfn>
+<dfn data-lt="creating a child FileSystemFileHandle">create a child `FileSystemFileHandle`</dfn>
 given a [=directory locator=] |parentLocator| and a string |name| in a [=/Realm=] |realm|:
 
 1. Let |handle| be a [=new=] {{FileSystemFileHandle}} in |realm|.
