@@ -12,7 +12,6 @@ Markup Shorthands: css no, markdown yes
 </pre>
 
 <pre class=link-defaults>
-spec:infra; type:dfn; text:string
 spec:webidl; type:dfn; text:resolve
 </pre>
 
