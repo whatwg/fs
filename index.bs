@@ -679,7 +679,7 @@ dictionary FileSystemRemoveOptions {
 
 [Exposed=(Window,Worker), SecureContext, Serializable]
 interface FileSystemDirectoryHandle : FileSystemHandle {
-  async iterable<USVString, FileSystemHandle>;
+  async_iterable<USVString, FileSystemHandle>;
 
   Promise<FileSystemFileHandle> getFileHandle(USVString name, optional FileSystemGetFileOptions options = {});
   Promise<FileSystemDirectoryHandle> getDirectoryHandle(USVString name, optional FileSystemGetDirectoryOptions options = {});
@@ -742,7 +742,7 @@ in a [=/Realm=] |realm|:
      might or might not be included. No guarantees are given either way.
 </div>
 
-Issue(15): In the future we might want to add arguments to the async iterable declaration to
+Issue(15): In the future we might want to add arguments to the async_iterable declaration to
 support for example recursive iteration.
 
 <div algorithm="iterator initialization">
