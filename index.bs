@@ -1511,7 +1511,7 @@ The <dfn method for=FileSystemSyncAccessHandle>read(|buffer|, {{FileSystemReadWr
   : |handle| . {{FileSystemSyncAccessHandle/write()|write}}(|buffer|, { {{FileSystemReadWriteOptions/at}} })
   :: Writes the content of |buffer| into the file associated with |handle|, optionally at a given offset, and returns the number of written bytes.
      Checking the returned number of written bytes allows callers to detect and handle errors and partial writes.
-  :: The file cursor is updated when {{write}} is called to point to the byte after the last byte written.
+  :: The file cursor is updated when {{FileSystemSyncAccessHandle/write()|write}} is called to point to the byte after the last byte written.
 </div>
 
 <!-- TODO(fivedots): Figure out how to properly check the available storage quota (in this method and others) by passing the right storage shelf. -->
