@@ -6,6 +6,7 @@ Text Macro: TWITTER whatfilesystem
 Text Macro: LATESTRD 2023-09
 Abstract: File System defines infrastructure for file systems as well as their API.
 Translation: ja https://triple-underscore.github.io/fs-ja.html
+Translation: zh-Hans https://htmlspecs.com/fs/
 Indent: 2
 Markup Shorthands: css no, markdown yes
 </pre>
@@ -438,7 +439,7 @@ Note: A {{FileSystemFileHandle}}'s associated [=FileSystemHandle/locator=]'s
 
 <div algorithm>
 To
-<dfn data-lt="creating a child FileSystemFileHandle">create a child `FileSystemFileHandle`</code></dfn>
+<dfn data-lt="creating a child FileSystemFileHandle">create a child `FileSystemFileHandle`</dfn>
 given a [=directory locator=] |parentLocator| and a string |name| in a [=/Realm=] |realm|:
 
 1. Let |handle| be a [=new=] {{FileSystemFileHandle}} in |realm|.
@@ -677,7 +678,7 @@ dictionary FileSystemRemoveOptions {
 
 [Exposed=(Window,Worker), SecureContext, Serializable]
 interface FileSystemDirectoryHandle : FileSystemHandle {
-  async iterable<USVString, FileSystemHandle>;
+  async_iterable<USVString, FileSystemHandle>;
 
   Promise<FileSystemFileHandle> getFileHandle(USVString name, optional FileSystemGetFileOptions options = {});
   Promise<FileSystemDirectoryHandle> getDirectoryHandle(USVString name, optional FileSystemGetDirectoryOptions options = {});
@@ -740,7 +741,7 @@ in a [=/Realm=] |realm|:
      might or might not be included. No guarantees are given either way.
 </div>
 
-Issue(15): In the future we might want to add arguments to the async iterable declaration to
+Issue(15): In the future we might want to add arguments to the async_iterable declaration to
 support for example recursive iteration.
 
 <div algorithm="iterator initialization">
@@ -1346,9 +1347,9 @@ runs these steps:
   :: Resizes the file associated with |stream| to be |size| bytes long. If |size| is larger than
      the current file size this pads the file with null bytes, otherwise it truncates the file.
 
-     The file cursor is updated when {{truncate}} is called. If the cursor is smaller than |size|,
-     it remains unchanged. If the cursor is larger than |size|, it is set to |size| to
-     ensure that subsequent writes do not error.
+     The file cursor is updated when {{FileSystemWritableFileStream/truncate()|truncate}} is called.
+     If the cursor is smaller than |size|, it remains unchanged. If the cursor is larger than
+     |size|, it is set to |size| to ensure that subsequent writes do not error.
 
      No changes are written to the actual file until on disk until the stream has been closed.
      Changes are typically written to a temporary file instead.
@@ -1391,9 +1392,9 @@ The <dfn method for=FileSystemWritableFileStream>seek(|position|)</dfn> method s
   :: Resizes the file associated with |stream| to be |size| bytes long. If |size| is larger than
      the current file size this pads the file with null bytes, otherwise it truncates the file.
 
-     The file cursor is updated when {{truncate}} is called. If the cursor is smaller than |size|,
-     it remains unchanged. If the cursor is larger than |size|, it is set to |size| to
-     ensure that subsequent writes do not error.
+     The file cursor is updated when {{FileSystemWritableFileStream/truncate()|truncate}} is called.
+     If the cursor is smaller than |size|, it remains unchanged. If the cursor is larger than
+     |size|, it is set to |size| to ensure that subsequent writes do not error.
 
      No changes are written to the actual file until on disk until the stream has been closed.
      Changes are typically written to a temporary file instead.
@@ -1509,7 +1510,7 @@ The <dfn method for=FileSystemSyncAccessHandle>read(|buffer|, {{FileSystemReadWr
   : |handle| . {{FileSystemSyncAccessHandle/write()|write}}(|buffer|, { {{FileSystemReadWriteOptions/at}} })
   :: Writes the content of |buffer| into the file associated with |handle|, optionally at a given offset, and returns the number of written bytes.
      Checking the returned number of written bytes allows callers to detect and handle errors and partial writes.
-  :: The file cursor is updated when {{write}} is called to point to the byte after the last byte written.
+  :: The file cursor is updated when {{FileSystemSyncAccessHandle/write()|write}} is called to point to the byte after the last byte written.
 </div>
 
 <!-- TODO(fivedots): Figure out how to properly check the available storage quota (in this method and others) by passing the right storage shelf. -->
@@ -1570,7 +1571,7 @@ The <dfn method for=FileSystemSyncAccessHandle>write(|buffer|, {{FileSystemReadW
   : |handle| . {{FileSystemSyncAccessHandle/truncate()|truncate}}(|newSize|)
   :: Resizes the file associated with |handle| to be |newSize| bytes long. If |newSize| is larger than the current file size this pads the file with null bytes; otherwise it truncates the file.
 
-  :: The file cursor is updated when {{truncate}} is called. If the cursor is smaller than |newSize|, it remains unchanged. If the cursor is larger than |newSize|, it is set to |newSize|.
+  :: The file cursor is updated when {{FileSystemSyncAccessHandle/truncate()|truncate}} is called. If the cursor is smaller than |newSize|, it remains unchanged. If the cursor is larger than |newSize|, it is set to |newSize|.
 </div>
 
 <div algorithm>
@@ -1637,7 +1638,7 @@ The <dfn method for=FileSystemSyncAccessHandle>flush()</dfn> method steps are:
 1. Attempt to transfer all cached modifications of the file's content to the
    file system's underlying storage device.
 
-   Note: This is also known as flushing. This may be a no-op on some file
+   Note: This is also known as flushing. This can be a no-op on some file
    systems, such as in-memory file systems, which do not have a "disk" to flush
    to.
 
