@@ -65,7 +65,7 @@ A <dfn export id="entry">file system entry</dfn> is either a [=file entry=] or a
 
 Each [=/file system entry=] has an associated
 <dfn for="file system entry" id=entry-query-access>query access</dfn>
-algorithm, which takes "`read`" or "`readwrite`" <var ignore>mode</var> and
+algorithm, which takes "`read`", "`readwrite`", or "`write`" <var ignore>mode</var> and
 returns a [=/file system access result=].
 Unless specified otherwise it returns a [=/file system access result=] with a
 [=file system access result/permission state=] of "{{PermissionState/denied}}"
@@ -73,7 +73,7 @@ and with an [=file system access result/error name=] of the empty string.
 
 Each [=/file system entry=] has an associated
 <dfn for="file system entry" id=entry-request-access>request access</dfn>
-algorithm, which takes "`read`" or "`readwrite`" <var ignore>mode</var> and
+algorithm, which takes "`read`", "`readwrite`", or "`write`" <var ignore>mode</var> and
 returns a [=/file system access result=].
 Unless specified otherwise it returns a [=/file system access result=] with a
 [=file system access result/permission state=] of "{{PermissionState/denied}}"
@@ -565,7 +565,7 @@ The <dfn method for=FileSystemFileHandle>createWritable(|options|)</dfn> method 
 1. [=Enqueue the following steps=] to the [=file system queue=]:
   1. Let |entry| be the result of [=locating an entry=] given |locator|.
   1. Let |accessResult| be the result of running |entry|'s
-     [=file system entry/request access=] given "`readwrite`".
+     [=file system entry/request access=] given "`write`".
   1. If |accessResult|'s [=file system access result/permission state=]
      is not "{{PermissionState/granted}}", [=queue a storage task=] with
      |global| to [=/reject=] |result| with a {{DOMException}} of
@@ -846,7 +846,7 @@ The <dfn method for=FileSystemDirectoryHandle>getFileHandle(|name|, |options|)</
   1. Let |entry| be the result of [=locating an entry=] given |locator|.
   1. If |options|["{{FileSystemGetFileOptions/create}}"] is true:
     1. Let |accessResult| be the result of running |entry|'s
-       [=file system entry/request access=] given "`readwrite`".
+       [=file system entry/request access=] given "`write`".
   1. Otherwise:
     1. Let |accessResult| be the result of running |entry|'s
        [=file system entry/query access=] given "`read`".
@@ -928,7 +928,7 @@ The <dfn method for=FileSystemDirectoryHandle>getDirectoryHandle(|name|, |option
   1. Let |entry| be the result of [=locating an entry=] given |locator|.
   1. If |options|["{{FileSystemGetDirectoryOptions/create}}"] is true:
     1. Let |accessResult| be the result of running |entry|'s
-       [=file system entry/request access=] given "`readwrite`".
+       [=file system entry/request access=] given "`write`".
   1. Otherwise:
     1. Let |accessResult| be the result of running |entry|'s
        [=file system entry/query access=] given "`read`".
@@ -1004,7 +1004,7 @@ The <dfn method for=FileSystemDirectoryHandle>removeEntry(|name|, |options|)</df
 
   1. Let |entry| be the result of [=locating an entry=] given |locator|.
   1. Let |accessResult| be the result of running |entry|'s
-     [=file system entry/request access=] given "`readwrite`".
+     [=file system entry/request access=] given "`write`".
 
   1. [=Queue a storage task=] with |global| to run these steps:
     1. If |accessResult|'s [=file system access result/permission state=]
@@ -1162,7 +1162,7 @@ given a [=file entry=] |file| in a [=/Realm=] |realm|:
    1. Let |closeResult| be [=a new promise=].
    1. [=Enqueue the following steps=] to the [=file system queue=]:
       1. Let |accessResult| be the result of running |file|'s
-         [=file system entry/query access=] given "`readwrite`".
+         [=file system entry/query access=] given "`write`".
 
       1. [=Queue a storage task=] with |file|'s [=relevant global object=]
          to run these steps:
@@ -1215,7 +1215,7 @@ runs these steps:
 1. [=Enqueue the following steps=] to the [=file system queue=]:
   1. Let |accessResult| be the result of running
      |stream|'s [=FileSystemWritableFileStream/[[file]]=]'s
-     [=file system entry/query access=] given "`readwrite`".
+     [=file system entry/query access=] given "`write`".
 
   1. [=Queue a storage task=] with |stream|'s [=relevant global object=] to
      run these steps:
