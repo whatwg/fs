@@ -335,6 +335,7 @@ interface FileSystemHandle {
   readonly attribute USVString name;
 
   Promise<boolean> isSameEntry(FileSystemHandle other);
+  Promise<undefined> remove(optional FileSystemRemoveOptions options = {});
 };
 </xmp>
 
@@ -416,6 +417,100 @@ The <dfn method for=FileSystemHandle>isSameEntry(|other|)</dfn> method steps are
      [=/resolve=] |p| with true.
   1. Otherwise [=/resolve=] |p| with false.
 1. Return |p|.
+
+</div>
+
+### The {{FileSystemHandle/remove()}} method ### {#api-filesystemhandle-remove}
+
+<div class="note domintro">
+  : await |handle| . {{FileSystemHandle/remove()|remove}}()
+  : await |handle| . {{FileSystemHandle/remove()|remove}}({ {{FileSystemRemoveOptions/recursive}}: false })
+  :: Deletes the [=file system entry=] [=locate an entry|locatable=] by
+     |handle|'s [=FileSystemHandle/locator=] from the underlying file system.
+
+     Attempting to delete a file or directory that does not exist is considered
+     success, while attempting to delete a non-empty directory will
+     result in a promise rejection.
+
+  : await |handle| . {{FileSystemHandle/remove()|remove}}({ {{FileSystemRemoveOptions/recursive}}: true })
+  :: Deletes the [=file system entry=] [=locate an entry|locatable=] by
+     |handle|'s [=FileSystemHandle/locator=] from the underlying file system.
+     If that [=file system entry=] is a [=directory entry=],
+     its contents will also be deleted recursively.
+
+     Attempting to delete a file or directory that does not exist is considered
+     success.
+</div>
+
+<div algorithm>
+The <dfn method for=FileSystemHandle>remove(|options|)</dfn> method steps are:
+
+1. Let |result| be [=a new promise=].
+1. Let |locator| be [=this=]'s [=FileSystemHandle/locator=].
+1. Let |global| be [=this=]'s [=relevant global object=].
+1. Let |isInABucketFileSystem| be true if
+   [=this=] [=FileSystemHandle/is in a bucket file system=];
+   otherwise false.
+1. [=Enqueue the following steps=] to the [=file system queue=]:
+  1. Let |entry| be the result of [=locating an entry=] given |locator|.
+  1. Let |accessResult| be the result of running |entry|'s
+     [=file system entry/request access=] given "`readwrite`".
+  1. If |accessResult|'s [=file system access result/permission state=]
+     is not "{{PermissionState/granted}}", [=queue a storage task=] with
+     |global| to [=/reject=] |result| with a {{DOMException}} of
+     |accessResult|'s [=file system access result/error name=] and
+     abort these steps.
+
+  1. If |entry| is `null`, [=queue a storage task=] with |global| to [=/reject=]
+     |result| with a "{{NotFoundError}}" {{DOMException}} and abort these steps.
+
+  1. Let |lockResult| be the result of [=file entry/lock/take|taking a lock=]
+     with "`exclusive`" on |entry|.
+
+     Issue(137): Support locking directory entries.
+
+  1. [=Queue a storage task=] with |global| to run these steps:
+    1. If |lockResult| is "`failure`", [=/reject=] |result| with a
+       "{{NoModificationAllowedError}}" {{DOMException}} and abort these steps.
+
+    1. If |entry| is a [=directory entry=]:
+      1. If |entry|'s [=directory entry/children=] [=set/is empty=] and
+         |options|["{{FileSystemRemoveOptions/recursive}}"] is false,
+         [=/reject=] |result| with an
+         "{{InvalidModificationError}}" {{DOMException}} and abort these steps.
+
+      1. Let |isTheRootOfABucketFileSystem| be true if
+         |isInABucketFileSystem| is true and
+         |entry|'s [=file system entry/parent=] is `null`;
+         otherwise false.
+      1. If |isTheRootOfABucketFileSystem| is true:
+        1. [=set/For each=] |child| of |entry|'s [=directory entry/children=]:
+          1. Attempt to remove |child| from the underlying file system.
+             If that throws an exception, [=/reject=] |result| with
+             that exception and abort these steps.
+        1. Set |entry|'s [=directory entry/children=] to an empty [=/set=].
+        1. [=/Resolve=] |result| with `undefined` and abort these steps.
+
+    1. If |entry|'s [=file system entry/parent=] is not `null`,
+       [=set/remove=] |entry| from |entry|'s [=file system entry/parent=]'s
+       [=directory entry/children=].
+
+    1. Attempt to remove |entry| from the underlying file system.
+       If that throws an exception, [=/reject=] |result| with that exception
+       and abort these steps.
+
+       Note: If |options|["{{FileSystemRemoveOptions/recursive}}"] is true,
+       the removal can fail non-atomically. Some files or directories might
+       have been removed while other files or directories still exist.
+
+       Issue(11): Better specify what possible exceptions this could throw.
+
+    1. [=Enqueue the following steps=] to the [=file system queue=]:
+      1. [=file entry/lock/release|Release the lock=] on |entry|.
+      1. [=Queue a storage task=] with |global| to
+         [=/resolve=] |result| with `undefined`.
+
+1. Return |result|.
 
 </div>
 
