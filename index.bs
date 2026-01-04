@@ -335,9 +335,6 @@ interface FileSystemHandle {
   readonly attribute USVString name;
 
   Promise<boolean> isSameEntry(FileSystemHandle other);
-  Promise<undefined> move(USVString newEntryName);
-  Promise<undefined> move(FileSystemDirectoryHandle destinationDirectory);
-  Promise<undefined> move(FileSystemDirectoryHandle destinationDirectory, USVString newEntryName);
 };
 </xmp>
 
@@ -422,56 +419,62 @@ The <dfn method for=FileSystemHandle>isSameEntry(|other|)</dfn> method steps are
 
 </div>
 
-### The {{FileSystemHandle/move(destinationDirectory, newEntryName)|move()}} method ### {#api-filesystemhandle-move}
+### The {{FileSystemFileHandle/move(destinationDirectory, newEntryName)|move()}} method ### {#api-filesystemhandle-move}
 
 <div class="note domintro">
-  : await |handle| . {{FileSystemHandle/move(newEntryName)|move}}({ {{USVString}}: |newEntryName|})
+  : await fileHhandle| . {{FileSystemFileHandle/move(newEntryName)|move}}({ {{USVString}}: |newEntryName|})
   :: Renames the [=file system entry=] [=locate an entry|locatable=] by
-     |handle|'s [=FileSystemHandle/locator=] to |newEntryName|.
+     |fileHandle|'s [=FileSystemHandle/locator=] to |newEntryName|.
 
-  : await |handle| . {{FileSystemHandle/move(destinationDirectory)|move}}({ {{FileSystemDirectoryHandle}}: |destinationDirectory|})
+  : await |fileHandle| . {{FileSystemFileHandle/move(destinationDirectory)|move}}({ {{FileSystemDirectoryHandle}}: |destinationDirectory|})
   :: Moves the [=file system entry=] [=locate an entry|locatable=] by
-     |handle|'s [=FileSystemHandle/locator=] to the [=directory entry=]
+     |fileHandle|'s [=FileSystemHandle/locator=] to the [=directory entry=]
      [=locate an entry|locatable=] by |destinationDirectory|'s
      [=FileSystemHandle/locator=], while keeping its existing name.
 
-  : await |handle| . {{FileSystemHandle/move(destinationDirectory, newEntryName)|move}}({ {{FileSystemDirectoryHandle}}: |destinationDirectory|, {{USVString}}: |newEntryName|})
+     If the [=file system locator/root|roots=] of the respective
+     [=FileSystemHandle/locator|locators=] of |destinationDirectory| and
+     |fileHandle| are not the same, this operation might abort or fail
+     non-atomically.
+
+  : await |fileHandle| . {{FileSystemFileHandle/move(destinationDirectory, newEntryName)|move}}({ {{FileSystemDirectoryHandle}}: |destinationDirectory|, {{USVString}}: |newEntryName|})
   :: Moves the [=file system entry=] [=locate an entry|locatable=] by
-     |handle|'s [=FileSystemHandle/locator=] to the [=directory entry=]
+     |fileHandle|'s [=FileSystemHandle/locator=] to the [=directory entry=]
      [=locate an entry|locatable=] by |destinationDirectory|'s
      [=FileSystemHandle/locator=], as well as renaming to |newEntryName|.
 
      If the [=file system locator/root|roots=] of the respective
      [=FileSystemHandle/locator|locators=] of |destinationDirectory| and
-     |handle| are not the same, this operation may abort or fail non-atomically.
+     |fileHandle| are not the same, this operation might abort or fail
+     non-atomically.
 </div>
 
 <div algorithm>
-The <dfn method for=FileSystemHandle>move({{FileSystemDirectoryHandle}}: |destinationDirectory|)</dfn>
-method steps are to [=FileSystemHandle/move=] [=this=]
+The <dfn method for=FileSystemFileHandle>move({{FileSystemDirectoryHandle}}: |destinationDirectory|)</dfn>
+method steps are to [=FileSystemFileHandle/move=] [=this=]
 given [=this=]'s {{FileSystemHandle/name}} and |destinationDirectory|.
 
 </div>
 
 <div algorithm>
-The <dfn method for=FileSystemHandle>move({{USVString}}: |newEntryName|)</dfn>
-method steps are to [=FileSystemHandle/move=] [=this=]
+The <dfn method for=FileSystemFileHandle>move({{USVString}}: |newEntryName|)</dfn>
+method steps are to [=FileSystemFileHandle/move=] [=this=]
 given |newEntryName|.
 
 </div>
 
 <div algorithm>
-The <dfn method for=FileSystemHandle>move({{FileSystemDirectoryHandle}}: |destinationDirectory|, {{USVString}}: |newEntryName|)</dfn>
-method steps are to [=FileSystemHandle/move=] [=this=]
+The <dfn method for=FileSystemFileHandle>move({{FileSystemDirectoryHandle}}: |destinationDirectory|, {{USVString}}: |newEntryName|)</dfn>
+method steps are to [=FileSystemFileHandle/move=] [=this=]
 given |newEntryName| and |destinationDirectory|.
 
 </div>
 
 <div algorithm>
 
-To <dfn for=FileSystemHandle>move</dfn> a {{FileSystemHandle}} |handle| given
-a {{USVString}} |newEntryName| and
-an optional {{FileSystemDirectoryHandle}} |destinationDirectory|:
+To <dfn for=FileSystemFileHandle>move</dfn> a {{FileSystemFileHandle}} |handle|
+given a {{USVString}} |newEntryName| and an optional
+{{FileSystemDirectoryHandle}} |destinationDirectory|:
 
 1. Let |result| be [=a new promise=].
 1. Let |locator| be |handle|'s [=FileSystemHandle/locator=].
@@ -530,12 +533,6 @@ an optional {{FileSystemDirectoryHandle}} |destinationDirectory|:
      [=file system locator/kind=] is |locator|'s [=file system locator/kind=],
      [=file system locator/root=] is |locator|'s [=file system locator/root=], and
      [=file system locator/path=] is |destinationPath|.
-  1. If the result of [=file system locator/resolving=] |destinationLocator|
-     relative to |locator| is not null and is not [=list/is empty|empty=],
-     [=queue a storage task=] with |global| to [=/reject=] |result| with a
-     "{{InvalidModificationError}}" {{DOMException}} and abort these steps.
-
-     Note: This prevents moving a directory within itself.
 
   1. Let |destinationEntry| be the result of [=locating an entry=]
      given |destinationLocator|.
@@ -551,24 +548,13 @@ an optional {{FileSystemDirectoryHandle}} |destinationDirectory|:
   1. Otherwise:
     1. Let |destinationAccessResult| be |destinationDirectoryAccessResult|.
 
-  1. Let |isTheRootOfABucketFileSystem| be true if
-     |isInABucketFileSystem| is true and
-     |entry|'s [=file system entry/parent=] is `null`;
-     otherwise false.
-  1. If |isTheRootOfABucketFileSystem| is true,
-     [=queue a storage task=] with |global| to [=/reject=] |result| with a
-     "{{InvalidModificationError}}" {{DOMException}} and abort these steps.
-
-  Issue: Do not allow |entry| to be moved if it is a
-  <a href=https://wicg.github.io/file-system-access/#enumdef-wellknowndirectory>well-known directory</a>.
-
   1. If |destinationAccessResult|'s
      [=file system access result/permission state=] is not
      "{{PermissionState/granted}}":
     1. If |destinationEntry| is not `null`, [=queue a storage task=] with
        |global| to [=/reject=] |result| with a {{DOMException}} of
        |destinationAccessResult|'s [=file system access result/error name=] and
-       abort these steps
+       abort these steps.
 
        Note: This prevents overwriting an existing file or directory which the
        website does not have access to. To prevent overwriting a file which
@@ -593,8 +579,6 @@ an optional {{FileSystemDirectoryHandle}} |destinationDirectory|:
   1. Let |lockResult| be the result of [=file entry/lock/take|taking a lock=]
      with "`exclusive`" on |entry|.
 
-     Issue(137): Support locking directory entries.
-
   1. If |destinationEntry| is not `null`:
     1. Let |destinationLockResult| be the result of
        [=file entry/lock/take|taking a lock=] with "`exclusive`"
@@ -617,10 +601,9 @@ an optional {{FileSystemDirectoryHandle}} |destinationDirectory|:
       1. [=Queue a storage task=] with |global| to
          [=/resolve=] |result| with `undefined` and abort these steps.
 
-    1. If |entry| is a [=file entry=] and |isInABucketFileSystem| is false,
-         run [=implementation-defined=] malware scans and safe browsing checks.
-         If these checks fail, [=/reject=] |result| with an
-         "{{AbortError}}" {{DOMException}} and abort these steps.
+    1. If |isInABucketFileSystem| is false, run [=implementation-defined=]
+       malware scans and safe browsing checks. If these checks fail, [=/reject=]
+       |result| with an "{{AbortError}}" {{DOMException}} and abort these steps.
 
     1. Let |sourceQueryAccess| be |entry|'s [=file system entry/query access=].
     1. Let |sourceRequestAccess| be |entry|'s [=file system entry/request access=].
@@ -634,12 +617,12 @@ an optional {{FileSystemDirectoryHandle}} |destinationDirectory|:
        exception and abort these steps.
 
        Note: In some cases, moving a file or directory can fail non-atomically.
-       A file move may result in a partially-written |destinationEntry|.
-       A directory move may result in only some files or sub-folders being
-       copied to |destinationEntry|, and some containing files may themselves
-       fail to be moved atomically.
-       In both cases, |entry| will only be removed from the underlying file
-       system if all contents were successfully moved to |destinationEntry|.
+       A file move might result in a partially-written |destinationEntry|.
+       A directory move might result in only some files or sub-folders being
+       copied to |destinationEntry|, and some containing files might themselves
+       fail to be moved atomically. In both cases, |entry| will only be removed
+       from the underlying file system if all contents were successfully moved
+       to |destinationEntry|.
 
     1. If |destinationDirectory| was given:
       1. If |entry|'s [=file system entry/parent=] is not `null`,
@@ -649,11 +632,9 @@ an optional {{FileSystemDirectoryHandle}} |destinationDirectory|:
     1. Set |handle|'s [=FileSystemHandle/locator=] to |destinationLocator|.
 
        Note: This does not update other {{FileSystemHandle}}s with the same
-       [=FileSystemHandle/locator=], nor does it update any {{FileSystemHandle}}
-       which [=locate an entry|located to=] any of |handle|'s
-       [=directory entry/children=] if |handle| is a [=directory entry=].
-       Each of these handles will presumably no longer [=locate an entry=],
-       unless a new entry is created at the respective location.
+       [=FileSystemHandle/locator=]. Each of these handles will presumably no
+       longer [=locate an entry=], unless a new entry is created at the respective
+       location.
 
     1. Set |destinationEntry|'s [=file system entry/query access=] to
        |sourceQueryAccess|.
@@ -687,6 +668,10 @@ interface FileSystemFileHandle : FileSystemHandle {
   Promise<FileSystemWritableFileStream> createWritable(optional FileSystemCreateWritableOptions options = {});
   [Exposed=DedicatedWorker]
   Promise<FileSystemSyncAccessHandle> createSyncAccessHandle();
+
+  Promise<undefined> move(USVString newEntryName);
+  Promise<undefined> move(FileSystemDirectoryHandle destinationDirectory);
+  Promise<undefined> move(FileSystemDirectoryHandle destinationDirectory, USVString newEntryName);
 };
 </xmp>
 
