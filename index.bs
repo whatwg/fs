@@ -1105,9 +1105,9 @@ enum WriteCommandType {
 
 dictionary WriteParams {
   required WriteCommandType type;
-  unsigned long long? size;
-  unsigned long long? position;
-  (BufferSource or Blob or USVString)? data;
+  unsigned long long size;
+  unsigned long long position;
+  (BufferSource or Blob or USVString) data;
 };
 
 typedef (BufferSource or Blob or USVString or WriteParams) FileSystemWriteChunkType;
