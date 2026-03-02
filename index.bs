@@ -798,7 +798,7 @@ given a {{USVString}} |newEntryName| and an optional
   1. If |destinationAccessResult|'s
      [=file system access result/permission state=] is not
      "{{PermissionState/granted}}":
-    1. If |destinationEntry| is not `null`, [=queue a storage task=] with
+    1. If |destinationEntry| is not null, [=queue a storage task=] with
        |global| to [=/reject=] |result| with a {{DOMException}} of
        |destinationAccessResult|'s [=file system access result/error name=] and
        abort these steps.
@@ -817,17 +817,17 @@ given a {{USVString}} |newEntryName| and an optional
        [=queue a storage task=] with |global| to [=/reject=] |result|
        with a "{{NotAllowedError}}" {{DOMException}}.
 
-  1. If |entry| is `null`, [=queue a storage task=] with |global| to [=/reject=]
+  1. If |entry| is null, [=queue a storage task=] with |global| to [=/reject=]
      |result| with a "{{NotFoundError}}" {{DOMException}} and abort these steps.
   1. If |destinationDirectory| was given and |destinationDirectoryEntry|
-     is `null`, [=queue a storage task=] with |global| to [=/reject=] |result|
+     is null, [=queue a storage task=] with |global| to [=/reject=] |result|
      with a "{{NotFoundError}}" {{DOMException}} and abort these steps.
 
   1. Let |lockResult| be the result of [=file entry/lock/take|taking a lock=]
      with "`exclusive`" on |entry|.
   1. Let |destinationLockResult| be "`not taken`".
 
-  1. If |destinationEntry| is not `null`:
+  1. If |destinationEntry| is not null:
     1. Set |destinationLockResult| to the result of
        [=file entry/lock/take|taking a lock=] with "`exclusive`"
        on |destinationEntry|.
@@ -871,7 +871,7 @@ given a {{USVString}} |newEntryName| and an optional
        to |destinationEntry|.
 
     1. If |destinationDirectory| was given:
-      1. If |entry|'s [=file system entry/parent=] is not `null`,
+      1. If |entry|'s [=file system entry/parent=] is not null,
          [=set/remove=] |entry| from |entry|'s [=file system entry/parent=]'s
          [=directory entry/children=].
 
