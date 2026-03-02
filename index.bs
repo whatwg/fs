@@ -825,13 +825,12 @@ given a {{USVString}} |newEntryName| and an optional
 
   1. Let |lockResult| be the result of [=file entry/lock/take|taking a lock=]
      with "`exclusive`" on |entry|.
+  1. Let |destinationLockResult| be "`not taken`".
 
   1. If |destinationEntry| is not `null`:
-    1. Let |destinationLockResult| be the result of
+    1. Set |destinationLockResult| to the result of
        [=file entry/lock/take|taking a lock=] with "`exclusive`"
        on |destinationEntry|.
-  1. Otherwise:
-    1. Let |destinationLockResult| be "`not taken`".
 
        Issue: Consider whether it should be possible to lock a
        [=/file system entry=] which does not (yet) exist.
