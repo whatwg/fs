@@ -697,21 +697,21 @@ The <dfn method for=FileSystemFileHandle>createSyncAccessHandle()</dfn> method s
 </div>
 
 <div algorithm>
-The <dfn method for=FileSystemFileHandle>move({{FileSystemDirectoryHandle}}: |destinationDirectory|)</dfn>
+The <dfn method for=FileSystemFileHandle>move(|destinationDirectory|)</dfn>
 method steps are to [=FileSystemFileHandle/move=] [=this=]
 given [=this=]'s {{FileSystemHandle/name}} and |destinationDirectory|.
 
 </div>
 
 <div algorithm>
-The <dfn method for=FileSystemFileHandle>move({{USVString}}: |newEntryName|)</dfn>
+The <dfn method for=FileSystemFileHandle>move(|newEntryName|)</dfn>
 method steps are to [=FileSystemFileHandle/move=] [=this=]
 given |newEntryName|.
 
 </div>
 
 <div algorithm>
-The <dfn method for=FileSystemFileHandle>move({{FileSystemDirectoryHandle}}: |destinationDirectory|, {{USVString}}: |newEntryName|)</dfn>
+The <dfn method for=FileSystemFileHandle>move(|destinationDirectory|, |newEntryName|)</dfn>
 method steps are to [=FileSystemFileHandle/move=] [=this=]
 given |newEntryName| and |destinationDirectory|.
 
