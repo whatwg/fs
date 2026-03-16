@@ -62,6 +62,29 @@ different storage mechanism with a different API for such files. The entry point
 
 ## Concepts ## {#concepts}
 
+### File System ### {#concept-file-system}
+
+A <dfn export>file system root</dfn> is an opaque [=string=] whose value is
+[=implementation-defined=].
+
+A <dfn export>file system path</dfn> is a [=/list=] of one or more [=strings=].
+This may be a virtual path that is mapped to real location on disk or in memory,
+may correspond directly to a path on the local file system, or may not
+correspond to any file on disk at all. The actual physical location of the
+corresponding [=/file system entry=] is [=implementation-defined=].
+
+<p class=example id=example-path>Let |path| be the [=/list=]
+« "`data`", "`drafts`", "`example.txt`" ».
+There is no expectation that a file named `example.txt` exists anywhere on disk.
+
+A [=/file system path=] |a| is <dfn for="file system path">the same path as</dfn>
+a [=/file system path=] |b| if
+|a|'s [=list/size=] is the same as |b|'s [=list/size=] and
+[=list/for each=] |index| of |a|'s [=list/indices=]
+|a|.\[[|index|]] is |b|.\[[|index|]].
+
+### File System Entry ### {#concept-file-system-entry}
+
 A <dfn export id="entry">file system entry</dfn> is either a [=file entry=] or a [=directory entry=].
 
 Each [=/file system entry=] has an associated
@@ -202,6 +225,38 @@ A [=/file system entry=] |a| is <dfn for="file system entry">the same entry as</
 a [=/file system entry=] |b| if |a| is equal to |b|, or
 if |a| and |b| are backed by the same file or directory on the local file system.
 
+### File System Locator ### {#concept-file-system-locator}
+
+A <dfn export>file system locator</dfn> represents a potential location of a
+[=/file system entry=]. A [=/file system locator=] is either a [=file locator=]
+or a [=directory locator=].
+
+Each [=/file system locator=] has an associated <dfn export for="file system locator" id=locator-path>path</dfn> (a [=/file system path=]),
+a <dfn export for="file system locator" id=locator-kind>kind</dfn> (a {{FileSystemHandleKind}}), and
+a <dfn export for="file system locator" id=locator-root>root</dfn> (a [=file system root=]).
+
+Issue(109): Consider giving each locator a [=storage bucket=].
+
+A <dfn export>file locator</dfn> is a [=/file system locator=] whose
+[=file system locator/kind=] is "{{FileSystemHandleKind/file}}".
+A <dfn export>directory locator</dfn> is a [=/file system locator=] whose
+[=file system locator/kind=] is "{{FileSystemHandleKind/directory}}".
+
+<p class=example id=example-locator>For a [=/file system locator=] |locator|
+whichs [=locate an entry|locates to=] a [=file entry=] |entry| that conceptually
+exists at the path `data/drafts/example.txt` relative to the root directory of
+a [=/bucket file system=],
+|locator|'s [=file system locator/kind=] has to be "{{FileSystemHandleKind/file}}",
+|locator|'s [=file system locator/path=] has to be « "`data`", "`drafts`", "`example.txt`" », and
+|locator|'s [=file system locator/root=] might include relevant identifying
+information such as the [=storage bucket=] and the disk drive.
+
+A [=/file system locator=] |a| is <dfn for="file system locator">the same locator as</dfn>
+a [=/file system locator=] |b| if
+|a|'s [=file system locator/kind=] is |b|'s [=file system locator/kind=],
+|a|'s [=file system locator/root=] is |b|'s [=file system locator/root=], and
+|a|'s [=file system locator/path=] is [=the same path as=] |b|'s [=file system locator/path=].
+
 <div algorithm>
 
 To <dfn for="file system locator" id=locator-resolve>resolve</dfn> a
@@ -236,39 +291,6 @@ To <dfn for="file system locator" id=locator-resolve>resolve</dfn> a
 
 </div>
 
-A <dfn export>file system locator</dfn> represents a potential location of a
-[=/file system entry=]. A [=/file system locator=] is either a [=file locator=]
-or a [=directory locator=].
-
-Each [=/file system locator=] has an associated <dfn export for="file system locator" id=locator-path>path</dfn> (a [=/file system path=]),
-a <dfn export for="file system locator" id=locator-kind>kind</dfn> (a {{FileSystemHandleKind}}), and
-a <dfn export for="file system locator" id=locator-root>root</dfn> (a [=file system root=]).
-
-Issue(109): Consider giving each locator a [=storage bucket=].
-
-A <dfn export>file locator</dfn> is a [=/file system locator=] whose
-[=file system locator/kind=] is "{{FileSystemHandleKind/file}}".
-A <dfn export>directory locator</dfn> is a [=/file system locator=] whose
-[=file system locator/kind=] is "{{FileSystemHandleKind/directory}}".
-
-A <dfn export>file system root</dfn> is an opaque [=string=] whose value is
-[=implementation-defined=].
-
-<p class=example id=example-locator>For a [=/file system locator=] |locator|
-whichs [=locate an entry|locates to=] a [=file entry=] |entry| that conceptually
-exists at the path `data/drafts/example.txt` relative to the root directory of
-a [=/bucket file system=],
-|locator|'s [=file system locator/kind=] has to be "{{FileSystemHandleKind/file}}",
-|locator|'s [=file system locator/path=] has to be « "`data`", "`drafts`", "`example.txt`" », and
-|locator|'s [=file system locator/root=] might include relevant identifying
-information such as the [=storage bucket=] and the disk drive.
-
-A [=/file system locator=] |a| is <dfn for="file system locator">the same locator as</dfn>
-a [=/file system locator=] |b| if
-|a|'s [=file system locator/kind=] is |b|'s [=file system locator/kind=],
-|a|'s [=file system locator/root=] is |b|'s [=file system locator/root=], and
-|a|'s [=file system locator/path=] is [=the same path as=] |b|'s [=file system locator/path=].
-
 <div algorithm>
 The <dfn export data-lt="locating an entry">locate an entry</dfn> algorithm given a
 [=/file system locator=] |locator| runs an [=implementation-defined=] series of steps adhering to
@@ -298,22 +320,6 @@ constraints:
     [=file system locator/path=].
 
 </div>
-
-A <dfn export>file system path</dfn> is a [=/list=] of one or more [=strings=].
-This may be a virtual path that is mapped to real location on disk or in memory,
-may correspond directly to a path on the local file system, or may not
-correspond to any file on disk at all. The actual physical location of the
-corresponding [=/file system entry=] is [=implementation-defined=].
-
-<p class=example id=example-path>Let |path| be the [=/list=]
-« "`data`", "`drafts`", "`example.txt`" ».
-There is no expectation that a file named `example.txt` exists anywhere on disk.
-
-A [=/file system path=] |a| is <dfn for="file system path">the same path as</dfn>
-a [=/file system path=] |b| if
-|a|'s [=list/size=] is the same as |b|'s [=list/size=] and
-[=list/for each=] |index| of |a|'s [=list/indices=]
-|a|.\[[|index|]] is |b|.\[[|index|]].
 
 <p class=warning> The contents of a [=/file system locator=], including its
 [=file system locator/path=], are not expected to be shared in their entirety
