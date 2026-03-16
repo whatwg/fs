@@ -126,35 +126,33 @@ Issue: We should consider having further normative restrictions on file names th
 never be allowed using this API, rather than leaving it entirely up to underlying file
 systems.
 
+A <dfn>lock type</dfn> is a [=string=] that may exclusively be "`open`",
+"`exclusive`", "`writable-siloed`", "`sync-access-handle-read-only`",
+"`sync-access-handle-read-write-unsafe`".
+
 A <dfn export id=file>file entry</dfn> additionally consists of
 <dfn for="file entry" export>binary data</dfn> (a [=byte sequence=]), a
 <dfn for="file entry">modification timestamp</dfn> (a number representing the number of milliseconds since the <a spec=FileAPI>Unix Epoch</a>),
-a <dfn for="file entry">lock</dfn> (a string that may exclusively be "`open`", "`taken-exclusive`" or "`taken-shared`")
-and a <dfn for="file entry">shared lock count</dfn> (a number representing the number shared locks that are taken at a given point in time).
+a <dfn for="file entry">lock</dfn> (a [=lock type=]),
+and a <dfn for="file entry">lock count</dfn> (a number representing the number of locks that are taken at a given point in time).
 
 A user agent has an associated <dfn>file system queue</dfn> which is the
 result of [=starting a new parallel queue=]. This queue is to be used for all
 file system operations.
 
 <div algorithm>
-To <dfn for="file entry/lock">take</dfn> a [=file entry/lock=] with a |value| of
-"`exclusive`" or "`shared`" on a given [=file entry=] |file|:
+To <dfn for="file entry" id=file-entry-lock-take>take a lock</dfn> with a |lockType| (a [=lock type=])
+on a given [=file entry=] |file|:
 
+1. [=Assert=]: |lockType| is not "`open`".
 1. Let |lock| be the |file|'s [=file entry/lock=].
-1. Let |count| be the |file|'s [=file entry/shared lock count=].
-1. If |value| is "`exclusive`":
-   1. If |lock| is "`open`":
-     1. Set lock to "`taken-exclusive`".
-     1. Return "`success`".
-1. If |value| is "`shared`":
-   1. If |lock| is "`open`":
-     1. Set |lock| to "`taken-shared`".
-     1. Set |count| to 1.
-     1. Return "`success`".
-   1. Otherwise, if |lock| is "`taken-shared`":
-     1. Increase |count| by 1.
-     1. Return "`success`".
-1. Return "`failure`".
+1. Let |count| be the |file|'s [=file entry/lock count=].
+1. If |lock| is not "`open`":
+   1. If |lockType| is "`exclusive`" or |lock| is not equal to |lockType|:
+     1. Return "`failure`".
+1. Set |lock| to |lockType|.
+1. Increase |count| by 1.
+1. Return "`success`".
 
 Note: These steps have to be run on the [=file system queue=].
 
@@ -162,21 +160,20 @@ Note: These steps have to be run on the [=file system queue=].
 
 <div algorithm>
 To <dfn for="file entry/lock">release</dfn> a [=file entry/lock=] on a given
-[=file entry=] |file|:
+[=/file entry=] |file|:
 
 1. Let |lock| be the |file|'s associated [=file entry/lock=].
-1. Let |count| be the |file|'s [=file entry/shared lock count=].
-1. If |lock| is "`taken-shared`":
-  1. Decrease |count| by 1.
-  1. If |count| is 0, set |lock| to "`open`".
-1. Otherwise, set |lock| to "`open`".
+1. [=Assert=]: |lock| is not "`open`".
+1. Let |count| be the |file|'s [=file entry/lock count=].
+1. [=Assert=]: |count| is greater than 0.
+1. Decrease |count| by 1.
+1. If |count| is 0, set |lock| to "`open`".
 
 Note: These steps have to be run on the [=file system queue=].
 
 </div>
 
-Note: Locks help prevent concurrent modifications to a file. A {{FileSystemWritableFileStream}}
-requires a shared lock, while a {{FileSystemSyncAccessHandle}} requires an exclusive one.
+Note: Locks help prevent concurrent modifications to a file that are incompatible.
 
 A <dfn export id=directory>directory entry</dfn> additionally consists of a [=/set=] of
 <dfn for="directory entry">children</dfn>, which are themselves [=/file system entries=].
@@ -422,8 +419,24 @@ The <dfn method for=FileSystemHandle>isSameEntry(|other|)</dfn> method steps are
 ## The {{FileSystemFileHandle}} interface ## {#api-filesystemfilehandle}
 
 <xmp class=idl>
+enum FileSystemWritableFileStreamMode {
+  "exclusive",
+  "siloed",
+};
+
 dictionary FileSystemCreateWritableOptions {
   boolean keepExistingData = false;
+  FileSystemWritableFileStreamMode mode = "siloed";
+};
+
+enum FileSystemSyncAccessHandleMode {
+  "readwrite",
+  "read-only",
+  "readwrite-unsafe",
+};
+
+dictionary FileSystemCreateSyncAccessHandleOptions {
+  FileSystemSyncAccessHandleMode mode = "readwrite";
 };
 
 [Exposed=(Window,Worker), SecureContext, Serializable]
@@ -431,7 +444,7 @@ interface FileSystemFileHandle : FileSystemHandle {
   Promise<File> getFile();
   Promise<FileSystemWritableFileStream> createWritable(optional FileSystemCreateWritableOptions options = {});
   [Exposed=DedicatedWorker]
-  Promise<FileSystemSyncAccessHandle> createSyncAccessHandle();
+  Promise<FileSystemSyncAccessHandle> createSyncAccessHandle(optional FileSystemCreateSyncAccessHandleOptions options = {});
 };
 </xmp>
 
@@ -540,10 +553,12 @@ The <dfn method for=FileSystemFileHandle>getFile()</dfn> method steps are:
      the temporary file starts out empty,
      otherwise the existing file is first copied to this temporary file.
 
-     Creating a {{FileSystemWritableFileStream}} [=file entry/lock/take|takes a shared lock=] on the
-     [=file entry=] [=locate an entry|locatable=] with |fileHandle|'s [=FileSystemHandle/locator=].
-     This prevents the creation of {{FileSystemSyncAccessHandle|FileSystemSyncAccessHandles}}
-     for the entry, until the stream is closed.
+     Creating a {{FileSystemWritableFileStream}} [=file entry/take a lock|takes a lock=] on the
+     [=file entry=] [=locate an entry|locatable=] with |fileHandle|'s [=FileSystemHandle/locator=]
+     and a |lockType| determined by {{FileSystemCreateWritableOptions/mode}}. Until the stream is
+     closed, both {{FileSystemCreateWritableOptions/mode|modes}} prevent any file operation or the
+     creation of a file primitive on the [=file entry=], but "`siloed`" will allow the creation of other
+     {{FileSystemWritableFileStream}} in "`siloed`" {{FileSystemCreateWritableOptions/mode}}.
 </div>
 
 <p class=XXX>See <a href=https://github.com/WICG/file-system-access/issues/67>WICG/file-system-access issue #67</a>
@@ -577,8 +592,15 @@ The <dfn method for=FileSystemFileHandle>createWritable(|options|)</dfn> method 
      |result| with a "{{NotFoundError}}" {{DOMException}} and abort these steps.
   1. [=Assert=]: |entry| is a [=file entry=].
 
-  1. Let |lockResult| be the result of [=file entry/lock/take|taking a lock=]
-     with "`shared`" on |entry|.
+  1. Let |lockType| be the empty string.
+  1. Let |mode| be |options|["{{FileSystemCreateWritableOptions/mode}}"].
+  1. If |mode| is "`exclusive`":
+    1. Set |lockType| to "`exclusive`".
+  1. Otherwise:
+    1. [=Assert=]: |mode| is "`siloed`".
+    1. Set |lockType| to "`writable-siloed`".
+  1. Let |lockResult| be the result of [=file entry/take a lock|taking a lock=]
+     with |lockType| on |entry|.
 
   1. [=Queue a storage task=] with |global| to run these steps:
     1. If |lockResult| is "`failure`", [=/reject=] |result| with a
@@ -605,11 +627,12 @@ The <dfn method for=FileSystemFileHandle>createWritable(|options|)</dfn> method 
      [=file entry=] [=locate an entry|locatable=] by |fileHandle|'s [=FileSystemHandle/locator=].
      To ensure the changes are reflected in this file, the handle can be flushed.
 
-     Creating a {{FileSystemSyncAccessHandle}} [=file entry/lock/take|takes an exclusive lock=] on the
-     [=file entry=] [=locate an entry|locatable=] with |fileHandle|'s [=FileSystemHandle/locator=].
-     This prevents the creation of further {{FileSystemSyncAccessHandle|FileSystemSyncAccessHandles}}
-     or {{FileSystemWritableFileStream|FileSystemWritableFileStreams}}
-     for the entry, until the access handle is closed.
+     Creating a {{FileSystemSyncAccessHandle}} [=file entry/take a lock|takes a lock=] on the
+     [=file entry=] [=locate an entry|locatable=] with |fileHandle|'s [=FileSystemHandle/locator=]
+     and a |lockType| determined by {{FileSystemCreateSyncAccessHandleOptions/mode}}. Until the access handle is
+     closed, all {{FileSystemCreateSyncAccessHandleOptions/mode|modes}} prevent any file operation or the
+     creation of a file primitive on the [=file entry=], but "`read-only`" and "`readwrite-unsafe`" will allow the creation of other
+     {{FileSystemSyncAccessHandle}} in their respective {{FileSystemCreateSyncAccessHandleOptions/mode|modes}}.
 
      The returned {{FileSystemSyncAccessHandle}} offers synchronous methods. This allows for higher performance
      on contexts where asynchronous operations come with high overhead, e.g., WebAssembly.
@@ -619,7 +642,7 @@ The <dfn method for=FileSystemFileHandle>createWritable(|options|)</dfn> method 
 </div>
 
 <div algorithm>
-The <dfn method for=FileSystemFileHandle>createSyncAccessHandle()</dfn> method steps are:
+The <dfn method for=FileSystemFileHandle>createSyncAccessHandle(|options|)</dfn> method steps are:
 
 1. Let |result| be [=a new promise=].
 1. Let |locator| be [=this=]'s [=FileSystemHandle/locator=].
@@ -647,15 +670,28 @@ The <dfn method for=FileSystemFileHandle>createSyncAccessHandle()</dfn> method s
      |result| with a "{{NotFoundError}}" {{DOMException}} and abort these steps.
   1. [=Assert=]: |entry| is a [=file entry=].
 
-  1. Let |lockResult| be the result of [=file entry/lock/take|taking a lock=]
-     with "`exclusive`" on |entry|.
+  1. Let |lockType| be the empty string.
+  1. Let |writeAccess| be the empty string.
+  1. Let |mode| be |options|["{{FileSystemCreateSyncAccessHandleOptions/mode}}"].
+  1. If |mode| is "`readwrite`":
+    1. Set |lockType| to "`exclusive`".
+    1. Set |writeAccess| to "`writable`".
+  1. Otherwise, if |mode| is "`read-only`":
+    1. Set |lockType| to "`sync-access-handle-read-only`".
+    1. Set |writeAccess| to "`not-writable`".
+  1. Otherwise:
+    1. [=Assert=]: |mode| is "`readwrite-unsafe`".
+    1. Set |lockType| to "`sync-access-handle-read-write-unsafe`".
+    1. Set |writeAccess| to "`writable`".
+  1. Let |lockResult| be the result of [=file entry/take a lock|taking a lock=]
+     with |lockType| on |entry|.
 
   1. [=Queue a storage task=] with |global| to run these steps:
     1. If |lockResult| is "`failure`", [=/reject=] |result| with a
        "{{NoModificationAllowedError}}" {{DOMException}} and abort these steps.
 
     1. Let |handle| be the result of <a>creating a new `FileSystemSyncAccessHandle`</a>
-       for |entry| in |realm|.
+       with |entry| and |writeAccess| in |realm|.
     1. [=/Resolve=] |result| with |handle|.
 
 1. Return |result|.
@@ -1442,6 +1478,9 @@ A {{FileSystemSyncAccessHandle}} has an associated <dfn for=FileSystemSyncAccess
 A {{FileSystemSyncAccessHandle}} has an associated <dfn for=FileSystemSyncAccessHandle>\[[state]]</dfn>,
 a string that may exclusively be "`open`" or "`closed`".
 
+A {{FileSystemSyncAccessHandle}} has an associated <dfn for=FileSystemSyncAccessHandle>\[[writeAccess]]</dfn>,
+a [=string=] that may exclusively be "`writable`" or "`not-writable`".
+
 A {{FileSystemSyncAccessHandle}} is an object that is capable of reading from/writing to,
 as well as obtaining and changing the size of, a single file.
 
@@ -1453,11 +1492,13 @@ A {{FileSystemSyncAccessHandle}} has a <dfn for="FileSystemSyncAccessHandle">fil
 <div algorithm>
 To
 <dfn local-lt="creating a new FileSystemSyncAccessHandle">create a new `FileSystemSyncAccessHandle`</dfn>
-given a [=file entry=] |file| in a [=/Realm=] |realm|:
+given a [=file entry=] |file| and a [=string=] |writeAccess| in a [=/Realm=] |realm|:
 
+1. [=Assert=]: |writeAccess| is "`writable`" or "`not-writable`".
 1. Let |handle| be a [=new=] {{FileSystemSyncAccessHandle}} in |realm|.
 1. Set |handle|'s [=FileSystemSyncAccessHandle/[[file]]=] to |file|.
 1. Set |handle|'s [=FileSystemSyncAccessHandle/[[state]]=] to "`open`".
+1. Set |handle|'s [=FileSystemSyncAccessHandle/[[writeAccess]]=] to |writeAccess|.
 1. Return |handle|.
 
 </div>
@@ -1520,6 +1561,8 @@ The <dfn method for=FileSystemSyncAccessHandle>write(|buffer|, {{FileSystemReadW
 
 1. If [=this=]'s [=[[state]]=] is "`closed`",
    [=throw=] an "{{InvalidStateError}}" {{DOMException}}.
+1. If [=this=]'s [=[[writeAccess]]=]' is "`not-writable`",
+   [=throw=] a "{{NoModificationAllowedError}}" {{DOMException}}.
 1. Let |writePosition| be |options|["{{FileSystemReadWriteOptions/at}}"] if
    |options|["{{FileSystemReadWriteOptions/at}}"] [=map/exists=]; otherwise
    [=this=]'s [=FileSystemSyncAccessHandle/file position cursor=].
@@ -1580,6 +1623,8 @@ The <dfn method for=FileSystemSyncAccessHandle>truncate(|newSize|)</dfn> method 
 
 1. If [=this=]'s [=[[state]]=] is "`closed`",
    [=throw=] an "{{InvalidStateError}}" {{DOMException}}.
+1. If [=this=]'s [=[[writeAccess]]=]' is "`not-writable`",
+   [=throw=] a "{{NoModificationAllowedError}}" {{DOMException}}.
 1. Let |fileContents| be a copy of [=this=]'s
    [=FileSystemSyncAccessHandle/[[file]]=]'s [=file entry/binary data=].
 1. Let |oldSize| be the [=byte sequence/length=] of [=this=]'s
@@ -1636,6 +1681,8 @@ The <dfn method for=FileSystemSyncAccessHandle>flush()</dfn> method steps are:
 
 1. If [=this=]'s [=[[state]]=] is "`closed`",
    [=throw=] an "{{InvalidStateError}}" {{DOMException}}.
+1. If [=this=]'s [=[[writeAccess]]=]' is "`not-writable`",
+   [=throw=] a "{{NoModificationAllowedError}}" {{DOMException}}.
 1. Attempt to transfer all cached modifications of the file's content to the
    file system's underlying storage device.
 
