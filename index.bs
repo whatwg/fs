@@ -981,15 +981,18 @@ The <dfn method for=FileSystemDirectoryHandle>getDirectoryHandle(|name|, |option
      [=FileSystemHandle/locator=] contains a file named |name|, or an empty
      directory named |name|, this will attempt to delete that file or directory.
 
-     Attempting to delete a file or directory that does not exist is considered success,
-     while attempting to delete a non-empty directory will result in a promise rejection.
+     Attempting to delete a file or directory that does not exist results in a promise
+     being rejected with a "NotFoundError" DOMException. Attempting to delete a non-empty
+     directory results in a promise being rejected with an "InvalidModificationError"
+     DOMException.
 
   : await |directoryHandle| . {{FileSystemDirectoryHandle/removeEntry()|removeEntry}}(|name|, { {{FileSystemRemoveOptions/recursive}}: true })
   :: Removes the [=/file system entry=] named |name| in the [=directory entry=]
      [=locate an entry|locatable=] by |directoryHandle|'s [=FileSystemHandle/locator=].
      If that entry is a directory, its contents will also be deleted recursively.
 
-     Attempting to delete a file or directory that does not exist is considered success.
+     Attempting to delete a file or directory that does not exist results in a promise
+     being rejected with a "NotFoundError" DOMException.
 </div>
 
 <div algorithm>
@@ -1760,6 +1763,7 @@ Marcos Cáceres,
 Martin Thomson,
 Olivier Yiptong,
 Philip Jägenstedt,
+Rahul Singh,
 Randell Jesup,
 Richard Stotz,
 Ruth John,
