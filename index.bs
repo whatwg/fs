@@ -199,7 +199,7 @@ as well as how changes made to the data structures defined here are reflected ex
 is left up to individual user-agent implementations.
 
 A [=/file system entry=] |a| is <dfn for="file system entry">the same entry as</dfn>
-a [=/file system entry=] |b| if |a| is equal to |b|, or
+a [=/file system entry=] |b| if |a| [=/is=] |b|, or
 if |a| and |b| are backed by the same file or directory on the local file system.
 
 <div algorithm>
@@ -310,10 +310,7 @@ corresponding [=/file system entry=] is [=implementation-defined=].
 There is no expectation that a file named `example.txt` exists anywhere on disk.
 
 A [=/file system path=] |a| is <dfn for="file system path">the same path as</dfn>
-a [=/file system path=] |b| if
-|a|'s [=list/size=] is the same as |b|'s [=list/size=] and
-[=list/for each=] |index| of |a|'s [=list/indices=]
-|a|.\[[|index|]] is |b|.\[[|index|]].
+a [=/file system path=] |b| if |a| [=/equals=] |b|.
 
 <p class=warning> The contents of a [=/file system locator=], including its
 [=file system locator/path=], are not expected to be shared in their entirety
