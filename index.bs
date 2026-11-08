@@ -769,7 +769,7 @@ and its async iterator |iterator|:
        {{DOMException}} of |accessResult|'s
        [=file system access result/error name=] and abort these steps.:
 
-    1. If |directory| is `null`, [=/reject=] |result| with a
+    1. If |directory| is `null`, [=/reject=] |promise| with a
        "{{NotFoundError}}" {{DOMException}} and abort these steps.
       1. [=Assert=]: |directory| is a [=directory entry=].
 
