@@ -227,7 +227,7 @@ To <dfn for="file system locator" id=locator-resolve>resolve</dfn> a
 
   1. Let |relativePath| be « ».
   1. [=list/For each=] |index| of [=the range=] from |rootPath|'s [=list/size=]
-     to |rootPath|'s [=list/size=], exclusive,
+     to |childPath|'s [=list/size=], exclusive,
      [=list/append=] |childPath|.\[[|index|]] to |relativePath|.
 
   1. [=/Resolve=] |result| with |relativePath|.
