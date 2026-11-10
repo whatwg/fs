@@ -1586,16 +1586,16 @@ The <dfn method for=FileSystemSyncAccessHandle>truncate(|newSize|)</dfn> method 
 1. If |newSize| is larger than |oldSize|:
    1. If |newSize| &minus; |oldSize| exceeds the available [=storage quota=],
       [=throw=] a {{QuotaExceededError}}.
-   1. Set [=this=]'s [=FileSystemSyncAccessHandle/[[file]]=]'s to a
-      [=byte sequence=] formed by concatenating |fileContents| with a
+   1. Set [=this=]'s [=FileSystemSyncAccessHandle/[[file]]=]'s [=file entry/binary data=]
+      to a [=byte sequence=] formed by concatenating |fileContents| with a
       [=byte sequence=] containing |newSize| &minus; |oldSize| 0x00 bytes.
    1. If the operations modifying the [=this=]'s
       [=FileSystemSyncAccessHandle/[[file]]=]'s [=file entry/binary data=]
       in the previous steps failed,
       [=throw=] an "{{InvalidStateError}}" {{DOMException}}.
 1. Otherwise, if |newSize| is smaller than |oldSize|:
-   1. Set [=this=]'s [=FileSystemSyncAccessHandle/[[file]]=]'s to a
-      [=byte sequence=] containing the first |newSize| bytes in |fileContents|.
+   1. Set [=this=]'s [=FileSystemSyncAccessHandle/[[file]]=]'s [=file entry/binary data=]
+      to a [=byte sequence=] containing the first |newSize| bytes in |fileContents|.
    1. If the operations modifying the [=this=]'s
       [=FileSystemSyncAccessHandle/[[file]]=]'s [=file entry/binary data=]
       in the previous steps failed,
