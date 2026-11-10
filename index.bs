@@ -1257,12 +1257,12 @@ runs these steps:
       1. Let |head| be a [=byte sequence=] containing the first |writePosition|
          bytes of |stream|'s[=[[buffer]]=].
       1. Let |tail| be an empty [=byte sequence=].
-      1. If |writePosition| + |data|'s [=byte sequence/length=] is smaller than |oldSize|:
+      1. If |writePosition| + |dataBytes|'s [=byte sequence/length=] is smaller than |oldSize|:
          1. Let |tail| be a [=byte sequence=] containing the last
-            |oldSize| - (|writePosition| + |data|'s [=byte sequence/length=])
+            |oldSize| - (|writePosition| + |dataBytes|'s [=byte sequence/length=])
             bytes of |stream|'s [=[[buffer]]=].
       1. Set |stream|'s [=[[buffer]]=] to the concatenation of
-         |head|, |data| and |tail|.
+         |head|, |dataBytes| and |tail|.
       1. If the operations modifying |stream|'s [=[[buffer]]=] in the
          previous steps failed due to exceeding the [=storage quota=],
          [=/reject=] |p| with a {{QuotaExceededError}} and abort these steps,
@@ -1272,21 +1272,21 @@ runs these steps:
          [=/bucket file system=].
          However this operation could still fail for other files,
          for example if the disk being written to runs out of disk space.
-      1. Set |stream|'s [=[[seekOffset]]=] to |writePosition| + |data|'s
+      1. Set |stream|'s [=[[seekOffset]]=] to |writePosition| + |dataBytes|'s
          [=byte sequence/length=].
       1. [=/Resolve=] |p|.
     1. Otherwise, if |command| is "{{WriteCommandType/seek}}":
-      1. [=Assert=]: |chunk| is a [=/dictionary=].
-      1. If |chunk|["{{WriteParams/position}}"] does not [=map/exists|exist=],
+      1. [=Assert=]: |input| is a [=/dictionary=].
+      1. If |input|["{{WriteParams/position}}"] does not [=map/exists|exist=],
          [=/reject=] |p| with a {{TypeError}} and abort these steps.
       1. Set |stream|'s [=[[seekOffset]]=] to
-         |chunk|["{{WriteParams/position}}"].
+         |input|["{{WriteParams/position}}"].
       1. [=/Resolve=] |p|.
     1. Otherwise, if |command| is "{{WriteCommandType/truncate}}":
-      1. [=Assert=]: |chunk| is a [=/dictionary=].
-      1. If |chunk|["{{WriteParams/size}}"] does not [=map/exists|exist=],
+      1. [=Assert=]: |input| is a [=/dictionary=].
+      1. If |input|["{{WriteParams/size}}"] does not [=map/exists|exist=],
          [=/reject=] |p| with a {{TypeError}} and abort these steps.
-      1. Let |newSize| be |chunk|["{{WriteParams/size}}"].
+      1. Let |newSize| be |input|["{{WriteParams/size}}"].
       1. Let |oldSize| be |stream|'s [=[[buffer]]=]'s [=byte sequence/length=].
       1. If |newSize| is larger than |oldSize|:
          1. Set |stream|'s [=[[buffer]]=] to a [=byte sequence=] formed by
