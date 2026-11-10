@@ -1483,19 +1483,23 @@ The <dfn method for=FileSystemSyncAccessHandle>read(|buffer|, {{FileSystemReadWr
    [=this=]'s [=FileSystemSyncAccessHandle/file position cursor=].
 1. If the underlying file system does not support reading from a file offset of
    |readStart|, [=throw=] a {{TypeError}}.
-1. If |readStart| is larger than |fileSize|:
+1. If |readStart| is greater than or equal to |fileSize|:
     1. Set [=this=]'s [=FileSystemSyncAccessHandle/file position cursor=] to |fileSize|.
     1. Return 0.
-1. Let |readEnd| be |readStart| + (|bufferSize| &minus; 1).
-1. If |readEnd| is larger than |fileSize|, set |readEnd| to |fileSize|.
-1. Let |bytes| be a [=byte sequence=] containing the bytes from |readStart| to |readEnd| of |fileContents|.
+1. Let |readEnd| be the smaller of |readStart| + |bufferSize| and |fileSize|.
+1. Let |bytes| be a [=byte sequence=] containing the bytes from |readStart| (inclusive)
+   to |readEnd| (exclusive) of |fileContents|.
 1. Let |result| be |bytes|'s [=byte sequence/length=].
 1. If the operations reading from |fileContents| in the previous steps failed:
     1. If there were partial reads and the number of bytes that were read into |bytes| is known,
        set |result| to the number of read bytes.
     1. Otherwise set |result| to 0.
+1. Let |startingOffset| be 0.
+1. If |buffer| is an {{ArrayBufferView}}:
+    1. Let |view| be the result of [=converted to a JavaScript value|converting=] |buffer| to a JavaScript value.
+    1. Set |startingOffset| to |view|.`[[ByteOffset]]`.
 1. Let |arrayBuffer| be |buffer|'s [=underlying buffer=].
-1. [=ArrayBuffer/write|Write=] |bytes| into |arrayBuffer|.
+1. [=ArrayBuffer/write|Write=] |bytes| into |arrayBuffer|, given |startingOffset|.
 1. Set [=this=]'s [=FileSystemSyncAccessHandle/file position cursor=] to |readStart| + |result|.
 1. Return |result|.
 
